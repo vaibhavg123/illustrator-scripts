@@ -1,5 +1,202 @@
-<h3>Remote UI123</h3>
+ <style>
+    :root {
+      --accent: #0078d4;
+      --accent-hover: #005ea2;
+      --bg-light: #f3f3f3;
+      --bg-dark: #2e2e2e;
+      --text-light: #222;
+      --text-dark: #f0f0f0;
+      --button-radius: 8px;
+      --button-padding: 12px 16px;
+    }
 
-<button onclick="alert('Hello from GitHub UI')">
-    Test Button
-</button>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 24px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h2 {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    /* Button container for spacing and grouping */
+    .button-group {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+button {
+    margin: 10px;
+    width: auto;                /* allow natural size */
+    flex-wrap: nowrap;
+    padding: var(--button-padding);
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--button-radius);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+
+
+    button:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
+
+    svg {
+      fill: currentColor;
+      width: 16px;
+      height: 16px;
+    }
+
+    .info {
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* Light Theme */
+    body.light-theme {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    /* Dark Theme */
+    body.dark-theme {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    body.dark-theme button {
+      background-color: #4a90e2;
+    }
+
+    body.dark-theme button:hover {
+      background-color: #357abd;
+    }
+
+    /* Optional section headers for grouping */
+    .section-title {
+      margin-top: 20px;
+      margin-bottom: 5px;
+      font-weight: 500;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #888;
+      text-align: left;
+      width: 100%;
+      max-width: 320px;
+      border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+      padding-bottom: 4px;
+    }
+  .button-group_new {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: row;   /* horizontal layout */
+      justify-content: center;
+      gap: 10px;             /* space between buttons */
+  }
+
+        #progressText {
+            margin-top: 10px;
+        }
+
+        progress {
+            width: 100%;
+            height: 20px;
+        }
+/* LOG PANEL */
+        #logPanel {
+            margin-top: 10px;
+            height: 180px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            padding: 6px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log {
+            margin-bottom: 4px;
+        }
+
+        .info { color: #ccc; }
+        .success { color: #4caf50; }
+        .error { color: #ff5555; }
+  </style>
+<h2>Illustrator Tools</h2>
+
+  <div class="button-group">
+    <div class="section-title">General</div>
+    <button id="btn">Say Hello from JSX</button>
+    <button id="run">Crop & Ungroup</button>
+    <button id="ungroupBtn">Ungroup</button>
+
+    <div class="section-title">Layers & Export</div>
+    <button id="createBtn">Create Layers: Text, Fill, Lines</button>
+    <button id="exportBtn">Export</button>
+
+    <div class="section-title">Text Tools</div>
+    <button id="textsizeBtn">Select Same Text</button>
+	<div class="button-group_new">
+      <button id="combinetextBtn">Merge Vertical Text</button>
+      <button id="reversetextBtn">Reverse Text</button>
+  </div>
+  
+
+     <button id="mergeonelinetextBtn">Merge and one Line Text</button>
+	  
+    <button id="combinehotextBtn">Combine to Horizontal Text</button>
+	<button id="rotatetextBtn">Rotate Text</button>
+    <button id="centeraligntextBtn">Center Align Text</button>
+    <button id="findchangetextBtn">Find and Change Colour</button>
+
+    <div class="section-title">Selection Tools</div>
+    <button id="dashedBtn">Dashed Lines</button>
+	<button id="pathBtn">Fill Paths</button>
+	<button id="alphabetsBtn">Alphabets</button>
+	
+	<div class="section-title">Other</div>
+    <button id="keyboardBtn">Keyboard Shortcuts</button>
+  </div>
+
+
+	<button id="runBtn">Run Script</button>
+
+	<div id="progressText">Idle</div>
+	<progress id="progressBar" value="0" max="100"></progress>
+
+	<div id="logPanel"></div>
+	
+
+  <div class="info">✨ Auto light/dark mode supported</div>
