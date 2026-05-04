@@ -7,7 +7,6 @@
  * – Script finds horizontally-aligned ones based on Y tolerance
  * – Frames within GAP_THRESHOLD are merged left→right
  */
-
 (function () {
 
     if (app.documents.length === 0) {
