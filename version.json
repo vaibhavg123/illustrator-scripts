@@ -1,5 +1,5 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/refs/heads/main/script.jsx",
   "interval": 30000
 }
