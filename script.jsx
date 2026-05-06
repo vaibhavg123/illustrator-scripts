@@ -2,10 +2,9 @@
  * Combine horizontally nearby text frames into one text frame.
  * Works in Illustrator CS6–2025.
  * 
- * HOW IT WORKS:
- * – Select several text objects
- * – Script finds horizontally-aligned ones based on Y tolerance
- * – Frames within GAP_THRESHOLD are merged left→right
+ * FIXED:
+ * – Ensures exactly one space before & after "X"
+ * – Cleans extra spaces
  */
 (function () {
 
@@ -23,9 +22,8 @@
     }
 
     // ---- SETTINGS ----
-    var Y_TOLERANCE = 4;        // max vertical difference (points)
-    var GAP_THRESHOLD = 50;     // max horizontal gap between frames to merge
-    var SPACE_BETWEEN = " ";    // what is inserted between merged texts
+    var Y_TOLERANCE = 4;
+    var GAP_THRESHOLD = 50;
 
     // ---- HELPERS ----
     function isText(it) {
@@ -47,16 +45,16 @@
         return;
     }
 
-    // ---- Sort by Y first (top→bottom), then X (left→right) ----
+    // ---- Sort by Y then X ----
     frames.sort(function (a, b) {
         var dy = yCenter(b) - yCenter(a);
-        if (Math.abs(dy) < Y_TOLERANCE) { 
-            return a.position[0] - b.position[0]; 
+        if (Math.abs(dy) < Y_TOLERANCE) {
+            return a.position[0] - b.position[0];
         }
         return dy;
     });
 
-    // ---- Group horizontally-nearby frames into lines ----
+    // ---- Group into horizontal lines ----
     var lines = [];
     var currentLine = [frames[0]];
 
@@ -76,30 +74,36 @@
     }
     lines.push(currentLine);
 
-    // ---- Process each horizontal line ----
+    // ---- Process lines ----
     var totalCombined = 0;
 
     for (var li = 0; li < lines.length; li++) {
         var group = lines[li];
-        if (group.length < 2) continue;   // skip lines with only one piece
+        if (group.length < 2) continue;
 
-        // sort left→right strictly
+        // Sort left → right
         group.sort(function (a, b) {
             return a.position[0] - b.position[0];
         });
 
+        // ---- Combine text (no spacing here) ----
         var combinedText = "";
         for (var j = 0; j < group.length; j++) {
             combinedText += group[j].contents;
-            if (j < group.length - 1) combinedText += SPACE_BETWEEN;
         }
+
+        // ---- FIX SPACING AROUND X ----
+        combinedText = combinedText
+            .replace(/\s*[Xx×]\s*/g, " X ") // force single space around X
+            .replace(/\s+/g, " ")           // collapse multiple spaces
+            .replace(/^\s+|\s+$/g, "");     // trim
 
         var first = group[0];
         var newFrame = first.layer.textFrames.add();
         newFrame.position = first.position;
         newFrame.contents = combinedText;
 
-        // Copy base formatting
+        // Copy formatting
         try {
             var ca = first.textRange.characterAttributes;
             var ta = newFrame.textRange.characterAttributes;
@@ -117,7 +121,7 @@
     }
 
     if (totalCombined > 0) {
-        alert("✅ Combined " + totalCombined + " text objects into fewer text frames.");
+        alert("✅ Combined " + totalCombined + " text objects.");
     } else {
         alert("No horizontally-near text groups found.");
     }
