@@ -35,5 +35,10 @@
       "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/circles.jsx"
     }
 
+    {
+      "label": "My New Tool",
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/newtool.jsx"
+    }
+
   ]
 }
