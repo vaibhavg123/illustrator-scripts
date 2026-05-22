@@ -1,6 +1,6 @@
 {
   "version": "1.0.2",
-  "interval": 10000,
+  "interval": 5000,
 
   "buttons": [
 
