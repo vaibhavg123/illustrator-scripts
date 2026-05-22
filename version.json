@@ -1,11 +1,11 @@
 {
-  "version": "1.0.10",
+  "version": "1.0.11",
   "interval": 5000,
 
   "buttons": [
 
     {
-      "label": "Hello Alert77",
+      "label": "Welcome To VG Tools",
       "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx"
     },
 
