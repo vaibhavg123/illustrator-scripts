@@ -5,7 +5,7 @@
   "buttons": [
 
     {
-      "label": "Hello Alert",
+      "label": "Hello Alert1",
       "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx"
     },
 
