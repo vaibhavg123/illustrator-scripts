@@ -1,1 +1,1 @@
-alert("Hello from GitHub JSX999 ✔");
+alert("Hello from VG Tools! ✔");
