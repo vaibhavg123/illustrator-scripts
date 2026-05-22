@@ -1,5 +1,19 @@
 {
-  "version": "5.0.9",
-  "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/refs/heads/main/script.jsx",
-  "interval": 30000
+  "version": "1.1.0",
+
+  "interval": 30000,
+
+  "scripts": [
+
+    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx",
+
+    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/rectangle.jsx",
+
+    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/text.jsx",
+
+    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/colors.jsx",
+
+    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/export.jsx"
+
+  ]
 }
