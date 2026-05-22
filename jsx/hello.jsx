@@ -1,1 +1,1 @@
-alert("Hello from VG Tools! ✔");
+alert("Hello from VG Tools!! ✔");
