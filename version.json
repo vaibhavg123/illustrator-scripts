@@ -1,11 +1,11 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "interval": 5000,
 
   "buttons": [
 
     {
-      "label": "Hello Alert99",
+      "label": "Hello Alert909",
       "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx"
     },
 
