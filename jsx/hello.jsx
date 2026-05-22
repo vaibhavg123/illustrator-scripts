@@ -1,1 +1,1 @@
-alert("Hello from GitHub JSX ✔");
+alert("Hello from GitHub JSX1 ✔");
