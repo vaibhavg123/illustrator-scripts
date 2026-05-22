@@ -1,19 +1,39 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
 
   "interval": 30000,
 
-  "scripts": [
+  "buttons": [
 
-    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx",
+    {
+      "label": "Hello Alert",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx"
+    },
 
-    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/rectangle.jsx",
+    {
+      "label": "Create Rectangle",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/rectangle.jsx"
+    },
 
-    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/text.jsx",
+    {
+      "label": "Create Text",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/text.jsx"
+    },
 
-    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/colors.jsx",
+    {
+      "label": "Random Colors",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/colors.jsx"
+    },
 
-    "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/export.jsx"
+    {
+      "label": "Export PNG",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/export.jsx"
+    },
+
+    {
+      "label": "Create Circles",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/circles.jsx"
+    }
 
   ]
 }
