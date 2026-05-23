@@ -1,96 +1,18 @@
-/* =====================================================
-   ROOT VARIABLES
-===================================================== */
-
-:root {
-
-    --bg: #2b2b2b;
-
-    --panel: #343434;
-
-    --panel-border: #454545;
-
-    --text: #f2f2f2;
-
-    --muted: #9a9a9a;
-
-    --accent: #4c8dff;
-
-    --accent-hover: #6aa3ff;
-
-    --radius: 10px;
-
-    --button-height: 38px;
-
-    --transition: 0.18s ease;
-}
-
-/* =====================================================
-   BODY
-===================================================== */
-
-body {
-
-    margin: 0;
-
-    padding: 14px;
-
-    background: var(--bg);
-
-    color: var(--text);
-
-    font-family: "Segoe UI", sans-serif;
-
-    font-size: 13px;
-
-    box-sizing: border-box;
-}
-
-/* =====================================================
-   ROOT
-===================================================== */
-
-#root {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 14px;
-}
-
 body {
     background: #2b2b2b;
     color: white;
     font-family: Arial;
-    padding: 20px;
+    padding: 10px;
 }
 
-h2 {
-    margin-top: 0;
-}
+    h3 {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
 
-button {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border: none;
-    background: #4caf50;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-button:hover {
-    background: #45a049;
-}
-
-.footer {
-    margin-top: 20px;
-    opacity: 0.6;
-    font-size: 11px;
-}
 
 /* =====================================================
    BUTTON GROUP
@@ -126,31 +48,36 @@ button:hover {
 #static-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+}
+
+#static-buttons-new {
+    display: flex;
+    flex-direction: row;
 }
 
 /* =====================================================
    BUTTON STYLE
 ===================================================== */
 
-#static-buttons button {
+.tool-btn {
     width: 100%;
-    padding: 10px 14px;
+    padding: 10px;
+    margin: 4px;
     border: none;
     border-radius: 8px;
-    background: #3a3a3a;
+    background: #616161;
     color: white;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-#static-buttons button:hover {
+.tool-btn:hover {
     background: #4c8dff;
     transform: translateY(-1px);
 }
 
-#static-buttons button:active {
+.tool-btn:active {
     transform: scale(0.98);
 }
 
@@ -160,18 +87,27 @@ button:hover {
 ===================================================== */
 
 ::-webkit-scrollbar {
-
     width: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-
     background: #555;
-
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-track {
-
     background: transparent;
 }
+
+svg {
+      fill: currentColor;
+      width: 16px;
+      height: 16px;
+    }
+
+    .info {
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      margin-top: 20px;
+    }
