@@ -113,34 +113,43 @@ svg {
 /* =====================================================
    TOP BAR
 ===================================================== */
-
 .top-bar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 999;
     background: #2b2b2b;
-    padding-bottom: 12px;
-    margin-bottom: 10px;
+    padding: 10px 12px 12px;
+    box-sizing: border-box;
 }
 
+/* title spacing */
+.top-bar h3 {
+    margin: 0 0 8px 0;
+}
+#sections {
+    margin-top: 80px;
+}
 /* =====================================================
    INPUT
 ===================================================== */
-
+/* input fix */
 #messageInput {
     width: 100%;
-    padding: 10px;
-    border: none;
+    padding: 10px 12px;
+    border: 1px solid #3f3f3f;
     border-radius: 8px;
     background: #3a3a3a;
     color: white;
     box-sizing: border-box;
     outline: none;
     font-size: 13px;
+    transition: all 0.2s ease;
 }
 
 #messageInput:focus {
     background: #444;
-    box-shadow:
-        0 0 0 2px #0078d4;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
 }
