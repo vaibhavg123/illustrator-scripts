@@ -1,6 +1,5 @@
 // Select all filled paths in the document, with progress bar + Cancel button
 // Works safely and responsively (no freezing)
-
 if (app.documents.length > 0) {
     var doc = app.activeDocument;
     app.executeMenuCommand("deselectall");
