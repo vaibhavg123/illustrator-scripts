@@ -36,11 +36,8 @@ button:hover {
 ===================================================== */
 
 .button-group {
-
     display: flex;
-
     flex-direction: column;
-
     gap: 10px;
 
     padding: 14px;
