@@ -21,9 +21,8 @@ body {
 .button-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px;
-    margin-bottom: 16px;
+    padding: 15px;
+    margin-bottom: 10px;
     background: #2b2b2b;
     border: 1px solid #3f3f3f;
     border-radius: 10px;
@@ -41,19 +40,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* =====================================================
-   STATIC BUTTON CONTAINER
-===================================================== */
-
-#static-buttons {
-    display: flex;
-    flex-direction: column;
-}
-
-#static-buttons-new {
-    display: flex;
-    flex-direction: row;
-}
 
 /* =====================================================
    BUTTON STYLE
@@ -65,7 +51,7 @@ body {
     margin: 4px;
     border: none;
     border-radius: 8px;
-    background: #616161;
+    background: #0078d4;
     color: white;
     font-size: 13px;
     cursor: pointer;
