@@ -111,10 +111,13 @@ body {
     max-height: 0;
     overflow: hidden;
 
-    transition: max-height 0.25s ease;
+    padding: 0 10px;
+
+    transition:
+        max-height 0.25s ease,
+        padding 0.25s ease;
 
     background: #2b2b2b;
-    padding: 0 10px;
 }
 /* =====================================================
    BUTTON LAYOUT
