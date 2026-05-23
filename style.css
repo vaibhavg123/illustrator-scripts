@@ -122,14 +122,11 @@ body {
 .button-sub.layout-column {
     display: flex;
     flex-direction: column;
-    padding: 10px 0;
 }
 
 .button-sub.layout-row {
     display: flex;
     flex-direction: row;
-    gap: 8px;
-    padding: 10px 0;
 }
 
 /* =====================================================
