@@ -11,10 +11,12 @@
       "buttons": [
         {
           "label": "Merge Vertical Text",
+          "icon": "https://vaibhavg123.github.io/illustrator-scripts/icons/merge.svg",
           "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/merge.jsx"
         },
         {
           "label": "Reverse Text",
+         "icon": "https://vaibhavg123.github.io/illustrator-scripts/icons/reverse.svg",
           "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/reverse.jsx"
         }
       ]
