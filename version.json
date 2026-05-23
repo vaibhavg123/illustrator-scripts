@@ -1,6 +1,6 @@
 {
   "version": "1.0.12",
-  "interval": 2000,
+  "interval": 60000,
 
 
 "sections": [
