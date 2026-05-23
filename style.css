@@ -116,19 +116,10 @@ svg {
 .button-sub.layout-column {
     display: flex;
     flex-direction: column;
-    gap: 8px;
 }
 
 /* row layout */
 .button-sub.layout-row {
     display: flex;
     flex-direction: row;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-/* optional: equal size buttons in row */
-.button-sub.layout-row button {
-    flex: 1;
-    min-width: 120px;
 }
