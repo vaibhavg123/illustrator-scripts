@@ -10,12 +10,12 @@
       "layout": "column",
       "buttons": [
         {
-          "label": "Merge Vertical Text",
-          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/merge.jsx"
+          "label": "Align+Spacing Text",
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/centeraligntexts.jsx"
         },
         {
           "label": "Reverse Text",
-          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/reverse.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
         }
       ]
     },
@@ -27,7 +27,7 @@
       "buttons": [
         {
           "label": "Crop & Ungroup",
-         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/text.jsx"
+         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
         },
         {
           "label": "Say Hello from JSX",
