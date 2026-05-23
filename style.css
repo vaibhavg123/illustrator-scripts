@@ -143,8 +143,9 @@ body {
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
 }
-
 .tool-btn:hover {
     background: #616161;
     transform: translateY(-2px);
