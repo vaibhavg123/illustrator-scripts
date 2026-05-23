@@ -118,14 +118,23 @@ svg {
 
 
 
-/* icon box */
 .btn-icon {
     width: 18px;
     height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+}
+
+.btn-icon img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+/* optional hover color effect */
+.tool-btn:hover .btn-icon img {
+    filter: brightness(1.2);
 }
 
 /* label */
