@@ -1,7 +1,24 @@
 {
-  "version": "1.0.11",
-  "interval": 5000,
+  "version": "1.0.12",
+  "interval": 2000,
 
+"staticButtons": [
+
+    {
+      "id": "btn",
+      "label": "Say Hello from JSX",
+      "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
+    },
+
+    {
+      "id": "run",
+      "label": "Crop & Ungroup",
+      "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/text.jsx"
+    }
+
+  ],
+
+  
   "buttons": [
 
     {
