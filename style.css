@@ -58,12 +58,6 @@ body {
     transition: all 0.2s ease;
 }
 
-.tool-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .tool-btn:hover {
     background: #616161;
     transform: translateY(-2px);
@@ -116,29 +110,3 @@ svg {
     flex-direction: row;
 }
 
-
-
-.btn-icon {
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-icon img {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-}
-
-/* optional hover color effect */
-.tool-btn:hover .btn-icon img {
-    filter: brightness(1.2);
-}
-
-/* label */
-.btn-label {
-    flex: 1;
-    text-align: left;
-}
