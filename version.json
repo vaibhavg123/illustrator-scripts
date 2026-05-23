@@ -15,22 +15,30 @@
         {
           "label": "Join Text",
           "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/jointexts.jsx"
+        },
+        {
+          "label": "Rotate Text",
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/rotate.jsx"
         }
       ]
     },
 
   
     {
-      "title": "Main Tools",
+      "title": "Selecti Tools",
       "layout": "row",
       "buttons": [
         {
-          "label": "Crop & Ungroup",
-         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
+          "label": "Fill",
+         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelPaths.jsx"
         },
         {
-          "label": "Say Hello from JSX",
-         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
+          "label": "Dashed",
+         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelDash.jsx"
+        },
+        {
+          "label": "Dashed",
+         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelDash.jsx"
         }
       ]
     }
@@ -45,13 +53,13 @@
     },
 
     {
-      "label": "Create Rectangle",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/rectangle.jsx"
+      "label": "Create Layers: Text, Fill, Lines",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/create.jsx"
     },
 
     {
-      "label": "Create Text",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/text.jsx"
+      "label": "Same Size Text",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/textsize.jsx"
     },
 
     {
