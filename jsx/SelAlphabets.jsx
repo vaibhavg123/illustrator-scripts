@@ -5,7 +5,6 @@ function isEditable(item) {
         if (p.locked || p.hidden) return false;
         p = p.parent;
     }
-
     // Layer must be visible
     if (!item.layer.visible) return false;
 
