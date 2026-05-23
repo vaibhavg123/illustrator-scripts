@@ -59,8 +59,8 @@ body {
 }
 
 .tool-btn:hover {
-    background: #4c8dff;
-    transform: translateY(-1px);
+    background: #616161;
+    transform: translateY(-2px);
 }
 
 .tool-btn:active {
