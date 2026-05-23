@@ -2,22 +2,38 @@
   "version": "1.0.12",
   "interval": 2000,
 
-"staticButtons": [
+
+"sections": [
 
     {
-      "id": "btn",
-      "label": "Say Hello from JSX",
-      "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
+      "title": "Text Tools",
+      "buttons": [
+        {
+          "label": "Merge Vertical Text",
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/merge.jsx"
+        },
+        {
+          "label": "Reverse Text",
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/reverse.jsx"
+        }
+      ]
     },
 
     {
-      "id": "run",
-      "label": "Crop & Ungroup",
-      "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/text.jsx"
+      "title": "Main Tools",
+      "buttons": [
+        {
+          "label": "Crop & Ungroup",
+         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/text.jsx"
+        },
+        {
+          "label": "Say Hello from JSX",
+         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/hello.jsx"
+        }
+      ]
     }
 
   ],
-
   
   "buttons": [
 
