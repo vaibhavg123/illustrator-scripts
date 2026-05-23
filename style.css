@@ -103,7 +103,7 @@ body {
 .accordion-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    transition: max-height 0.25s ease-out;
     background: #2b2b2b;
     padding: 0 10px;
 }
