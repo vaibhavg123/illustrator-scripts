@@ -39,15 +39,10 @@ button:hover {
     display: flex;
     flex-direction: column;
     gap: 10px;
-
     padding: 14px;
-
     margin-bottom: 16px;
-
     background: #2b2b2b;
-
     border: 1px solid #3f3f3f;
-
     border-radius: 10px;
 }
 
@@ -56,15 +51,10 @@ button:hover {
 ===================================================== */
 
 .section-title {
-
     color: #ffffff;
-
     font-size: 13px;
-
     font-weight: 700;
-
     text-transform: uppercase;
-
     letter-spacing: 0.5px;
 }
 
@@ -73,11 +63,8 @@ button:hover {
 ===================================================== */
 
 #static-buttons {
-
     display: flex;
-
     flex-direction: column;
-
     gap: 8px;
 }
 
