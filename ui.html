@@ -61,25 +61,27 @@
 </div>
 
 <script>
-const headers = document.querySelectorAll(".accordion-header");
+var headers = document.getElementsByClassName("accordion-header");
 
-headers.forEach(header => {
-    header.addEventListener("click", () => {
+for (var i = 0; i < headers.length; i++) {
 
-        const content = header.nextElementSibling;
-        const isOpen = header.classList.contains("active");
+    headers[i].addEventListener("click", function () {
 
-        // Close all
-        headers.forEach(h => {
-            h.classList.remove("active");
-            h.nextElementSibling.style.maxHeight = null;
-        });
+        var content = this.nextElementSibling;
+        var isActive = this.classList.contains("active");
 
-        // Open clicked
-        if (!isOpen) {
-            header.classList.add("active");
+        // Close all accordions
+        for (var j = 0; j < headers.length; j++) {
+            headers[j].classList.remove("active");
+            headers[j].nextElementSibling.style.maxHeight = null;
+        }
+
+        // Open current
+        if (!isActive) {
+            this.classList.add("active");
             content.style.maxHeight = content.scrollHeight + "px";
         }
     });
-});
+
+}
 </script>
