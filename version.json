@@ -7,6 +7,7 @@
 
     {
       "title": "Text Tools",
+      "layout": "column",
       "buttons": [
         {
           "label": "Merge Vertical Text",
@@ -21,6 +22,7 @@
 
     {
       "title": "Main Tools",
+      "layout": "row",
       "buttons": [
         {
           "label": "Crop & Ungroup",
