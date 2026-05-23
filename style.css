@@ -1,54 +1,136 @@
 body {
     background: #2b2b2b;
     color: white;
-   font-family: "Segoe UI", sans-serif;
+    font-family: "Segoe UI", sans-serif;
     padding: 10px;
+    margin: 0;
 }
 
-    h3 {
-      font-weight: 600;
-      font-size: 18px;
-      margin-bottom: 20px;
-      text-align: center;
-      letter-spacing: 0.5px;
-    }
+/* =====================================================
+   TOP BAR
+===================================================== */
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: #2b2b2b;
+    padding: 10px 12px 12px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #3f3f3f;
+}
 
+.top-bar h3 {
+    margin: 0 0 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+}
 
 /* =====================================================
-   BUTTON GROUP
+   INPUT
 ===================================================== */
+#messageInput {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #3f3f3f;
+    border-radius: 8px;
+    background: #3a3a3a;
+    color: white;
+    box-sizing: border-box;
+    outline: none;
+    font-size: 13px;
+}
 
-.button-group {
-    display: flex;
-    flex-direction: column;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: #2b2b2b;
+#messageInput:focus {
+    background: #444;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
+}
+
+/* =====================================================
+   CONTENT
+===================================================== */
+#sections {
+    margin-top: 95px;
+}
+
+/* =====================================================
+   ACCORDION
+===================================================== */
+.accordion {
+    margin-bottom: 12px;
     border: 1px solid #3f3f3f;
     border-radius: 10px;
+    overflow: hidden;
+    background: #2f2f2f;
 }
 
-/* =====================================================
-   TITLE
-===================================================== */
-
-.section-title {
-    color: #ffffff;
+.accordion-header {
+    width: 100%;
+    padding: 14px 16px;
+    background: #333;
+    border: none;
+    color: white;
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
+.accordion-header:hover {
+    background: #3c3c3c;
+}
+
+.accordion-header.active {
+    background: #0078d4;
+}
+
+.accordion-icon {
+    transition: transform 0.25s ease;
+}
+
+.accordion-header.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #2b2b2b;
+    padding: 0 10px;
+}
 
 /* =====================================================
-   BUTTON STYLE
+   BUTTON LAYOUT
 ===================================================== */
+.button-sub.layout-column {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+}
 
+.button-sub.layout-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+/* =====================================================
+   BUTTONS
+===================================================== */
 .tool-btn {
     width: 100%;
     padding: 10px;
-    margin: 4px;
+    margin: 4px 0;
     border: none;
     border-radius: 8px;
     background: #0078d4;
@@ -67,11 +149,19 @@ body {
     transform: scale(0.98);
 }
 
+/* =====================================================
+   INFO
+===================================================== */
+.info {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+}
 
 /* =====================================================
    SCROLLBAR
 ===================================================== */
-
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -83,73 +173,4 @@ body {
 
 ::-webkit-scrollbar-track {
     background: transparent;
-}
-
-svg {
-      fill: currentColor;
-      width: 16px;
-      height: 16px;
-    }
-
-    .info {
-      font-size: 12px;
-      color: #888;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-/* default column layout */
-.button-sub.layout-column {
-    display: flex;
-    flex-direction: column;
-}
-
-/* row layout */
-.button-sub.layout-row {
-    display: flex;
-    flex-direction: row;
-}
-
-/* =====================================================
-   TOP BAR
-===================================================== */
-.top-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 999;
-    background: #2b2b2b;
-    padding: 10px 12px 12px;
-    box-sizing: border-box;
-}
-
-/* title spacing */
-.top-bar h3 {
-    margin: 0 0 8px 0;
-}
-#sections {
-    margin-top: 80px;
-}
-/* =====================================================
-   INPUT
-===================================================== */
-/* input fix */
-#messageInput {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #3f3f3f;
-    border-radius: 8px;
-    background: #3a3a3a;
-    color: white;
-    box-sizing: border-box;
-    outline: none;
-    font-size: 13px;
-    transition: all 0.2s ease;
-}
-
-#messageInput:focus {
-    background: #444;
-    border-color: #0078d4;
-    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
 }
