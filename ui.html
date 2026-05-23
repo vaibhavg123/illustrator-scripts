@@ -1,17 +1,85 @@
 <div class="top-bar">
     <h3>✨ VG Tools ✨</h3>
-    <input
-        type="text"
-        id="messageInput"
-        placeholder="Enter message here..."
-    >
-
+    <input type="text" id="messageInput" placeholder="Enter message here..." />
 </div>
 
-<div id="sections"></div>
+<div id="sections">
 
-<div id="buttons"></div>
+    <!-- TEXT TOOLS -->
+    <div class="accordion">
+        <button class="accordion-header active">
+            Text Tools
+            <span class="accordion-icon">▼</span>
+        </button>
+
+        <div class="accordion-content" style="max-height: 200px;">
+            <div class="button-sub layout-column">
+                <button class="tool-btn">Align+Spacing Text</button>
+                <button class="tool-btn">Join Text</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TOOLS -->
+    <div class="accordion">
+        <button class="accordion-header">
+            Main Tools
+            <span class="accordion-icon">▼</span>
+        </button>
+
+        <div class="accordion-content">
+            <div class="button-sub layout-row">
+                <button class="tool-btn">Crop & Ungroup</button>
+                <button class="tool-btn">Say Hello from JSX</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXTRA TOOLS -->
+    <div class="accordion">
+        <button class="accordion-header">
+            Extra Tools
+            <span class="accordion-icon">▼</span>
+        </button>
+
+        <div class="accordion-content">
+            <div class="button-sub layout-column">
+                <button class="tool-btn">Welcome To VG Tools</button>
+                <button class="tool-btn">Create Rectangle</button>
+                <button class="tool-btn">Create Text</button>
+                <button class="tool-btn">Random Colors</button>
+                <button class="tool-btn">Export PNG</button>
+                <button class="tool-btn">Create Circles</button>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 <div class="info">
     ✨ Designed & Developed by VG!
 </div>
+
+<script>
+const headers = document.querySelectorAll(".accordion-header");
+
+headers.forEach(header => {
+    header.addEventListener("click", () => {
+
+        const content = header.nextElementSibling;
+        const isOpen = header.classList.contains("active");
+
+        // Close all
+        headers.forEach(h => {
+            h.classList.remove("active");
+            h.nextElementSibling.style.maxHeight = null;
+        });
+
+        // Open clicked
+        if (!isOpen) {
+            header.classList.add("active");
+            content.style.maxHeight = content.scrollHeight + "px";
+        }
+    });
+});
+</script>
