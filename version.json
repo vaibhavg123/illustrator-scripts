@@ -63,8 +63,8 @@
     },
 
     {
-      "label": "Random Colors",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/colors.jsx"
+      "label": "Sort Layers",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/SortLayerItems.jsx"
     },
 
     {
