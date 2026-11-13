@@ -7,10 +7,17 @@ if (sel.length < 2) {
     alert("Select at least TWO text objects.");
 } else {
 
-    var spacing = Number(panelInput);
+    // Determine the spacing and check its origin for the alert message
+    var rawInput = Number(panelInput);
+    var spacing;
+    var spacingSource;
 
-    if (isNaN(spacing)) {
-        spacing = -3; // Default spacing if panelInput is not defined
+    if (isNaN(rawInput)) {
+        spacing = -3; // Default fallback value
+        spacingSource = "Default (-3pt)";
+    } else {
+        spacing = rawInput;
+        spacingSource = "Panel Input (" + spacing + "pt)";
     }
 
     // Collect each object's bounds
@@ -47,7 +54,6 @@ if (sel.length < 2) {
         var shiftX = targetCenterX - currCenterX;
 
         // --- Vertical spacing ---
-        // In Illustrator, Y goes up. The new top should be: previous bottom - spacing
         var targetTopY = currentBottomY - spacing;
         var shiftY = targetTopY - b[1];
 
@@ -59,5 +65,6 @@ if (sel.length < 2) {
         currentBottomY = updatedBounds[3];
     }
 
-    alert("Successfully aligned " + objects.length + " text objects with " + spacing + "pt vertical spacing!");
+    // Final alert showing the exact source and value applied
+    alert("Successfully aligned " + objects.length + " text objects!\nApplied Spacing: " + spacing + " pt\nSource: " + spacingSource);
 }
