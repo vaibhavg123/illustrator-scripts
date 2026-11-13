@@ -7,17 +7,21 @@ if (sel.length < 2) {
     alert("Select at least TWO text objects.");
 } else {
 
-    // Determine the spacing and check its origin for the alert message
-    var rawInput = Number(panelInput);
+    // Robust check for panelInput (handles empty strings, undefined, and numbers)
     var spacing;
     var spacingSource;
 
-    if (isNaN(rawInput)) {
-        spacing = -3; // Default fallback value
-        spacingSource = "Default (-3pt)";
+    if (typeof panelInput === "undefined" || panelInput === null || String(panelInput).replace(/\s+/g, "") === "") {
+        spacing = -1; // Default fallback value requested (-1pt)
+        spacingSource = "Default (-1pt)";
     } else {
-        spacing = rawInput;
-        spacingSource = "Panel Input (" + spacing + "pt)";
+        spacing = Number(panelInput);
+        if (isNaN(spacing)) {
+            spacing = -1;
+            spacingSource = "Default (-1pt)";
+        } else {
+            spacingSource = "Panel Input (" + spacing + "pt)";
+        }
     }
 
     // Collect each object's bounds
@@ -66,5 +70,5 @@ if (sel.length < 2) {
     }
 
     // Final alert showing the exact source and value applied
-    alert("Successfully aligned " + objects.length + " text objects!\nApplied Spacing: " + spacing + " pt\nSource: " + spacingSource);
+    alert("Successfully aligned V " + objects.length + " text objects!\nApplied Spacing: " + spacing + " pt\nSource: " + spacingSource);
 }
