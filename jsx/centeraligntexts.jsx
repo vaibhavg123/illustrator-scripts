@@ -7,16 +7,16 @@ if (sel.length < 2) {
     alert("Select at least TWO text objects.");
 } else {
 
-   var spacing = Number(panelInput);
+    var spacing = Number(panelInput);
 
-  if (isNaN(spacing)) {
-      spacing = -2;
-  }
+    if (isNaN(spacing)) {
+        spacing = -2; // Default spacing if panelInput is not defined
+    }
 
     // Collect each object's bounds
     var objects = [];
     for (var i = 0; i < sel.length; i++) {
-        var b = sel[i].visibleBounds; // [x1, y1, x2, y2]
+        var b = sel[i].visibleBounds; // [left, top, right, bottom]
         objects.push({
             item: sel[i],
             bounds: b,
@@ -25,29 +25,39 @@ if (sel.length < 2) {
         });
     }
 
-    // Sort from top to bottom (Illustrator Y decreases downward)
+    // Sort from top to bottom (Illustrator Y increases upward, so higher top bounds come first)
     objects.sort(function(a, b) {
         return b.bounds[1] - a.bounds[1]; 
     });
 
-    // Process objects in pairs
-    for (var i = 0; i < objects.length - 1; i += 2) {
-        var topObj = objects[i];
-        var bottomObj = objects[i + 1];
+    // Use the topmost object's horizontal center as the alignment anchor
+    var baseObj = objects[0];
+    var targetCenterX = (baseObj.bounds[0] + baseObj.bounds[2]) / 2;
 
-        // --- Center horizontally relative to top object ---
-        var topCenterX = (topObj.bounds[0] + topObj.bounds[2]) / 2;
-        var bottomCenterX = (bottomObj.bounds[0] + bottomObj.bounds[2]) / 2;
-        var shiftX = topCenterX - bottomCenterX;
+    // Keep track of the bottom Y of the previous object in the stack
+    var currentBottomY = baseObj.bounds[3];
+
+    // Process all subsequent objects sequentially (supports 3, 4, 5+ objects)
+    for (var i = 1; i < objects.length; i++) {
+        var currObj = objects[i];
+        var b = currObj.bounds;
+
+        // --- Center horizontally relative to the topmost object ---
+        var currCenterX = (b[0] + b[2]) / 2;
+        var shiftX = targetCenterX - currCenterX;
 
         // --- Vertical spacing ---
-        var prevBottomY = topObj.bounds[3]; // bottom of top object
-        var currentTopY = bottomObj.bounds[1];
-        var shiftY = prevBottomY - currentTopY - spacing;
+        // In Illustrator, Y goes up. The new top should be: previous bottom - spacing
+        var targetTopY = currentBottomY - spacing;
+        var shiftY = targetTopY - b[1];
 
-        // Apply translation to bottom object only
-        bottomObj.item.translate(shiftX, shiftY);
+        // Apply translation to the current object
+        currObj.item.translate(shiftX, shiftY);
+
+        // Update currentBottomY based on the newly translated object's bottom bounds for the next item
+        var updatedBounds = currObj.item.visibleBounds;
+        currentBottomY = updatedBounds[3];
     }
 
-    alert("Selected text pairs centered horizontally with " + spacing + "pt vertical spacing!");
+    alert("Successfully aligned " + objects.length + " text objects with " + spacing + "pt vertical spacing!");
 }
