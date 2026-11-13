@@ -10,7 +10,7 @@ if (sel.length < 2) {
     var spacing = Number(panelInput);
 
     if (isNaN(spacing)) {
-        spacing = -2; // Default spacing if panelInput is not defined
+        spacing = -3; // Default spacing if panelInput is not defined
     }
 
     // Collect each object's bounds
