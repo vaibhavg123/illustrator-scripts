@@ -1,151 +1,748 @@
 <!-- views/floor_plan_cleaner.html -->
-<div class="custom-card">
-    <h4>Floor Plan Label Cleaner v3.0</h4>
-
-    <label class="field-label" for="fplcScope">Scope</label>
-    <select id="fplcScope" class="view-dropdown">
-        <option value="document" selected>Entire document</option>
-        <option value="selection">Selection only</option>
-    </select>
-
-    <label class="field-label" for="fplcStyleSet">Style Set</label>
-    <select id="fplcStyleSet" class="view-dropdown">
-        <option value="standard" selected>Standard</option>
-        <option value="compact">Compact</option>
-    </select>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcRestyle" checked />
-        <span>Rename / restyle labels (5 categories)</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcUpDn" checked />
-        <span>Convert UP / DN labels</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcWrap" checked />
-        <span>Multi-line labels / mappings</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcJunk" checked />
-        <span>Delete junk text</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcLoose" checked />
-        <span>Loose matching</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcDashed" />
-        <span>Update dashed lines</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcAllLines" />
-        <span>Update ALL lines (weight + colour)</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcArrows" />
-        <span>Recolour arrows</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcGroupGfx" />
-        <span>Group matching graphics by W x H</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcCapLayers" />
-        <span>Capitalise all layer names</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcCapText" />
-        <span>Set ALL texts to CAPITAL</span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="fplcDryRun" />
-        <span>Dry run (report only, no edits)</span>
-    </label>
-
-    <div class="action-btn-row">
-        <button id="btnFplcRun" class="tool-btn">Run Cleaner</button>
-        <button id="btnFplcCompact" class="tool-btn secondary">Run Compact</button>
+<div class="fplc-wrap">
+    <div class="fplc-header">
+        <h4>Floor Plan Label Cleaner v3.0</h4>
+        <div class="fplc-top-actions">
+            <button type="button" id="fplcBtnRunCompact" class="tool-btn secondary fplc-mini-btn">Run Compact</button>
+            <button type="button" id="fplcBtnRunMain" class="tool-btn fplc-mini-btn">Run</button>
+        </div>
     </div>
 
-    <button id="btnFplcFullDialog" class="tool-btn secondary">Open Full Rules / Styles Dialog</button>
+    <!-- Tab Bar -->
+    <div class="fplc-tabs" id="fplcTabBar">
+        <button type="button" class="fplc-tab active" data-tab="fplcTabRun">Run</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabRules">Rules</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabStyles">Styles</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabLists">Lists</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabDashed">Dashed</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabUniversal">Universal</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabLayers">Layers</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabGroupGfx">Group Graphics</button>
+    </div>
+
+    <!-- 1. RUN TAB -->
+    <div id="fplcTabRun" class="fplc-tab-pane active">
+        <div class="custom-card">
+            <div class="fplc-section-title">Scope</div>
+            <label class="checkbox-row">
+                <input type="radio" name="fplcScopeRadio" value="document" checked />
+                <span>Entire document</span>
+            </label>
+            <label class="checkbox-row">
+                <input type="radio" name="fplcScopeRadio" value="selection" />
+                <span>Selection only</span>
+            </label>
+        </div>
+
+        <div class="custom-card">
+            <div class="fplc-section-title">Text Labels</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcRestyle" checked /><span>Rename / restyle labels (all 5 categories)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcUpDn" checked /><span>Convert UP / DN labels</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcWrap" checked /><span>Multi-line labels / mappings (Lists tab)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcJunk" checked /><span>Delete junk text</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcLoose" checked /><span>Loose matching ("KITCHEN ISLAND" -> "KITCHEN")</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcOpt" /><span>Skip option note matches (kept in place)</span></label>
+        </div>
+
+        <div class="custom-card">
+            <div class="fplc-section-title">Lines, Arrows &amp; Graphics</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllLines" /><span>Update ALL lines: weight + colour (Dashed tab)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashed" /><span>Update dashed lines (Dashed tab)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcArrows" /><span>Recolour all arrows (Styles tab)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcGroupGfx" /><span>Group matching graphics by W x H (all sets)</span></label>
+        </div>
+
+        <div class="custom-card">
+            <div class="fplc-section-title">Universal &amp; Report</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcCapLayers" /><span>Capitalise all layer names</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcCapText" /><span>Set ALL texts to CAPITAL</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcReport" checked /><span>Detailed report at the end (saved to UserData)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcReportItems" /><span>Include item-by-item listing (slower)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDryRun" /><span>Dry run (report only, change nothing)</span></label>
+
+            <label class="field-label" for="fplcRunSet">Style Set used by [Run]</label>
+            <select id="fplcRunSet" class="view-dropdown">
+                <option value="standard" selected>Standard</option>
+                <option value="compact">Compact</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 2. RULES TAB -->
+    <div id="fplcTabRules" class="fplc-tab-pane">
+        <div class="custom-card">
+            <div class="fplc-row-gap">
+                <input type="text" id="fplcRuleFilter" class="custom-input" placeholder="Filter rules..." />
+                <span id="fplcRuleCount" class="fplc-muted">0 rules</span>
+            </div>
+
+            <div class="fplc-grid-2">
+                <div>
+                    <label class="field-label" for="fplcRuleCat">Category</label>
+                    <select id="fplcRuleCat" class="view-dropdown">
+                        <option value="main">Main room</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="small">Small</option>
+                        <option value="oname">O_name</option>
+                        <option value="fname">F_name</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="fplcRuleFinal">Final Text (/n = line break)</label>
+                    <input type="text" id="fplcRuleFinal" class="custom-input" placeholder="e.g. GREAT/nROOM" />
+                </div>
+            </div>
+
+            <label class="field-label" for="fplcRuleKeys">Input Match Keys (comma separated)</label>
+            <input type="text" id="fplcRuleKeys" class="custom-input" placeholder="e.g. great rm, great room" />
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="fplcRuleExact" />
+                <span>Exact match only</span>
+            </label>
+
+            <div class="action-btn-row">
+                <button type="button" id="fplcBtnAddRule" class="tool-btn">+ Add / Update Rule</button>
+                <button type="button" id="fplcBtnResetRules" class="tool-btn secondary">Reset Defaults</button>
+            </div>
+
+            <div id="fplcRulesList" class="fplc-list-box"></div>
+        </div>
+    </div>
+
+    <!-- 3. STYLES TAB -->
+    <div id="fplcTabStyles" class="fplc-tab-pane">
+        <div class="custom-card">
+            <label class="field-label" for="fplcEditStyleSet">Edit Style Set</label>
+            <select id="fplcEditStyleSet" class="view-dropdown">
+                <option value="standard" selected>Standard</option>
+                <option value="compact">Compact</option>
+            </select>
+
+            <div id="fplcStyleRows"></div>
+        </div>
+
+        <div class="custom-card">
+            <div class="fplc-section-title">Arrow Detection</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcArrowTri" checked /><span>Triangle arrowheads (3 pts, max pt)</span></label>
+            <input type="number" id="fplcArrowTriMax" class="custom-input" value="24" min="1" max="500" />
+            <label class="checkbox-row"><input type="checkbox" id="fplcArrowGlyph" checked /><span>Text arrow glyphs</span></label>
+            <label class="field-label" for="fplcArrowKw">Name keywords (comma separated)</label>
+            <input type="text" id="fplcArrowKw" class="custom-input" value="arrow" />
+            <button type="button" id="fplcBtnApplyArrowsNow" class="tool-btn secondary">Apply Arrow Colour Now</button>
+        </div>
+    </div>
+
+    <!-- 4. LISTS TAB -->
+    <div id="fplcTabLists" class="fplc-tab-pane">
+        <div class="custom-card">
+            <label class="field-label" for="fplcOptPatterns">Option Notes (one per line)</label>
+            <textarea id="fplcOptPatterns" class="fplc-textarea" rows="3">Floor Plan
+End Unit
+At End Unit
+Basement
+Steps Option</textarea>
+
+            <label class="field-label" for="fplcWrapTexts">Multi-Line Labels / Mappings (one per line)</label>
+            <textarea id="fplcWrapTexts" class="fplc-textarea" rows="5">WALK-IN CLOSET
+UPSTAIRS LIVING
+MASTER BEDROOM
+OWNER'S SUITE
+OWNER'S BATH
+OWNER'S BEDROOM
+DINING ROOM
+COVERED PORCH
+FRENCH DOOR
+FAMILY ROOM
+GREAT/nROOM
+PRIMARY BATH => MASTER/nBATH</textarea>
+
+            <label class="field-label" for="fplcJunkExact">Junk Text — Exact Match (one per line)</label>
+            <textarea id="fplcJunkExact" class="fplc-textarea" rows="2">PER ELEVATION</textarea>
+
+            <label class="field-label" for="fplcJunkRegex">Junk Text — Regex Case-Insensitive (one per line)</label>
+            <textarea id="fplcJunkRegex" class="fplc-textarea" rows="4">^SCALE:
+^\d+'(-\d+"?)?\s*CLG\.?$
+^\+?\d+"\s*ISLAND$
+^\d+"\s*X\s*\d+"$
+^\d+\/\d+\s*X\s*\d+\/\d+$</textarea>
+        </div>
+    </div>
+
+    <!-- 5. DASHED TAB -->
+    <div id="fplcTabDashed" class="fplc-tab-pane">
+        <div class="custom-card">
+            <div class="fplc-section-title">Dashed Lines</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashEnabled" checked /><span>Enable dashed line processing</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashWeightOn" checked /><span>Set stroke weight</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashSpaceOn" checked /><span>Set dash &amp; space</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashColorOn" checked /><span>Apply Dashed colour from Styles</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashSelect" checked /><span>Select updated dashed lines</span></label>
+
+            <div class="fplc-grid-3">
+                <div>
+                    <label class="field-label">Weight (pt)</label>
+                    <input type="number" id="fplcDashWeight" class="custom-input" value="0.5" step="0.1" />
+                </div>
+                <div>
+                    <label class="field-label">Dash (pt)</label>
+                    <input type="number" id="fplcDashLen" class="custom-input" value="3" step="0.5" />
+                </div>
+                <div>
+                    <label class="field-label">Space (pt)</label>
+                    <input type="number" id="fplcDashSpace" class="custom-input" value="2" step="0.5" />
+                </div>
+            </div>
+        </div>
+
+        <div class="custom-card">
+            <div class="fplc-section-title">ALL Lines (Stroked Paths)</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllWeightOn" checked /><span>Set stroke weight</span></label>
+            <input type="number" id="fplcAllWeight" class="custom-input" value="0.5" step="0.1" />
+
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllColorOn" checked /><span>Set stroke colour (Hex)</span></label>
+            <input type="text" id="fplcAllHex" class="custom-input" value="#000000" />
+
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllSkipDashed" /><span>Skip dashed lines</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllSelect" /><span>Select updated lines</span></label>
+            <button type="button" id="fplcBtnApplyAllLinesNow" class="tool-btn secondary">Apply to All Lines Now</button>
+        </div>
+    </div>
+
+    <!-- 6. UNIVERSAL TAB -->
+    <div id="fplcTabUniversal" class="fplc-tab-pane">
+        <div class="custom-card">
+            <div class="fplc-section-title">Layers &amp; Texts</div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcUnivCapLayers" /><span>Capitalise all layer names</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcUnivLayerSub" checked /><span>Include sublayers</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcUnivCapText" /><span>Set ALL texts to CAPITAL</span></label>
+
+            <label class="field-label" for="fplcUnivTextMode">Text Capitalisation Mode</label>
+            <select id="fplcUnivTextMode" class="view-dropdown">
+                <option value="upper" selected>Change characters to UPPERCASE</option>
+                <option value="allcaps">Apply All Caps character style</option>
+            </select>
+
+            <label class="checkbox-row"><input type="checkbox" id="fplcUnivSelectTexts" /><span>Leave all texts selected afterwards</span></label>
+            <button type="button" id="fplcBtnApplyUnivNow" class="tool-btn secondary">Apply Universal Options Now</button>
+        </div>
+    </div>
+
+    <!-- 7. LAYERS TAB -->
+    <div id="fplcTabLayers" class="fplc-tab-pane">
+        <div class="custom-card">
+            <div class="fplc-row-gap">
+                <label class="checkbox-row"><input type="checkbox" id="fplcLayersShowSub" checked /><span>Show sublayers</span></label>
+                <button type="button" id="fplcBtnRefreshLayers" class="tool-btn secondary fplc-mini-btn">↻ Refresh</button>
+            </div>
+
+            <div id="fplcLayersList" class="fplc-list-box"></div>
+
+            <label class="field-label" for="fplcNewLayerName">Selected Layer New Name</label>
+            <input type="text" id="fplcNewLayerName" class="custom-input" placeholder="Click a layer above..." />
+
+            <div class="action-btn-row">
+                <button type="button" id="fplcBtnRenameLayer" class="tool-btn">Rename Layer</button>
+                <button type="button" id="fplcBtnUpperLayer" class="tool-btn secondary">UPPERCASE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. GROUP GRAPHICS TAB -->
+    <div id="fplcTabGroupGfx" class="fplc-tab-pane">
+        <div class="custom-card">
+            <div class="fplc-section-title">Group Set &amp; Colour</div>
+            <label class="field-label" for="fplcGgSetSelect">Active Group Set</label>
+            <select id="fplcGgSetSelect" class="view-dropdown"></select>
+
+            <div class="action-btn-row">
+                <input type="text" id="fplcGgNewSetName" class="custom-input" placeholder="New set name (e.g. Group 3)" />
+                <button type="button" id="fplcBtnGgAddSet" class="tool-btn secondary fplc-mini-btn">+ Set</button>
+            </div>
+
+            <label class="field-label" for="fplcGgColor">Set Colour (Hex)</label>
+            <input type="text" id="fplcGgColor" class="custom-input" value="#545454" />
+
+            <div class="fplc-grid-3">
+                <div>
+                    <label class="field-label">Width (W)</label>
+                    <input type="number" id="fplcGgW" class="custom-input" step="0.1" placeholder="10" />
+                </div>
+                <div>
+                    <label class="field-label">Height (H)</label>
+                    <input type="number" id="fplcGgH" class="custom-input" step="0.1" placeholder="5" />
+                </div>
+                <div>
+                    <label class="field-label">Unit</label>
+                    <select id="fplcGgUnit" class="view-dropdown">
+                        <option value="in" selected>in</option>
+                        <option value="mm">mm</option>
+                        <option value="cm">cm</option>
+                        <option value="pt">pt</option>
+                        <option value="px">px</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="action-btn-row">
+                <button type="button" id="fplcBtnGgAddPart" class="tool-btn">+ Add Part</button>
+                <button type="button" id="fplcBtnGgClearParts" class="tool-btn secondary">Clear Set</button>
+            </div>
+
+            <div id="fplcGgPartsList" class="fplc-list-box"></div>
+
+            <div class="fplc-grid-2">
+                <div>
+                    <label class="field-label">Tolerance (+/-)</label>
+                    <input type="number" id="fplcGgTol" class="custom-input" value="0.05" step="0.01" />
+                </div>
+                <div>
+                    <label class="field-label">Max Gap</label>
+                    <input type="number" id="fplcGgGap" class="custom-input" value="2.0" step="0.1" />
+                </div>
+            </div>
+
+            <label class="checkbox-row"><input type="checkbox" id="fplcGgRot" /><span>Allow rotated (W &lt;-&gt; H)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcGgVis" /><span>Use visible bounds</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcGgReqAll" checked /><span>Require complete set</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcGgApplyCol" checked /><span>Apply set colour</span></label>
+
+            <button type="button" id="fplcBtnGgRunNow" class="tool-btn">Group All Sets Now</button>
+        </div>
+    </div>
 </div>
 
 <script>
 (function () {
-    function collectOptions(forceCompact) {
-        var chosenSet = forceCompact ? "compact" : document.getElementById("fplcStyleSet").value;
+    var CAT_NAMES = {
+        main: "Main room",
+        secondary: "Secondary",
+        small: "Small",
+        oname: "O_name",
+        fname: "F_name"
+    };
+
+    var DEFAULT_STYLES = {
+        standard: {
+            main:      { size: 9, color: [0, 100, 255] },
+            secondary: { size: 8, color: [255, 0, 0] },
+            small:     { size: 6, color: [0, 170, 0] },
+            oname:     { size: 6, color: [170, 0, 255] },
+            fname:     { size: 6, color: [255, 128, 0] },
+            dashed:    { color: [0, 0, 0] },
+            arrow:     { color: [0, 0, 0] }
+        },
+        compact: {
+            main:      { size: 8, color: [0, 100, 255] },
+            secondary: { size: 6, color: [255, 0, 0] },
+            small:     { size: 6, color: [0, 170, 0] },
+            oname:     { size: 6, color: [170, 0, 255] },
+            fname:     { size: 6, color: [255, 128, 0] },
+            dashed:    { color: [0, 0, 0] },
+            arrow:     { color: [0, 0, 0] }
+        }
+    };
+
+    var DEFAULT_RULES = [
+        { cat: "main", text: "BEDROOM 1", keys: ["bed 1", "bed1", "bdrm 1", "bdrm1", "bedroom 1"], exact: false },
+        { cat: "main", text: "BEDROOM 2", keys: ["bed 2", "bed2", "bdrm 2", "bdrm2", "bedroom 2"], exact: false },
+        { cat: "main", text: "BATH 1", keys: ["ba 1", "ba1", "bath 1", "bath1"], exact: false },
+        { cat: "main", text: "KITCHEN", keys: ["kitchen"], exact: false },
+        { cat: "main", text: "LIVING", keys: ["living"], exact: false },
+        { cat: "main", text: "GREAT ROOM", keys: ["great rm", "great room"], exact: false },
+        { cat: "main", text: "GARAGE", keys: ["garage"], exact: false },
+        { cat: "secondary", text: "LAUNDRY", keys: ["la", "laundry"], exact: false },
+        { cat: "secondary", text: "WALK-IN CLOSET", keys: ["wic", "walk-in closet"], exact: false },
+        { cat: "small", text: "CLOSET", keys: ["closet"], exact: false },
+        { cat: "small", text: "PANTRY", keys: ["pantry"], exact: false }
+    ];
+
+    var stateUi = {
+        rules: JSON.parse(JSON.stringify(DEFAULT_RULES)),
+        styleSets: JSON.parse(JSON.stringify(DEFAULT_STYLES)),
+        ggSets: [
+            { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
+            { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
+        ],
+        activeGgIdx: 0,
+        selectedLayerName: ""
+    };
+
+    function toHex(rgb) {
+        var r = Math.max(0, Math.min(255, parseInt(rgb[0], 10) || 0)).toString(16).toUpperCase();
+        var g = Math.max(0, Math.min(255, parseInt(rgb[1], 10) || 0)).toString(16).toUpperCase();
+        var b = Math.max(0, Math.min(255, parseInt(rgb[2], 10) || 0)).toString(16).toUpperCase();
+        return "#" + (r.length < 2 ? "0" + r : r) + (g.length < 2 ? "0" + g : g) + (b.length < 2 ? "0" + b : b);
+    }
+
+    function parseHex(hexStr) {
+        var h = String(hexStr || "").trim().replace(/^#+/, "");
+        if (/^[0-9a-fA-F]{6}$/.test(h)) {
+            return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+        }
+        return null;
+    }
+
+    function splitLines(id) {
+        var el = document.getElementById(id);
+        if (!el) return [];
+        return String(el.value || "").split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+
+    // Tabs switching
+    var tabButtons = document.querySelectorAll("#fplcTabBar .fplc-tab");
+    for (var i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].onclick = function () {
+            var targetId = this.getAttribute("data-tab");
+            for (var j = 0; j < tabButtons.length; j++) tabButtons[j].classList.remove("active");
+            var panes = document.querySelectorAll(".fplc-tab-pane");
+            for (var k = 0; k < panes.length; k++) panes[k].classList.remove("active");
+            this.classList.add("active");
+            var targetPane = document.getElementById(targetId);
+            if (targetPane) targetPane.classList.add("active");
+        };
+    }
+
+    // Rules rendering & actions
+    function renderRules() {
+        var box = document.getElementById("fplcRulesList");
+        var countEl = document.getElementById("fplcRuleCount");
+        var filterVal = String((document.getElementById("fplcRuleFilter") || {}).value || "").trim().toLowerCase();
+        if (!box) return;
+        box.innerHTML = "";
+        var shown = 0;
+        for (var i = 0; i < stateUi.rules.length; i++) {
+            var r = stateUi.rules[i];
+            var hay = (r.cat + " " + r.text + " " + r.keys.join(" ")).toLowerCase();
+            if (filterVal && hay.indexOf(filterVal) === -1) continue;
+            shown++;
+            var row = document.createElement("div");
+            row.className = "fplc-list-item";
+            row.innerHTML = "<span><b>[" + (CAT_NAMES[r.cat] || r.cat) + "]</b> " + r.text + " <i>(" + r.keys.join(", ") + ")</i></span>";
+            var delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "log-btn";
+            delBtn.textContent = "✕";
+            (function (idx) {
+                delBtn.onclick = function () {
+                    stateUi.rules.splice(idx, 1);
+                    renderRules();
+                };
+            })(i);
+            row.appendChild(delBtn);
+            box.appendChild(row);
+        }
+        if (countEl) countEl.textContent = shown + "/" + stateUi.rules.length;
+    }
+
+    document.getElementById("fplcRuleFilter").oninput = renderRules;
+    document.getElementById("fplcBtnAddRule").onclick = function () {
+        var cat = document.getElementById("fplcRuleCat").value;
+        var finalText = String(document.getElementById("fplcRuleFinal").value || "").trim().toUpperCase();
+        var rawKeys = String(document.getElementById("fplcRuleKeys").value || "");
+        var exact = document.getElementById("fplcRuleExact").checked;
+        if (!finalText) {
+            window.VGTools.log("Floor Plan Cleaner -> Final text is required.", "warn");
+            return;
+        }
+        var keys = rawKeys.split(",").map(function (k) { return k.trim(); }).filter(Boolean);
+        stateUi.rules.push({ cat: cat, text: finalText, keys: keys, exact: exact });
+        document.getElementById("fplcRuleFinal").value = "";
+        document.getElementById("fplcRuleKeys").value = "";
+        renderRules();
+    };
+    document.getElementById("fplcBtnResetRules").onclick = function () {
+        stateUi.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+        renderRules();
+    };
+
+    // Styles rendering
+    function renderStyleRows() {
+        var setName = document.getElementById("fplcEditStyleSet").value || "standard";
+        var container = document.getElementById("fplcStyleRows");
+        var setObj = stateUi.styleSets[setName];
+        if (!container || !setObj) return;
+        container.innerHTML = "";
+
+        var keys = ["main", "secondary", "small", "oname", "fname", "dashed", "arrow"];
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var entry = setObj[k];
+            var hasSize = typeof entry.size === "number";
+            var row = document.createElement("div");
+            row.className = "fplc-style-row";
+
+            var titleSpan = document.createElement("span");
+            titleSpan.className = "fplc-style-label";
+            titleSpan.textContent = CAT_NAMES[k] || k;
+            row.appendChild(titleSpan);
+
+            if (hasSize) {
+                var sizeInp = document.createElement("input");
+                sizeInp.type = "number";
+                sizeInp.className = "custom-input fplc-size-inp";
+                sizeInp.value = entry.size;
+                sizeInp.step = "0.5";
+                (function (objRef, inpRef) {
+                    inpRef.onchange = function () {
+                        var v = parseFloat(inpRef.value);
+                        if (!isNaN(v) && v > 0) objRef.size = v;
+                    };
+                })(entry, sizeInp);
+                row.appendChild(sizeInp);
+            }
+
+            var hexInp = document.createElement("input");
+            hexInp.type = "text";
+            hexInp.className = "custom-input fplc-hex-inp";
+            hexInp.value = toHex(entry.color);
+            (function (objRef, hRef) {
+                hRef.onchange = function () {
+                    var rgb = parseHex(hRef.value);
+                    if (rgb) {
+                        objRef.color = rgb;
+                        hRef.value = toHex(rgb);
+                    }
+                };
+            })(entry, hexInp);
+            row.appendChild(hexInp);
+
+            container.appendChild(row);
+        }
+    }
+
+    document.getElementById("fplcEditStyleSet").onchange = renderStyleRows;
+
+    // Layers tab
+    function refreshLayersViaJsx() {
+        var incSub = document.getElementById("fplcLayersShowSub").checked;
+        var scriptCode =
+            "if (!app.documents.length) { '[]'; } else { " +
+            "var out = []; function walk(layers, d) { " +
+            "for (var i = 0; i < layers.length; i++) { var L = layers[i]; " +
+            "out.push('{\"name\":\"' + String(L.name).replace(/\"/g, '\\\\\"') + '\",\"depth\":' + d + ',\"items\":' + L.pageItems.length + '}'); " +
+            "if (" + (incSub ? "true" : "false") + " && L.layers.length) walk(L.layers, d + 1); } } " +
+            "walk(app.activeDocument.layers, 0); '[' + out.join(',') + ']'; }";
+
+        window.VGTools.runScript(
+            "data:text/javascript;charset=utf-8," + encodeURIComponent(scriptCode),
+            null,
+            function (raw) {
+                var box = document.getElementById("fplcLayersList");
+                if (!box) return;
+                box.innerHTML = "";
+                try {
+                    var arr = JSON.parse(raw);
+                    for (var i = 0; i < arr.length; i++) {
+                        var item = document.createElement("div");
+                        item.className = "fplc-list-item";
+                        var indent = new Array(arr[i].depth + 1).join("  ");
+                        item.textContent = indent + arr[i].name + " (" + arr[i].items + ")";
+                        (function (layerName) {
+                            item.onclick = function () {
+                                stateUi.selectedLayerName = layerName;
+                                document.getElementById("fplcNewLayerName").value = layerName;
+                            };
+                        })(arr[i].name);
+                        box.appendChild(item);
+                    }
+                } catch (e) {}
+            },
+            "List Layers"
+        );
+    }
+
+    document.getElementById("fplcBtnRefreshLayers").onclick = refreshLayersViaJsx;
+    document.getElementById("fplcBtnRenameLayer").onclick = function () {
+        var newName = String(document.getElementById("fplcNewLayerName").value || "").trim();
+        if (!stateUi.selectedLayerName || !newName) return;
+        window.VGTools.runScript(
+            "jsx/floor_plan_cleaner.jsx",
+            { _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: newName } },
+            function () {
+                stateUi.selectedLayerName = newName;
+                refreshLayersViaJsx();
+            },
+            "Rename Layer"
+        );
+    };
+    document.getElementById("fplcBtnUpperLayer").onclick = function () {
+        if (!stateUi.selectedLayerName) return;
+        var up = stateUi.selectedLayerName.toUpperCase();
+        document.getElementById("fplcNewLayerName").value = up;
+        window.VGTools.runScript(
+            "jsx/floor_plan_cleaner.jsx",
+            { _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: up } },
+            function () {
+                stateUi.selectedLayerName = up;
+                refreshLayersViaJsx();
+            },
+            "Uppercase Layer"
+        );
+    };
+
+    // Group Graphics tab
+    function renderGgSets() {
+        var sel = document.getElementById("fplcGgSetSelect");
+        var partsBox = document.getElementById("fplcGgPartsList");
+        if (!sel || !partsBox) return;
+        sel.innerHTML = "";
+        for (var i = 0; i < stateUi.ggSets.length; i++) {
+            var opt = document.createElement("option");
+            opt.value = i;
+            opt.textContent = stateUi.ggSets[i].name + " (" + toHex(stateUi.ggSets[i].color) + ")";
+            sel.appendChild(opt);
+        }
+        sel.value = stateUi.activeGgIdx;
+
+        var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
+        document.getElementById("fplcGgColor").value = toHex(curSet.color);
+        partsBox.innerHTML = "";
+        for (var p = 0; p < curSet.items.length; p++) {
+            var row = document.createElement("div");
+            row.className = "fplc-list-item";
+            row.textContent = "Part " + (p + 1) + ": W=" + curSet.items[p].w + " , H=" + curSet.items[p].h;
+            partsBox.appendChild(row);
+        }
+    }
+
+    document.getElementById("fplcGgSetSelect").onchange = function () {
+        stateUi.activeGgIdx = parseInt(this.value, 10) || 0;
+        renderGgSets();
+    };
+    document.getElementById("fplcBtnGgAddSet").onclick = function () {
+        var name = String(document.getElementById("fplcGgNewSetName").value || "").trim();
+        if (!name) name = "Group " + (stateUi.ggSets.length + 1);
+        stateUi.ggSets.push({ name: name, color: [84, 84, 84], items: [] });
+        stateUi.activeGgIdx = stateUi.ggSets.length - 1;
+        document.getElementById("fplcGgNewSetName").value = "";
+        renderGgSets();
+    };
+    document.getElementById("fplcBtnGgAddPart").onclick = function () {
+        var wVal = parseFloat(document.getElementById("fplcGgW").value);
+        var hVal = parseFloat(document.getElementById("fplcGgH").value);
+        if (isNaN(wVal) || isNaN(hVal)) {
+            window.VGTools.log("Group Graphics -> Enter valid W and H numbers.", "warn");
+            return;
+        }
+        var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
+        curSet.items.push({ w: wVal, h: hVal });
+        document.getElementById("fplcGgW").value = "";
+        document.getElementById("fplcGgH").value = "";
+        renderGgSets();
+    };
+    document.getElementById("fplcBtnGgClearParts").onclick = function () {
+        var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
+        curSet.items = [];
+        renderGgSets();
+    };
+
+    // Build payload from all tabs
+    function buildFullPayload(forceCompact, onlyFlags) {
+        var scopeRadio = document.querySelector('input[name="fplcScopeRadio"]:checked');
+        var ggRgb = parseHex(document.getElementById("fplcGgColor").value) || [84, 84, 84];
+        if (stateUi.ggSets[stateUi.activeGgIdx]) stateUi.ggSets[stateUi.activeGgIdx].color = ggRgb;
+
+        var allRgb = parseHex(document.getElementById("fplcAllHex").value) || [0, 0, 0];
+
         return {
             _fromHtmlUi: true,
-            openDialog: false,
-            scope: document.getElementById("fplcScope").value,
-            runSet: chosenSet,
-            restyle: true,
-            updnEnabled: document.getElementById("fplcUpDn").checked,
-            wrapLabels: document.getElementById("fplcWrap").checked,
-            removeJunk: document.getElementById("fplcJunk").checked,
-            looseMatch: document.getElementById("fplcLoose").checked,
-            dashedEnabled: document.getElementById("fplcDashed").checked,
-            allLinesEnabled: document.getElementById("fplcAllLines").checked,
-            arrowsEnabled: document.getElementById("fplcArrows").checked,
-            groupGraphicsEnabled: document.getElementById("fplcGroupGfx").checked,
-            capLayersEnabled: document.getElementById("fplcCapLayers").checked,
-            capTextEnabled: document.getElementById("fplcCapText").checked,
-            dryRun: document.getElementById("fplcDryRun").checked,
-            restyleChecked: document.getElementById("fplcRestyle").checked
+            onlyFlags: onlyFlags || null,
+            cfg: {
+                scope: scopeRadio ? scopeRadio.value : "document",
+                runSet: forceCompact ? "compact" : document.getElementById("fplcRunSet").value,
+                restyle: document.getElementById("fplcRestyle").checked,
+                updnEnabled: document.getElementById("fplcUpDn").checked,
+                wrapLabels: document.getElementById("fplcWrap").checked,
+                removeJunk: document.getElementById("fplcJunk").checked,
+                looseMatch: document.getElementById("fplcLoose").checked,
+                moveOptNames: document.getElementById("fplcOpt").checked,
+                allLinesEnabled: document.getElementById("fplcAllLines").checked,
+                dashedEnabled: document.getElementById("fplcDashed").checked,
+                arrowsEnabled: document.getElementById("fplcArrows").checked,
+                groupGraphicsEnabled: document.getElementById("fplcGroupGfx").checked,
+                capLayersEnabled: document.getElementById("fplcCapLayers").checked,
+                capTextEnabled: document.getElementById("fplcCapText").checked,
+                reportEnabled: document.getElementById("fplcReport").checked,
+                reportItems: document.getElementById("fplcReportItems").checked,
+                dryRun: document.getElementById("fplcDryRun").checked
+            },
+            rules: stateUi.rules,
+            styleSets: stateUi.styleSets,
+            optPatterns: splitLines("fplcOptPatterns"),
+            wrapTexts: splitLines("fplcWrapTexts"),
+            junkExact: splitLines("fplcJunkExact"),
+            junkRegex: splitLines("fplcJunkRegex"),
+            dashed: {
+                enabled: document.getElementById("fplcDashEnabled").checked,
+                applyWeight: document.getElementById("fplcDashWeightOn").checked,
+                applyDashSpace: document.getElementById("fplcDashSpaceOn").checked,
+                applyColor: document.getElementById("fplcDashColorOn").checked,
+                selectAfter: document.getElementById("fplcDashSelect").checked,
+                strokeWeight: parseFloat(document.getElementById("fplcDashWeight").value) || 0.5,
+                dash: parseFloat(document.getElementById("fplcDashLen").value) || 3,
+                space: parseFloat(document.getElementById("fplcDashSpace").value) || 2
+            },
+            allLines: {
+                applyWeight: document.getElementById("fplcAllWeightOn").checked,
+                weight: parseFloat(document.getElementById("fplcAllWeight").value) || 0.5,
+                applyColor: document.getElementById("fplcAllColorOn").checked,
+                color: allRgb,
+                skipDashed: document.getElementById("fplcAllSkipDashed").checked,
+                selectAfter: document.getElementById("fplcAllSelect").checked
+            },
+            arrows: {
+                detectTriangles: document.getElementById("fplcArrowTri").checked,
+                triMax: parseFloat(document.getElementById("fplcArrowTriMax").value) || 24,
+                detectGlyphs: document.getElementById("fplcArrowGlyph").checked,
+                keywords: String(document.getElementById("fplcArrowKw").value || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+            },
+            universal: {
+                layersIncludeSub: document.getElementById("fplcUnivLayerSub").checked,
+                textMode: document.getElementById("fplcUnivTextMode").value,
+                selectTexts: document.getElementById("fplcUnivSelectTexts").checked
+            },
+            groupGraphics: {
+                unit: document.getElementById("fplcGgUnit").value,
+                tolerance: parseFloat(document.getElementById("fplcGgTol").value) || 0.05,
+                maxGap: parseFloat(document.getElementById("fplcGgGap").value) || 2.0,
+                allowRotated: document.getElementById("fplcGgRot").checked,
+                useVisibleBounds: document.getElementById("fplcGgVis").checked,
+                requireAllParts: document.getElementById("fplcGgReqAll").checked,
+                applyColor: document.getElementById("fplcGgApplyCol").checked,
+                sets: stateUi.ggSets
+            }
         };
     }
 
-    function runFplc(payload, label) {
-        var btnRun = document.getElementById("btnFplcRun");
-        var btnCompact = document.getElementById("btnFplcCompact");
-        var btnDialog = document.getElementById("btnFplcFullDialog");
-
-        if (btnRun) btnRun.disabled = true;
-        if (btnCompact) btnCompact.disabled = true;
-        if (btnDialog) btnDialog.disabled = true;
-
-        window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", payload, function () {
-            if (btnRun) btnRun.disabled = false;
-            if (btnCompact) btnCompact.disabled = false;
-            if (btnDialog) btnDialog.disabled = false;
-        }, label);
+    function invokeCleaner(payload, label) {
+        window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", payload, null, label);
     }
 
-    var runBtn = document.getElementById("btnFplcRun");
-    if (runBtn) {
-        runBtn.onclick = function () {
-            var opts = collectOptions(false);
-            opts.restyle = opts.restyleChecked;
-            runFplc(opts, "Floor Plan Cleaner");
-        };
-    }
+    document.getElementById("fplcBtnRunMain").onclick = function () {
+        invokeCleaner(buildFullPayload(false, null), "Floor Plan Cleaner");
+    };
+    document.getElementById("fplcBtnRunCompact").onclick = function () {
+        invokeCleaner(buildFullPayload(true, null), "Floor Plan Cleaner (Compact)");
+    };
+    document.getElementById("fplcBtnApplyArrowsNow").onclick = function () {
+        invokeCleaner(buildFullPayload(false, ["arrowsEnabled"]), "Apply Arrow Colour");
+    };
+    document.getElementById("fplcBtnApplyAllLinesNow").onclick = function () {
+        invokeCleaner(buildFullPayload(false, ["allLinesEnabled"]), "Apply All Lines");
+    };
+    document.getElementById("fplcBtnApplyUnivNow").onclick = function () {
+        var flags = [];
+        if (document.getElementById("fplcUnivCapLayers").checked) flags.push("capLayersEnabled");
+        if (document.getElementById("fplcUnivCapText").checked) flags.push("capTextEnabled");
+        invokeCleaner(buildFullPayload(false, flags), "Apply Universal");
+    };
+    document.getElementById("fplcBtnGgRunNow").onclick = function () {
+        invokeCleaner(buildFullPayload(false, ["groupGraphicsEnabled"]), "Group All Sets");
+    };
 
-    var compactBtn = document.getElementById("btnFplcCompact");
-    if (compactBtn) {
-        compactBtn.onclick = function () {
-            var opts = collectOptions(true);
-            opts.restyle = true;
-            runFplc(opts, "Floor Plan Cleaner (Compact)");
-        };
-    }
-
-    var dlgBtn = document.getElementById("btnFplcFullDialog");
-    if (dlgBtn) {
-        dlgBtn.onclick = function () {
-            runFplc({ _fromHtmlUi: true, openDialog: true }, "Floor Plan Cleaner Dialog");
-        };
-    }
+    renderRules();
+    renderStyleRows();
+    renderGgSets();
 })();
 </script>
