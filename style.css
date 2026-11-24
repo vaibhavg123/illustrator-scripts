@@ -417,6 +417,99 @@ body.vg-resizing-log * {
     user-select: none !important;
     -webkit-user-select: none !important;
 }
+/* FLOOR PLAN CLEANER TABS & CONTROLS */
+.fplc-wrap { display: flex; flex-direction: column; gap: 8px; }
+.fplc-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.fplc-header h4 { margin: 0; font-size: 14px; }
+.fplc-top-actions { display: flex; gap: 6px; }
+.fplc-mini-btn { width: auto; padding: 6px 10px; margin: 0; font-size: 11px; }
+
+.fplc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: #222;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+}
+
+.fplc-tab {
+    background: #303030;
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.fplc-tab.active {
+    background: #0078d4;
+    border-color: #0078d4;
+    color: #fff;
+    font-weight: 600;
+}
+
+.fplc-tab-pane { display: none; flex-direction: column; gap: 8px; }
+.fplc-tab-pane.active { display: flex; }
+
+.fplc-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #9ecaff; letter-spacing: 0.4px; }
+.fplc-row-gap { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fplc-muted { font-size: 11px; color: #aaa; white-space: nowrap; }
+.fplc-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fplc-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+.fplc-textarea {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #3f3f3f;
+    border-radius: 7px;
+    background: #252525;
+    color: #e6e6e6;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.fplc-list-box {
+    max-height: 130px;
+    overflow-y: auto;
+    background: #232323;
+    border: 1px solid #3c3c3c;
+    border-radius: 6px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.fplc-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    background: #2d2d2d;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.fplc-list-item:hover { background: #383838; }
+
+.fplc-style-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 3px 0;
+    border-bottom: 1px solid #3c3c3c;
+}
+
+.fplc-style-label { font-size: 11px; min-width: 72px; color: #ddd; }
+.fplc-size-inp { width: 58px !important; padding: 5px 6px !important; }
+.fplc-hex-inp { width: 78px !important; padding: 5px 6px !important; font-family: Consolas, monospace; }
 
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
