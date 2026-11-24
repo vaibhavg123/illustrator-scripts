@@ -4,13 +4,11 @@
     var CSS_URL = BASE_URL + "style.css";
     var UI_URL = BASE_URL + "ui.html";
 
-    // Single reused CSInterface instance (faster, avoids memory leaks)
     var cs = new CSInterface();
 
-    // App State
     var state = {
         version: null,
-        interval: 5 * 60 * 60 * 1000, // Default: 5 hours (18000000 ms)
+        interval: 5 * 60 * 60 * 1000, // 5 hours
         timer: null,
         config: null,
         currentViewId: null,
@@ -73,7 +71,6 @@
         if (wrap) wrap.classList.remove("visible");
     }
 
-    // Listen for live progress events dispatched from Illustrator JSX
     cs.addEventListener("com.vg.tools.progress", function (event) {
         try {
             var data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
@@ -88,7 +85,10 @@
     // =====================================================
     function loadRemoteCSS() {
         return fetch(noCache(CSS_URL))
-            .then(function (res) { return res.text(); })
+            .then(function (res) {
+                if (!res.ok) throw new Error("CSS HTTP " + res.status);
+                return res.text();
+            })
             .then(function (css) {
                 var old = document.getElementById("remote-style");
                 if (old) old.remove();
@@ -101,7 +101,10 @@
 
     function loadShellUI() {
         return fetch(noCache(UI_URL))
-            .then(function (res) { return res.text(); })
+            .then(function (res) {
+                if (!res.ok) throw new Error("UI HTTP " + res.status);
+                return res.text();
+            })
             .then(function (html) {
                 var root = document.getElementById("root");
                 if (!root) return;
@@ -121,7 +124,7 @@
         var viewSelect = document.getElementById("viewSelector");
         if (viewSelect) {
             viewSelect.onchange = function () {
-                loadView(this.value);
+                loadView(this.value, false);
             };
         }
     }
@@ -132,6 +135,7 @@
     function loadConfig(forceReload) {
         return fetch(noCache(VERSION_URL))
             .then(function (res) {
+                if (!res.ok) throw new Error("Config HTTP " + res.status);
                 var lastMod = res.headers.get("Last-Modified");
                 return res.json().then(function (data) {
                     return { data: data, lastMod: lastMod };
@@ -143,17 +147,17 @@
                 state.version = data.version || "1.0.0";
                 state.interval = data.interval || (5 * 60 * 60 * 1000);
 
-                // Format last updated timestamp (prefer version.json, fallback to HTTP header or sync time)
                 var dateText = data.lastUpdated
                     || (result.lastMod ? new Date(result.lastMod).toLocaleString() : new Date().toLocaleString());
                 state.lastUpdatedText = "v" + state.version + " • Updated: " + dateText;
                 renderLastUpdated();
 
-                // Populate dropdown from version.json
                 populateDropdown(data.views || [], data.defaultView);
 
-                // Load selected or default view
-                var targetView = state.currentViewId || data.defaultView || (data.views && data.views[0] && data.views[0].id);
+                var targetView = state.currentViewId
+                    || data.defaultView
+                    || (data.views && data.views.length > 0 ? data.views[0].id : null);
+
                 if (targetView) {
                     loadView(targetView, forceReload);
                 }
@@ -164,9 +168,7 @@
 
     function renderLastUpdated() {
         var el = document.getElementById("lastUpdatedText");
-        if (el) {
-            el.innerText = state.lastUpdatedText;
-        }
+        if (el) el.innerText = state.lastUpdatedText;
     }
 
     // =====================================================
@@ -177,14 +179,17 @@
         if (!select) return;
 
         select.innerHTML = "";
-        views.forEach(function (view) {
-            var opt = document.createElement("option");
-            opt.value = view.id;
-            opt.innerText = view.label || view.id;
-            select.appendChild(opt);
-        });
+        var hasCurrent = false;
 
-        if (state.currentViewId && views.some(function (v) { return v.id === state.currentViewId; })) {
+        for (var i = 0; i < views.length; i++) {
+            var opt = document.createElement("option");
+            opt.value = views[i].id;
+            opt.innerText = views[i].label || views[i].id;
+            select.appendChild(opt);
+            if (views[i].id === state.currentViewId) hasCurrent = true;
+        }
+
+        if (hasCurrent) {
             select.value = state.currentViewId;
         } else if (defaultView) {
             select.value = defaultView;
@@ -194,7 +199,13 @@
     function loadView(viewId, forceReload) {
         if (!state.config || !state.config.views) return;
 
-        var viewObj = state.config.views.find(function (v) { return v.id === viewId; });
+        var viewObj = null;
+        for (var i = 0; i < state.config.views.length; i++) {
+            if (state.config.views[i].id === viewId) {
+                viewObj = state.config.views[i];
+                break;
+            }
+        }
         if (!viewObj) return;
 
         state.currentViewId = viewId;
@@ -204,9 +215,14 @@
         var renderHtml = function (html) {
             container.innerHTML = html;
 
-            // Execute any inline <script> tags inside the loaded remote HTML view
-            var scripts = container.querySelectorAll("script");
-            scripts.forEach(function (oldScript) {
+            // Execute inline <script> tags safely in CEP
+            var scripts = container.getElementsByTagName("script");
+            var scriptList = [];
+            for (var s = 0; s < scripts.length; s++) {
+                scriptList.push(scripts[s]);
+            }
+            for (var k = 0; k < scriptList.length; k++) {
+                var oldScript = scriptList[k];
                 var newScript = document.createElement("script");
                 if (oldScript.src) {
                     newScript.src = noCache(resolveUrl(oldScript.src));
@@ -214,12 +230,10 @@
                     newScript.textContent = oldScript.textContent;
                 }
                 oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
+            }
 
-            // Auto-wire any buttons with data-jsx="url" inside custom HTML views
             bindDeclarativeJsxButtons(container);
 
-            // If this view contains #sections or #buttons, populate them from version.json
             if (document.getElementById("sections")) {
                 createSections(state.config.sections || []);
             }
@@ -228,7 +242,6 @@
             }
         };
 
-        // Use cached HTML unless Refresh UI was clicked
         if (!forceReload && state.cache.views[viewId]) {
             renderHtml(state.cache.views[viewId]);
             return;
@@ -237,25 +250,30 @@
         container.innerHTML = "<div class='view-loading'>Loading " + (viewObj.label || viewId) + "...</div>";
 
         fetch(noCache(resolveUrl(viewObj.html)))
-            .then(function (res) { return res.text(); })
+            .then(function (res) {
+                if (!res.ok) throw new Error("HTTP " + res.status + " (" + viewObj.html + ")");
+                return res.text();
+            })
             .then(function (html) {
                 state.cache.views[viewId] = html;
                 renderHtml(html);
             })
             .catch(function (err) {
                 console.error("View load failed:", err);
-                container.innerHTML = "<div style='color:#ff6b6b;padding:10px;'>Failed to load view: " + viewObj.html + "</div>";
+                container.innerHTML = "<div style='color:#ff6b6b;padding:10px;'>Failed to load view: " + err.message + "</div>";
             });
     }
 
     function bindDeclarativeJsxButtons(scope) {
         var btns = scope.querySelectorAll("[data-jsx]");
-        btns.forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                var scriptUrl = btn.getAttribute("data-jsx");
-                runRemoteScript(scriptUrl);
-            });
-        });
+        for (var i = 0; i < btns.length; i++) {
+            (function (btn) {
+                btn.addEventListener("click", function () {
+                    var scriptUrl = btn.getAttribute("data-jsx");
+                    runRemoteScript(scriptUrl);
+                });
+            })(btns[i]);
+        }
     }
 
     // =====================================================
@@ -266,15 +284,17 @@
         if (!container) return;
         container.innerHTML = "";
 
-        buttons.forEach(function (btn) {
-            var button = document.createElement("button");
-            button.innerText = btn.label || "Unnamed";
-            button.className = "tool-btn";
-            button.onclick = function () {
-                runRemoteScript(btn.script, btn.params || null);
-            };
-            container.appendChild(button);
-        });
+        for (var i = 0; i < buttons.length; i++) {
+            (function (btn) {
+                var button = document.createElement("button");
+                button.innerText = btn.label || "Unnamed";
+                button.className = "tool-btn";
+                button.onclick = function () {
+                    runRemoteScript(btn.script, btn.params || null);
+                };
+                container.appendChild(button);
+            })(buttons[i]);
+        }
     }
 
     function createSections(sections) {
@@ -282,56 +302,61 @@
         if (!container) return;
         container.innerHTML = "";
 
-        sections.forEach(function (section) {
-            var accordion = document.createElement("div");
-            accordion.className = "accordion";
+        for (var s = 0; s < sections.length; s++) {
+            (function (section) {
+                var accordion = document.createElement("div");
+                accordion.className = "accordion";
 
-            var header = document.createElement("div");
-            header.className = "accordion-header";
-            header.innerHTML = "<span>" + (section.title || "Tools") + "</span><span class='accordion-icon'>▼</span>";
+                var header = document.createElement("div");
+                header.className = "accordion-header";
+                header.innerHTML = "<span>" + (section.title || "Tools") + "</span><span class='accordion-icon'>▼</span>";
 
-            var content = document.createElement("div");
-            content.className = "accordion-content";
-            content.style.maxHeight = "0px";
+                var content = document.createElement("div");
+                content.className = "accordion-content";
+                content.style.maxHeight = "0px";
 
-            var sub = document.createElement("div");
-            sub.className = "button-sub layout-" + (section.layout || "column");
+                var sub = document.createElement("div");
+                sub.className = "button-sub layout-" + (section.layout || "column");
 
-            (section.buttons || []).forEach(function (btn) {
-                var button = document.createElement("button");
-                button.className = "tool-btn";
-                button.innerText = btn.label || "Unnamed";
-                button.onclick = function (e) {
-                    if (e && e.stopPropagation) e.stopPropagation();
-                    if (btn.script) runRemoteScript(btn.script, btn.params || null);
-                };
-                sub.appendChild(button);
-            });
+                var btns = section.buttons || [];
+                for (var b = 0; b < btns.length; b++) {
+                    (function (btn) {
+                        var button = document.createElement("button");
+                        button.className = "tool-btn";
+                        button.innerText = btn.label || "Unnamed";
+                        button.onclick = function (e) {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            if (btn.script) runRemoteScript(btn.script, btn.params || null);
+                        };
+                        sub.appendChild(button);
+                    })(btns[b]);
+                }
 
-            content.appendChild(sub);
-            accordion.appendChild(header);
-            accordion.appendChild(content);
-            container.appendChild(accordion);
+                content.appendChild(sub);
+                accordion.appendChild(header);
+                accordion.appendChild(content);
+                container.appendChild(accordion);
 
-            header.onclick = function () {
-                var isActive = header.classList.contains("active");
-                var headers = container.getElementsByClassName("accordion-header");
-                for (var i = 0; i < headers.length; i++) {
-                    headers[i].classList.remove("active");
-                    if (headers[i].nextElementSibling) {
-                        headers[i].nextElementSibling.style.maxHeight = "0px";
+                header.onclick = function () {
+                    var isActive = header.classList.contains("active");
+                    var headers = container.getElementsByClassName("accordion-header");
+                    for (var i = 0; i < headers.length; i++) {
+                        headers[i].classList.remove("active");
+                        if (headers[i].nextElementSibling) {
+                            headers[i].nextElementSibling.style.maxHeight = "0px";
+                        }
                     }
-                }
-                if (!isActive) {
-                    header.classList.add("active");
-                    content.style.maxHeight = content.scrollHeight + 20 + "px";
-                }
-            };
-        });
+                    if (!isActive) {
+                        header.classList.add("active");
+                        content.style.maxHeight = content.scrollHeight + 20 + "px";
+                    }
+                };
+            })(sections[s]);
+        }
     }
 
     // =====================================================
-    // RUN REMOTE JSX (WITH CACHING + LIVE PROGRESS BRIDGE)
+    // RUN REMOTE JSX (FIXED FOR ILLUSTRATOR evalScript)
     // =====================================================
     function runRemoteScript(url, customData, callback) {
         var fullUrl = resolveUrl(url);
@@ -342,7 +367,12 @@
 
         var fetchPromise = state.cache.scripts[fullUrl]
             ? Promise.resolve(state.cache.scripts[fullUrl])
-            : fetch(noCache(fullUrl)).then(function (res) { return res.text(); }).then(function (code) {
+            : fetch(noCache(fullUrl)).then(function (res) {
+                if (!res.ok) {
+                    throw new Error("HTTP " + res.status + " loading " + fullUrl);
+                }
+                return res.text();
+            }).then(function (code) {
                 state.cache.scripts[fullUrl] = code;
                 return code;
             });
@@ -351,9 +381,15 @@
             .then(function (code) {
                 if (code.indexOf("<html") !== -1 || code.indexOf("<!DOCTYPE") !== -1) {
                     hideProgress();
-                    alert("Invalid JSX file received from server.");
+                    var errJson = JSON.stringify({ ok: false, error: "Invalid JSX file (received HTML)." });
+                    if (typeof callback === "function") callback(errJson);
                     return;
                 }
+
+                // Strip #target / #targetengine directives so they never break evalScript()
+                var cleanCode = code
+                    .replace(/^\s*#target[^\r\n]*/gm, "")
+                    .replace(/^\s*#targetengine[^\r\n]*/gm, "");
 
                 updateProgress(25, "Running in Illustrator...");
 
@@ -364,10 +400,7 @@
 
                 var safeJsonData = JSON.stringify(customData || {});
 
-                // Inject vgProgress(percent, message) helper into every JSX script automatically
                 var wrapped =
-                    "#target illustrator\n" +
-                    "#targetengine 'temp_" + Date.now() + "'\n" +
                     "var panelInput = '" + safeInput + "';\n" +
                     "var panelData = " + safeJsonData + ";\n" +
                     "var _vgPlugPlug = null;\n" +
@@ -383,22 +416,29 @@
                     "    } catch(e) {}\n" +
                     "}\n" +
                     "(function(){\n" +
-                    code +
+                    cleanCode +
                     "\n})();";
 
                 cs.evalScript(wrapped, function (res) {
-                    updateProgress(100, "Done!");
+                    if (res === "EvalScript error.") {
+                        updateProgress(100, "JSX syntax/runtime error!");
+                    } else {
+                        updateProgress(100, "Done!");
+                    }
                     if (typeof callback === "function") callback(res);
                 });
             })
             .catch(function (err) {
                 console.error("JSX error:", err);
                 updateProgress(100, "Script failed!");
+                if (typeof callback === "function") {
+                    callback(JSON.stringify({ ok: false, error: err.message }));
+                }
             });
     }
 
     // =====================================================
-    // 5-HOUR AUTO-UPDATER & MANUAL REFRESH
+    // 5-HOUR AUTO-UPDATER & FULL REFRESH
     // =====================================================
     function startAutoUpdater() {
         if (state.timer) clearInterval(state.timer);
@@ -409,7 +449,6 @@
         fetch(noCache(VERSION_URL))
             .then(function (res) { return res.json(); })
             .then(function (data) {
-                // Only refresh if version on GitHub actually changed
                 if (data.version && data.version !== state.version) {
                     forceRefreshAll();
                 }
@@ -420,26 +459,10 @@
     }
 
     function forceRefreshAll() {
-        updateProgress(20, "Refreshing UI from GitHub...");
-        // Clear all cached views and JSX scripts
-        state.cache.views = {};
-        state.cache.scripts = {};
-
-        Promise.all([loadRemoteCSS(), loadShellUI()])
-            .then(function () {
-                updateProgress(65, "Updating config...");
-                return loadConfig(true);
-            })
-            .then(function () {
-                updateProgress(100, "UI Updated!");
-            })
-            .catch(function (err) {
-                console.error("Refresh failed:", err);
-                updateProgress(100, "Refresh failed");
-            });
+        // Reloads index.html -> js/main.js -> fresh app.js, CSS, UI, version.json & views
+        window.location.reload();
     }
 
-    // Expose global API so any custom HTML view can interact with Illustrator & Progress Bar
     window.VGTools = {
         runScript: runRemoteScript,
         setProgress: updateProgress,
@@ -452,5 +475,11 @@
     // =====================================================
     Promise.all([loadRemoteCSS(), loadShellUI()])
         .then(function () { return loadConfig(true); })
-        .catch(function (err) { console.error("Init error:", err); });
+        .catch(function (err) {
+            console.error("Init error:", err);
+            var root = document.getElementById("root");
+            if (root) {
+                root.innerHTML = "<div style='color:#ff6b6b;padding:12px;font-size:12px;'>Init error: " + err.message + "</div>";
+            }
+        });
 })();
