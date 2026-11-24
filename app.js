@@ -13,6 +13,7 @@
         config: null,
         currentViewId: null,
         lastUpdatedText: "",
+        logs: [],
         cache: {
             views: {},
             scripts: {}
@@ -33,6 +34,138 @@
             return path;
         }
         return BASE_URL + path.replace(/^\/+/, "");
+    }
+
+    function getScriptName(url) {
+        if (!url) return "script";
+        var clean = String(url).split("?")[0];
+        var parts = clean.split("/");
+        return parts[parts.length - 1] || clean;
+    }
+
+    function formatTime() {
+        var d = new Date();
+        var hh = ("0" + d.getHours()).slice(-2);
+        var mm = ("0" + d.getMinutes()).slice(-2);
+        var ss = ("0" + d.getSeconds()).slice(-2);
+        return hh + ":" + mm + ":" + ss;
+    }
+
+    // =====================================================
+    // GLOBAL SELECTABLE LOG SYSTEM
+    // =====================================================
+    function addLog(message, type) {
+        var entry = {
+            time: formatTime(),
+            type: type || "info", // "info" | "success" | "error" | "warn"
+            message: String(message)
+        };
+        state.logs.push(entry);
+
+        // Keep history reasonable (last 200 entries)
+        if (state.logs.length > 200) {
+            state.logs.shift();
+        }
+
+        renderLogEntry(entry);
+    }
+
+    function renderLogEntry(entry) {
+        var box = document.getElementById("vgLogBox");
+        if (!box) return;
+
+        var line = document.createElement("div");
+        line.className = "log-entry log-" + entry.type;
+
+        var timeSpan = document.createElement("span");
+        timeSpan.className = "log-time";
+        timeSpan.innerText = "[" + entry.time + "] ";
+
+        var msgSpan = document.createElement("span");
+        msgSpan.className = "log-msg";
+        msgSpan.innerText = entry.message;
+
+        line.appendChild(timeSpan);
+        line.appendChild(msgSpan);
+        box.appendChild(line);
+
+        // Auto-scroll to latest log
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function renderAllLogs() {
+        var box = document.getElementById("vgLogBox");
+        if (!box) return;
+        box.innerHTML = "";
+        for (var i = 0; i < state.logs.length; i++) {
+            renderLogEntry(state.logs[i]);
+        }
+    }
+
+    function copyLogsToClipboard() {
+        var lines = [];
+        for (var i = 0; i < state.logs.length; i++) {
+            var e = state.logs[i];
+            lines.push("[" + e.time + "] [" + e.type.toUpperCase() + "] " + e.message);
+        }
+        var text = lines.join("\n");
+        if (!text) return;
+
+        // CEP-safe copy using temporary textarea
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            document.execCommand("copy");
+            addLog("Log copied to clipboard.", "info");
+        } catch (err) {
+            addLog("Copy failed: " + err.message, "error");
+        }
+        document.body.removeChild(ta);
+    }
+
+    function formatJsxResult(scriptLabel, rawRes) {
+        if (rawRes === "EvalScript error.") {
+            addLog(scriptLabel + " -> EvalScript error (JSX syntax/runtime issue).", "error");
+            return;
+        }
+
+        if (rawRes === undefined || rawRes === null || rawRes === "" || rawRes === "undefined") {
+            addLog(scriptLabel + " -> Completed.", "success");
+            return;
+        }
+
+        // Try parsing JSON returned by JSX (e.g. {"ok":true,"fill":12,"dashed":3,...})
+        try {
+            var data = JSON.parse(rawRes);
+            if (data && typeof data === "object") {
+                if (data.ok === false) {
+                    addLog(scriptLabel + " -> " + (data.error || "Failed."), "error");
+                    return;
+                }
+
+                var summaryParts = [];
+                if (data.message) summaryParts.push(data.message);
+
+                for (var key in data) {
+                    if (data.hasOwnProperty(key) && key !== "ok" && key !== "message" && key !== "error") {
+                        summaryParts.push(key + ": " + data[key]);
+                    }
+                }
+
+                var summary = summaryParts.length > 0 ? summaryParts.join(" | ") : "Success";
+                addLog(scriptLabel + " -> " + summary, "success");
+                return;
+            }
+        } catch (e) {
+            // Not JSON — log plain string return directly
+        }
+
+        addLog(scriptLabel + " -> " + String(rawRes), "success");
     }
 
     // =====================================================
@@ -110,6 +243,7 @@
                 if (!root) return;
                 root.innerHTML = html;
                 bindShellEvents();
+                renderAllLogs();
             });
     }
 
@@ -125,6 +259,28 @@
         if (viewSelect) {
             viewSelect.onchange = function () {
                 loadView(this.value, false);
+            };
+        }
+
+        var copyBtn = document.getElementById("vgLogCopyBtn");
+        if (copyBtn) {
+            copyBtn.onclick = copyLogsToClipboard;
+        }
+
+        var clearBtn = document.getElementById("vgLogClearBtn");
+        if (clearBtn) {
+            clearBtn.onclick = function () {
+                state.logs = [];
+                renderAllLogs();
+            };
+        }
+
+        var toggleBtn = document.getElementById("vgLogToggleBtn");
+        var logPanel = document.getElementById("vgLogPanel");
+        if (toggleBtn && logPanel) {
+            toggleBtn.onclick = function () {
+                var collapsed = logPanel.classList.toggle("collapsed");
+                toggleBtn.innerText = collapsed ? "▲" : "▼";
             };
         }
     }
@@ -151,6 +307,8 @@
                     || (result.lastMod ? new Date(result.lastMod).toLocaleString() : new Date().toLocaleString());
                 state.lastUpdatedText = "v" + state.version + " • Updated: " + dateText;
                 renderLastUpdated();
+
+                addLog("VG Tools v" + state.version + " ready.", "info");
 
                 populateDropdown(data.views || [], data.defaultView);
 
@@ -215,7 +373,6 @@
         var renderHtml = function (html) {
             container.innerHTML = html;
 
-            // Execute inline <script> tags safely in CEP
             var scripts = container.getElementsByTagName("script");
             var scriptList = [];
             for (var s = 0; s < scripts.length; s++) {
@@ -244,6 +401,7 @@
 
         if (!forceReload && state.cache.views[viewId]) {
             renderHtml(state.cache.views[viewId]);
+            addLog("Switched view: " + (viewObj.label || viewId), "info");
             return;
         }
 
@@ -257,9 +415,10 @@
             .then(function (html) {
                 state.cache.views[viewId] = html;
                 renderHtml(html);
+                addLog("Loaded view: " + (viewObj.label || viewId), "info");
             })
             .catch(function (err) {
-                console.error("View load failed:", err);
+                addLog("View load failed: " + err.message, "error");
                 container.innerHTML = "<div style='color:#ff6b6b;padding:10px;'>Failed to load view: " + err.message + "</div>";
             });
     }
@@ -270,7 +429,8 @@
             (function (btn) {
                 btn.addEventListener("click", function () {
                     var scriptUrl = btn.getAttribute("data-jsx");
-                    runRemoteScript(scriptUrl);
+                    var label = btn.innerText ? btn.innerText.trim() : getScriptName(scriptUrl);
+                    runRemoteScript(scriptUrl, null, null, label);
                 });
             })(btns[i]);
         }
@@ -290,7 +450,7 @@
                 button.innerText = btn.label || "Unnamed";
                 button.className = "tool-btn";
                 button.onclick = function () {
-                    runRemoteScript(btn.script, btn.params || null);
+                    runRemoteScript(btn.script, btn.params || null, null, btn.label);
                 };
                 container.appendChild(button);
             })(buttons[i]);
@@ -326,7 +486,7 @@
                         button.innerText = btn.label || "Unnamed";
                         button.onclick = function (e) {
                             if (e && e.stopPropagation) e.stopPropagation();
-                            if (btn.script) runRemoteScript(btn.script, btn.params || null);
+                            if (btn.script) runRemoteScript(btn.script, btn.params || null, null, btn.label);
                         };
                         sub.appendChild(button);
                     })(btns[b]);
@@ -356,14 +516,16 @@
     }
 
     // =====================================================
-    // RUN REMOTE JSX (FIXED FOR ILLUSTRATOR evalScript)
+    // RUN REMOTE JSX (LOGS EVERY RUN & OUTPUT AUTOMATICALLY)
     // =====================================================
-    function runRemoteScript(url, customData, callback) {
+    function runRemoteScript(url, customData, callback, actionLabel) {
         var fullUrl = resolveUrl(url);
+        var label = actionLabel || getScriptName(url);
         var inputEl = document.getElementById("messageInput");
         var inputValue = inputEl ? inputEl.value : "";
 
-        updateProgress(10, "Loading script...");
+        addLog("Running: " + label + "...", "info");
+        updateProgress(10, "Loading " + label + "...");
 
         var fetchPromise = state.cache.scripts[fullUrl]
             ? Promise.resolve(state.cache.scripts[fullUrl])
@@ -381,12 +543,13 @@
             .then(function (code) {
                 if (code.indexOf("<html") !== -1 || code.indexOf("<!DOCTYPE") !== -1) {
                     hideProgress();
-                    var errJson = JSON.stringify({ ok: false, error: "Invalid JSX file (received HTML)." });
-                    if (typeof callback === "function") callback(errJson);
+                    addLog(label + " -> Invalid JSX file (received HTML).", "error");
+                    if (typeof callback === "function") {
+                        callback(JSON.stringify({ ok: false, error: "Invalid JSX file." }));
+                    }
                     return;
                 }
 
-                // Strip #target / #targetengine directives so they never break evalScript()
                 var cleanCode = code
                     .replace(/^\s*#target[^\r\n]*/gm, "")
                     .replace(/^\s*#targetengine[^\r\n]*/gm, "");
@@ -421,16 +584,17 @@
 
                 cs.evalScript(wrapped, function (res) {
                     if (res === "EvalScript error.") {
-                        updateProgress(100, "JSX syntax/runtime error!");
+                        updateProgress(100, "JSX Error!");
                     } else {
                         updateProgress(100, "Done!");
                     }
+                    formatJsxResult(label, res);
                     if (typeof callback === "function") callback(res);
                 });
             })
             .catch(function (err) {
-                console.error("JSX error:", err);
                 updateProgress(100, "Script failed!");
+                addLog(label + " -> " + err.message, "error");
                 if (typeof callback === "function") {
                     callback(JSON.stringify({ ok: false, error: err.message }));
                 }
@@ -454,17 +618,18 @@
                 }
             })
             .catch(function (err) {
-                console.error("Silent update check failed:", err);
+                addLog("Update check failed: " + err.message, "warn");
             });
     }
 
     function forceRefreshAll() {
-        // Reloads index.html -> js/main.js -> fresh app.js, CSS, UI, version.json & views
         window.location.reload();
     }
 
+    // Global API for all custom HTML views
     window.VGTools = {
         runScript: runRemoteScript,
+        log: addLog,
         setProgress: updateProgress,
         refresh: forceRefreshAll,
         getConfig: function () { return state.config; }
@@ -476,7 +641,6 @@
     Promise.all([loadRemoteCSS(), loadShellUI()])
         .then(function () { return loadConfig(true); })
         .catch(function (err) {
-            console.error("Init error:", err);
             var root = document.getElementById("root");
             if (root) {
                 root.innerHTML = "<div style='color:#ff6b6b;padding:12px;font-size:12px;'>Init error: " + err.message + "</div>";
