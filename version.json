@@ -1,81 +1,82 @@
 {
-  "version": "1.0.12",
-  "interval": 60000,
-
-  
-"sections": [
+  "version": "2.0.0",
+  "lastUpdated": "2026-11-24 20:30 IST",
+  "interval": 18000000,
+  "defaultView": "home",
+  "views": [
+    {
+      "id": "home",
+      "label": "🏠 Home Tools",
+      "html": "views/home.html"
+    },
+    {
+      "id": "settings",
+      "label": "⚙️ Custom Settings UI",
+      "html": "views/settings.html"
+    }
+  ],
+  "sections": [
     {
       "title": "Text Tools",
       "layout": "column",
       "buttons": [
         {
           "label": "Align+Spacing Text",
-          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/centeraligntexts.jsx"
+          "script": "https://ID.github.io/illustrator-scripts/jsx/centeraligntexts.jsx"
         },
         {
           "label": "Join Text",
-          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/jointexts.jsx"
+          "script": "https://ID.github.io/illustrator-scripts/jsx/jointexts.jsx"
         },
         {
           "label": "Rotate Text",
-          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/rotate.jsx"
+          "script": "https://ID.github.io/illustrator-scripts/jsx/rotate.jsx"
         }
       ]
     },
-
-  
     {
       "title": "Select Tools",
       "layout": "row",
       "buttons": [
         {
           "label": "Fill",
-         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelPaths.jsx"
+          "script": "https://ID.github.io/illustrator-scripts/jsx/SelPaths.jsx"
         },
         {
           "label": "Dashed",
-         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelDash.jsx"
+          "script": "https://ID.github.io/illustrator-scripts/jsx/SelDash.jsx"
         },
         {
           "label": "Alphabets",
-         "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelAlphabets.jsx"
+          "script": "https://ID.github.io/illustrator-scripts/jsx/SelAlphabets.jsx"
         }
       ]
     }
-
   ],
-  
   "buttons": [
-
     {
       "label": "Welcome To VG Tools",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx"
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/hello.jsx"
     },
-
     {
       "label": "Create Layers: Text, Fill, Lines",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/create.jsx"
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/create.jsx"
     },
-
     {
       "label": "Same Size Text",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/textsize.jsx"
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/textsize.jsx"
     },
-
     {
       "label": "Sort Layers",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/SortLayerItems.jsx"
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/SortLayerItems.jsx"
     },
-
     {
       "label": "Export PNG",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/export.jsx"
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/export.jsx"
     },
-
     {
       "label": "Create Circles",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/circles.jsx"
+      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/circles.jsx"
     }
-
   ]
 }
