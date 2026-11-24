@@ -1,9 +1,29 @@
 <div class="top-bar">
-    <h3>✨ VG Tools ✨</h3>
-    <input type="text" id="messageInput" placeholder="Enter message here..." />
+    <div class="header-row">
+        <h3>✨ VG Tools</h3>
+        <button id="refreshUiBtn" class="refresh-btn" title="Fetch latest UI & scripts from GitHub">↻ Refresh UI</button>
+    </div>
+
+    <input type="text" id="messageInput" placeholder="Enter message or parameter..." />
+
+    <select id="viewSelector" class="view-dropdown"></select>
+
+    <!-- Live JSX Progress Bar -->
+    <div id="progressWrap" class="progress-wrap">
+        <div class="progress-meta">
+            <span id="progressText">Ready</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+            <div id="progressFill" class="progress-fill"></div>
+        </div>
+    </div>
 </div>
 
-<div id="sections"></div>
-<div id="buttons"></div>
+<!-- Dynamic HTML views load here -->
+<div id="view-container"></div>
 
-<div class="info">✨ Designed & Developed by VG1!</div>
+<div class="footer-info">
+    <div class="info">✨ Designed & Developed by VG1!</div>
+    <div id="lastUpdatedText" class="last-updated">Syncing...</div>
+</div>
