@@ -10,6 +10,11 @@
       "html": "views/home.html"
     },
     {
+      "id": "hide_graphics",
+      "label": "🙈 Hide Graphics",
+      "html": "views/hide_graphics.html"
+    },
+    {
       "id": "settings",
       "label": "⚙️ Custom Settings UI",
       "html": "views/settings.html"
