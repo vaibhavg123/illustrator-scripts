@@ -10,6 +10,11 @@
       "html": "views/home.html"
     },
     {
+      "id": "floor_plan_cleaner",
+      "label": "📐 Floor Plan Cleaner",
+      "html": "views/floor_plan_cleaner.html"
+    },
+    {
       "id": "hide_graphics",
       "label": "🙈 Hide Graphics",
       "html": "views/hide_graphics.html"
