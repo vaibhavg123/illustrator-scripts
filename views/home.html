@@ -49,7 +49,6 @@
     var unhideBtn = document.getElementById("btnUnhideAll");
     var resultBox = document.getElementById("hideGraphicsResult");
 
-    // Accordion toggle
     if (header && content) {
         header.onclick = function () {
             var isOpen = header.classList.contains("active");
@@ -66,7 +65,7 @@
     function showResult(html, isError) {
         resultBox.innerHTML = html;
         resultBox.className = "result-box visible" + (isError ? " error" : "");
-        if (header.classList.contains("active")) {
+        if (header && header.classList.contains("active")) {
             content.style.maxHeight = content.scrollHeight + 30 + "px";
         }
     }
@@ -78,7 +77,6 @@
         unhideBtn.innerText = isBusy && activeLabel === "unhide" ? "Restoring..." : "Unhide All";
     }
 
-    // Hide Selected Types
     if (hideBtn) {
         hideBtn.onclick = function () {
             var payload = {
@@ -104,21 +102,20 @@
                         return;
                     }
                     showResult(
-                        "<strong>Hidden!</strong><br>" +
-                        "Filled: <b>" + data.fill + "</b> &nbsp;|&nbsp; " +
-                        "Dashed: <b>" + data.dashed + "</b><br>" +
-                        "Only lines: <b>" + data.lines + "</b> &nbsp;|&nbsp; " +
-                        "Text: <b>" + data.text + "</b>",
+                        "<strong>Done!</strong><br>" +
+                        "Hidden filled items: <b>" + data.fill + "</b><br>" +
+                        "Hidden dashed lines: <b>" + data.dashed + "</b><br>" +
+                        "Hidden only lines: <b>" + data.lines + "</b><br>" +
+                        "Hidden text frames: <b>" + data.text + "</b>",
                         false
                     );
                 } catch (e) {
-                    showResult("Completed.", false);
+                    showResult("Script error: " + String(res), true);
                 }
             });
         };
     }
 
-    // Unhide All
     if (unhideBtn) {
         unhideBtn.onclick = function () {
             setBusy(true, "unhide");
@@ -136,7 +133,7 @@
                         false
                     );
                 } catch (e) {
-                    showResult("All hidden items restored.", false);
+                    showResult("Script error: " + String(res), true);
                 }
             });
         };
