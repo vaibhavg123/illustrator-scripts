@@ -3,9 +3,6 @@
         <h3>✨ VG Tools</h3>
         <button id="refreshUiBtn" class="refresh-btn" title="Fetch latest UI & scripts from GitHub">↻ Refresh UI</button>
     </div>
-
-    <input type="text" id="messageInput" placeholder="Enter message or parameter..." />
-
     <select id="viewSelector" class="view-dropdown"></select>
 
     <!-- Live JSX Progress Bar -->
@@ -26,4 +23,17 @@
 <div class="footer-info">
     <div class="info">✨ Designed & Developed by VG1!</div>
     <div id="lastUpdatedText" class="last-updated">Syncing...</div>
+</div>
+
+<!-- Persistent Selectable Activity Log (Bottom of Panel) -->
+<div id="vgLogPanel" class="log-panel">
+    <div class="log-header">
+        <span class="log-title">Activity Log</span>
+        <div class="log-actions">
+            <button id="vgLogCopyBtn" class="log-btn" title="Copy all log history">Copy</button>
+            <button id="vgLogClearBtn" class="log-btn" title="Clear log">Clear</button>
+            <button id="vgLogToggleBtn" class="log-btn" title="Collapse/Expand">▼</button>
+        </div>
+    </div>
+    <div id="vgLogBox" class="log-box"></div>
 </div>
