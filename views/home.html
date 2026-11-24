@@ -27,7 +27,10 @@
                 <span>Hide Only Lines (Open or Unfilled Strokes)</span>
             </label>
 
-            <button id="btnRunHideGraphics" class="tool-btn">Hide Selected Types</button>
+            <div class="action-btn-row">
+                <button id="btnRunHideGraphics" class="tool-btn">Hide Selected</button>
+                <button id="btnUnhideAll" class="tool-btn secondary">Unhide All</button>
+            </div>
 
             <div id="hideGraphicsResult" class="result-box"></div>
         </div>
@@ -42,7 +45,8 @@
 (function () {
     var header = document.getElementById("hideGraphicsHeader");
     var content = document.getElementById("hideGraphicsContent");
-    var runBtn = document.getElementById("btnRunHideGraphics");
+    var hideBtn = document.getElementById("btnRunHideGraphics");
+    var unhideBtn = document.getElementById("btnUnhideAll");
     var resultBox = document.getElementById("hideGraphicsResult");
 
     // Accordion toggle
@@ -67,8 +71,16 @@
         }
     }
 
-    if (runBtn) {
-        runBtn.onclick = function () {
+    function setBusy(isBusy, activeLabel) {
+        hideBtn.disabled = isBusy;
+        unhideBtn.disabled = isBusy;
+        hideBtn.innerText = isBusy && activeLabel === "hide" ? "Hiding..." : "Hide Selected";
+        unhideBtn.innerText = isBusy && activeLabel === "unhide" ? "Restoring..." : "Unhide All";
+    }
+
+    // Hide Selected Types
+    if (hideBtn) {
+        hideBtn.onclick = function () {
             var payload = {
                 hideFill: document.getElementById("chkHideFill").checked,
                 hideText: document.getElementById("chkHideText").checked,
@@ -81,13 +93,10 @@
                 return;
             }
 
-            runBtn.disabled = true;
-            runBtn.innerText = "Hiding...";
+            setBusy(true, "hide");
 
             window.VGTools.runScript("jsx/hide_graphics.jsx", payload, function (res) {
-                runBtn.disabled = false;
-                runBtn.innerText = "Hide Selected Types";
-
+                setBusy(false);
                 try {
                     var data = JSON.parse(res);
                     if (!data.ok) {
@@ -95,15 +104,39 @@
                         return;
                     }
                     showResult(
-                        "<strong>Done!</strong><br>" +
-                        "Filled items: <b>" + data.fill + "</b> &nbsp;|&nbsp; " +
-                        "Dashed lines: <b>" + data.dashed + "</b><br>" +
+                        "<strong>Hidden!</strong><br>" +
+                        "Filled: <b>" + data.fill + "</b> &nbsp;|&nbsp; " +
+                        "Dashed: <b>" + data.dashed + "</b><br>" +
                         "Only lines: <b>" + data.lines + "</b> &nbsp;|&nbsp; " +
-                        "Text frames: <b>" + data.text + "</b>",
+                        "Text: <b>" + data.text + "</b>",
                         false
                     );
                 } catch (e) {
                     showResult("Completed.", false);
+                }
+            });
+        };
+    }
+
+    // Unhide All
+    if (unhideBtn) {
+        unhideBtn.onclick = function () {
+            setBusy(true, "unhide");
+
+            window.VGTools.runScript("jsx/unhide_graphics.jsx", {}, function (res) {
+                setBusy(false);
+                try {
+                    var data = JSON.parse(res);
+                    if (!data.ok) {
+                        showResult(data.error || "Operation failed.", true);
+                        return;
+                    }
+                    showResult(
+                        "<strong>Restored!</strong> Unhidden items: <b>" + data.unhidden + "</b>",
+                        false
+                    );
+                } catch (e) {
+                    showResult("All hidden items restored.", false);
                 }
             });
         };
