@@ -1,5 +1,7 @@
 (function () {
-    var BASE_URL = window.VG_BASE_URL || "";
+    var rawBase = window.VG_BASE_URL || "";
+    var BASE_URL = rawBase ? (rawBase.charAt(rawBase.length - 1) === "/" ? rawBase : rawBase + "/") : "";
+
     var VERSION_URL = BASE_URL + "version.json";
     var CSS_URL = BASE_URL + "style.css";
     var UI_URL = BASE_URL + "ui.html";
@@ -34,7 +36,7 @@
         if (path.indexOf("http://") === 0 || path.indexOf("https://") === 0) {
             return path;
         }
-        return BASE_URL + path.replace(/^\/+/, "");
+        return BASE_URL + String(path).replace(/^\/+/, "");
     }
 
     function getScriptName(url) {
@@ -58,7 +60,7 @@
     function addLog(message, type) {
         var entry = {
             time: formatTime(),
-            type: type || "info",
+            type: type || "info", // "info" | "success" | "error" | "warn"
             message: String(message)
         };
         state.logs.push(entry);
@@ -67,9 +69,7 @@
             state.logs.shift();
         }
 
-        if (document.getElementById("vgLogBox")) {
-            renderAllLogs();
-        }
+        renderAllLogs();
     }
 
     function renderLogEntry(entry) {
@@ -81,11 +81,11 @@
 
         var timeSpan = document.createElement("span");
         timeSpan.className = "log-time";
-        timeSpan.innerText = "[" + entry.time + "] ";
+        timeSpan.textContent = "[" + entry.time + "] ";
 
         var msgSpan = document.createElement("span");
         msgSpan.className = "log-msg";
-        msgSpan.innerText = entry.message;
+        msgSpan.textContent = entry.message;
 
         line.appendChild(timeSpan);
         line.appendChild(msgSpan);
@@ -101,6 +101,7 @@
         for (var i = 0; i < state.logs.length; i++) {
             renderLogEntry(state.logs[i]);
         }
+        box.scrollTop = box.scrollHeight;
     }
 
     function copyLogsToClipboard() {
@@ -135,7 +136,7 @@
         }
 
         if (rawRes === undefined || rawRes === null || rawRes === "" || rawRes === "undefined") {
-            addLog(scriptLabel + " -> Completed.", "success");
+            addLog(scriptLabel + " -> Completed (no return value).", "success");
             return;
         }
 
@@ -280,8 +281,8 @@
         var safePct = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
         wrap.classList.add("visible");
         fill.style.width = safePct + "%";
-        text.innerText = message || "Processing...";
-        pct.innerText = safePct + "%";
+        text.textContent = message || "Processing...";
+        pct.textContent = safePct + "%";
 
         if (safePct >= 100) {
             progressHideTimer = setTimeout(function () {
@@ -406,7 +407,7 @@
         if (toggleBtn && logPanel) {
             toggleBtn.onclick = function () {
                 var collapsed = logPanel.classList.toggle("collapsed");
-                toggleBtn.innerText = collapsed ? "▲" : "▼";
+                toggleBtn.textContent = collapsed ? "▲" : "▼";
                 syncFooterPadding();
             };
         }
@@ -450,12 +451,15 @@
                 }
 
                 startAutoUpdater();
+            })
+            .catch(function (err) {
+                addLog("Config load failed: " + err.message, "error");
             });
     }
 
     function renderLastUpdated() {
         var el = document.getElementById("lastUpdatedText");
-        if (el) el.innerText = state.lastUpdatedText;
+        if (el) el.textContent = state.lastUpdatedText;
     }
 
     // =====================================================
@@ -471,7 +475,7 @@
         for (var i = 0; i < views.length; i++) {
             var opt = document.createElement("option");
             opt.value = views[i].id;
-            opt.innerText = views[i].label || views[i].id;
+            opt.textContent = views[i].label || views[i].id;
             select.appendChild(opt);
             if (views[i].id === state.currentViewId) hasCurrent = true;
         }
@@ -529,6 +533,7 @@
 
             notifyFeatureHandlers(viewId);
             syncFooterPadding();
+            renderAllLogs();
         };
 
         if (!forceReload && state.cache.views[viewId]) {
@@ -561,7 +566,7 @@
             (function (btn) {
                 btn.addEventListener("click", function () {
                     var scriptUrl = btn.getAttribute("data-jsx");
-                    var label = btn.innerText ? btn.innerText.trim() : getScriptName(scriptUrl);
+                    var label = btn.textContent ? btn.textContent.trim() : getScriptName(scriptUrl);
                     runRemoteScript(scriptUrl, null, null, label);
                 });
             })(btns[i]);
@@ -579,7 +584,7 @@
         for (var i = 0; i < buttons.length; i++) {
             (function (btn) {
                 var button = document.createElement("button");
-                button.innerText = btn.label || "Unnamed";
+                button.textContent = btn.label || "Unnamed";
                 button.className = "tool-btn";
                 button.onclick = function () {
                     runRemoteScript(btn.script, btn.params || null, null, btn.label);
@@ -615,7 +620,7 @@
                     (function (btn) {
                         var button = document.createElement("button");
                         button.className = "tool-btn";
-                        button.innerText = btn.label || "Unnamed";
+                        button.textContent = btn.label || "Unnamed";
                         button.onclick = function (e) {
                             if (e && e.stopPropagation) e.stopPropagation();
                             if (btn.script) runRemoteScript(btn.script, btn.params || null, null, btn.label);
@@ -779,8 +784,9 @@
             renderAllLogs();
         })
         .catch(function (err) {
+            addLog("Init error: " + err.message, "error");
             var root = document.getElementById("root");
-            if (root) {
+            if (root && !document.getElementById("vgLogBox")) {
                 root.innerHTML = "<div style='color:#ff6b6b;padding:12px;font-size:12px;'>Init error: " + err.message + "</div>";
             }
         });
