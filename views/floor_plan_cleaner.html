@@ -314,6 +314,8 @@ PRIMARY BATH => MASTER/nBATH</textarea>
 
 <script>
 (function () {
+    var LOCAL_STORAGE_KEY = "vg_fplc_v3_settings_state";
+
     var CAT_NAMES = {
         main: "Main room",
         secondary: "Secondary",
@@ -368,6 +370,12 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         selectedLayerName: ""
     };
 
+    function safeLog(msg, type) {
+        if (window.VGTools && typeof window.VGTools.log === "function") {
+            window.VGTools.log(msg, type || "info");
+        }
+    }
+
     function toHex(rgb) {
         var r = Math.max(0, Math.min(255, parseInt(rgb[0], 10) || 0)).toString(16).toUpperCase();
         var g = Math.max(0, Math.min(255, parseInt(rgb[1], 10) || 0)).toString(16).toUpperCase();
@@ -400,6 +408,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             this.classList.add("active");
             var targetPane = document.getElementById(targetId);
             if (targetPane) targetPane.classList.add("active");
+            saveToLocalStorage();
         };
     }
 
@@ -427,6 +436,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
                 delBtn.onclick = function () {
                     stateUi.rules.splice(idx, 1);
                     renderRules();
+                    saveToLocalStorage();
                 };
             })(i);
             row.appendChild(delBtn);
@@ -442,7 +452,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         var rawKeys = String(document.getElementById("fplcRuleKeys").value || "");
         var exact = document.getElementById("fplcRuleExact").checked;
         if (!finalText) {
-            window.VGTools.log("Floor Plan Cleaner -> Final text is required.", "warn");
+            safeLog("Floor Plan Cleaner -> Final text is required.", "warn");
             return;
         }
         var keys = rawKeys.split(",").map(function (k) { return k.trim(); }).filter(Boolean);
@@ -450,10 +460,12 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         document.getElementById("fplcRuleFinal").value = "";
         document.getElementById("fplcRuleKeys").value = "";
         renderRules();
+        saveToLocalStorage();
     };
     document.getElementById("fplcBtnResetRules").onclick = function () {
         stateUi.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
         renderRules();
+        saveToLocalStorage();
     };
 
     // Styles rendering
@@ -486,7 +498,10 @@ PRIMARY BATH => MASTER/nBATH</textarea>
                 (function (objRef, inpRef) {
                     inpRef.onchange = function () {
                         var v = parseFloat(inpRef.value);
-                        if (!isNaN(v) && v > 0) objRef.size = v;
+                        if (!isNaN(v) && v > 0) {
+                            objRef.size = v;
+                            saveToLocalStorage();
+                        }
                     };
                 })(entry, sizeInp);
                 row.appendChild(sizeInp);
@@ -502,6 +517,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
                     if (rgb) {
                         objRef.color = rgb;
                         hRef.value = toHex(rgb);
+                        saveToLocalStorage();
                     }
                 };
             })(entry, hexInp);
@@ -511,7 +527,10 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         }
     }
 
-    document.getElementById("fplcEditStyleSet").onchange = renderStyleRows;
+    document.getElementById("fplcEditStyleSet").onchange = function () {
+        renderStyleRows();
+        saveToLocalStorage();
+    };
 
     // Layers tab
     function refreshLayersViaJsx() {
@@ -609,6 +628,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     document.getElementById("fplcGgSetSelect").onchange = function () {
         stateUi.activeGgIdx = parseInt(this.value, 10) || 0;
         renderGgSets();
+        saveToLocalStorage();
     };
     document.getElementById("fplcBtnGgAddSet").onclick = function () {
         var name = String(document.getElementById("fplcGgNewSetName").value || "").trim();
@@ -617,12 +637,13 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         stateUi.activeGgIdx = stateUi.ggSets.length - 1;
         document.getElementById("fplcGgNewSetName").value = "";
         renderGgSets();
+        saveToLocalStorage();
     };
     document.getElementById("fplcBtnGgAddPart").onclick = function () {
         var wVal = parseFloat(document.getElementById("fplcGgW").value);
         var hVal = parseFloat(document.getElementById("fplcGgH").value);
         if (isNaN(wVal) || isNaN(hVal)) {
-            window.VGTools.log("Group Graphics -> Enter valid W and H numbers.", "warn");
+            safeLog("Group Graphics -> Enter valid W and H numbers.", "warn");
             return;
         }
         var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
@@ -630,23 +651,26 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         document.getElementById("fplcGgW").value = "";
         document.getElementById("fplcGgH").value = "";
         renderGgSets();
+        saveToLocalStorage();
     };
     document.getElementById("fplcBtnGgClearParts").onclick = function () {
         var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
         curSet.items = [];
         renderGgSets();
+        saveToLocalStorage();
     };
 
-    // Build payload from all tabs
     function buildFullPayload(forceCompact, onlyFlags) {
         var scopeRadio = document.querySelector('input[name="fplcScopeRadio"]:checked');
         var ggRgb = parseHex(document.getElementById("fplcGgColor").value) || [84, 84, 84];
         if (stateUi.ggSets[stateUi.activeGgIdx]) stateUi.ggSets[stateUi.activeGgIdx].color = ggRgb;
 
         var allRgb = parseHex(document.getElementById("fplcAllHex").value) || [0, 0, 0];
+        var activeTabBtn = document.querySelector("#fplcTabBar .fplc-tab.active");
 
         return {
             _fromHtmlUi: true,
+            _activeTab: activeTabBtn ? activeTabBtn.getAttribute("data-tab") : "fplcTabRun",
             onlyFlags: onlyFlags || null,
             cfg: {
                 scope: scopeRadio ? scopeRadio.value : "document",
@@ -715,7 +739,152 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         };
     }
 
+    function saveToLocalStorage() {
+        try {
+            var snap = buildFullPayload(false, null);
+            delete snap._fromHtmlUi;
+            delete snap.onlyFlags;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(snap));
+        } catch (e) {}
+    }
+
+    function applyImportedConfig(data) {
+        if (!data || typeof data !== "object") {
+            safeLog("Import JSON -> Invalid JSON structure.", "error");
+            return;
+        }
+
+        if (data._activeTab) {
+            var activeTabBtn = document.querySelector('#fplcTabBar .fplc-tab[data-tab="' + data._activeTab + '"]');
+            if (activeTabBtn) activeTabBtn.click();
+        }
+
+        if (data.cfg) {
+            var scopeVal = data.cfg.scope === "selection" ? "selection" : "document";
+            var scopeRadio = document.querySelector('input[name="fplcScopeRadio"][value="' + scopeVal + '"]');
+            if (scopeRadio) scopeRadio.checked = true;
+
+            if (data.cfg.runSet) document.getElementById("fplcRunSet").value = data.cfg.runSet;
+            if (typeof data.cfg.restyle === "boolean") document.getElementById("fplcRestyle").checked = data.cfg.restyle;
+            if (typeof data.cfg.updnEnabled === "boolean") document.getElementById("fplcUpDn").checked = data.cfg.updnEnabled;
+            if (typeof data.cfg.wrapLabels === "boolean") document.getElementById("fplcWrap").checked = data.cfg.wrapLabels;
+            if (typeof data.cfg.removeJunk === "boolean") document.getElementById("fplcJunk").checked = data.cfg.removeJunk;
+            if (typeof data.cfg.looseMatch === "boolean") document.getElementById("fplcLoose").checked = data.cfg.looseMatch;
+            if (typeof data.cfg.moveOptNames === "boolean") document.getElementById("fplcOpt").checked = data.cfg.moveOptNames;
+            if (typeof data.cfg.allLinesEnabled === "boolean") document.getElementById("fplcAllLines").checked = data.cfg.allLinesEnabled;
+            if (typeof data.cfg.dashedEnabled === "boolean") document.getElementById("fplcDashed").checked = data.cfg.dashedEnabled;
+            if (typeof data.cfg.arrowsEnabled === "boolean") document.getElementById("fplcArrows").checked = data.cfg.arrowsEnabled;
+            if (typeof data.cfg.groupGraphicsEnabled === "boolean") document.getElementById("fplcGroupGfx").checked = data.cfg.groupGraphicsEnabled;
+            if (typeof data.cfg.capLayersEnabled === "boolean") document.getElementById("fplcCapLayers").checked = data.cfg.capLayersEnabled;
+            if (typeof data.cfg.capTextEnabled === "boolean") document.getElementById("fplcCapText").checked = data.cfg.capTextEnabled;
+            if (typeof data.cfg.reportEnabled === "boolean") document.getElementById("fplcReport").checked = data.cfg.reportEnabled;
+            if (typeof data.cfg.reportItems === "boolean") document.getElementById("fplcReportItems").checked = data.cfg.reportItems;
+            if (typeof data.cfg.dryRun === "boolean") document.getElementById("fplcDryRun").checked = data.cfg.dryRun;
+        }
+
+        if (data.rules instanceof Array) {
+            stateUi.rules = data.rules;
+            renderRules();
+        }
+
+        if (data.styleSets && typeof data.styleSets === "object") {
+            stateUi.styleSets = data.styleSets;
+            renderStyleRows();
+        }
+
+        if (data.optPatterns instanceof Array) {
+            document.getElementById("fplcOptPatterns").value = data.optPatterns.join("\n");
+        }
+        if (data.wrapTexts instanceof Array) {
+            document.getElementById("fplcWrapTexts").value = data.wrapTexts.join("\n");
+        }
+        if (data.junkExact instanceof Array) {
+            document.getElementById("fplcJunkExact").value = data.junkExact.join("\n");
+        }
+        if (data.junkRegex instanceof Array) {
+            document.getElementById("fplcJunkRegex").value = data.junkRegex.join("\n");
+        }
+
+        if (data.dashed) {
+            if (typeof data.dashed.enabled === "boolean") document.getElementById("fplcDashEnabled").checked = data.dashed.enabled;
+            if (typeof data.dashed.applyWeight === "boolean") document.getElementById("fplcDashWeightOn").checked = data.dashed.applyWeight;
+            if (typeof data.dashed.applyDashSpace === "boolean") document.getElementById("fplcDashSpaceOn").checked = data.dashed.applyDashSpace;
+            if (typeof data.dashed.applyColor === "boolean") document.getElementById("fplcDashColorOn").checked = data.dashed.applyColor;
+            if (typeof data.dashed.selectAfter === "boolean") document.getElementById("fplcDashSelect").checked = data.dashed.selectAfter;
+            if (typeof data.dashed.strokeWeight === "number") document.getElementById("fplcDashWeight").value = data.dashed.strokeWeight;
+            if (typeof data.dashed.dash === "number") document.getElementById("fplcDashLen").value = data.dashed.dash;
+            if (typeof data.dashed.space === "number") document.getElementById("fplcDashSpace").value = data.dashed.space;
+        }
+
+        if (data.allLines) {
+            if (typeof data.allLines.applyWeight === "boolean") document.getElementById("fplcAllWeightOn").checked = data.allLines.applyWeight;
+            if (typeof data.allLines.weight === "number") document.getElementById("fplcAllWeight").value = data.allLines.weight;
+            if (typeof data.allLines.applyColor === "boolean") document.getElementById("fplcAllColorOn").checked = data.allLines.applyColor;
+            if (data.allLines.color instanceof Array && data.allLines.color.length === 3) {
+                document.getElementById("fplcAllHex").value = toHex(data.allLines.color);
+            }
+            if (typeof data.allLines.skipDashed === "boolean") document.getElementById("fplcAllSkipDashed").checked = data.allLines.skipDashed;
+            if (typeof data.allLines.selectAfter === "boolean") document.getElementById("fplcAllSelect").checked = data.allLines.selectAfter;
+        }
+
+        if (data.arrows) {
+            if (typeof data.arrows.detectTriangles === "boolean") document.getElementById("fplcArrowTri").checked = data.arrows.detectTriangles;
+            if (typeof data.arrows.triMax === "number") document.getElementById("fplcArrowTriMax").value = data.arrows.triMax;
+            if (typeof data.arrows.detectGlyphs === "boolean") document.getElementById("fplcArrowGlyph").checked = data.arrows.detectGlyphs;
+            if (data.arrows.keywords instanceof Array) document.getElementById("fplcArrowKw").value = data.arrows.keywords.join(", ");
+        }
+
+        if (data.universal) {
+            if (typeof data.universal.layersIncludeSub === "boolean") document.getElementById("fplcUnivLayerSub").checked = data.universal.layersIncludeSub;
+            if (data.universal.textMode) document.getElementById("fplcUnivTextMode").value = data.universal.textMode;
+            if (typeof data.universal.selectTexts === "boolean") document.getElementById("fplcUnivSelectTexts").checked = data.universal.selectTexts;
+        }
+
+        if (data.groupGraphics && data.groupGraphics.sets instanceof Array && data.groupGraphics.sets.length > 0) {
+            stateUi.ggSets = data.groupGraphics.sets;
+            stateUi.activeGgIdx = 0;
+            if (data.groupGraphics.unit) document.getElementById("fplcGgUnit").value = data.groupGraphics.unit;
+            if (typeof data.groupGraphics.tolerance === "number") document.getElementById("fplcGgTol").value = data.groupGraphics.tolerance;
+            if (typeof data.groupGraphics.maxGap === "number") document.getElementById("fplcGgGap").value = data.groupGraphics.maxGap;
+            if (typeof data.groupGraphics.allowRotated === "boolean") document.getElementById("fplcGgRot").checked = data.groupGraphics.allowRotated;
+            if (typeof data.groupGraphics.useVisibleBounds === "boolean") document.getElementById("fplcGgVis").checked = data.groupGraphics.useVisibleBounds;
+            if (typeof data.groupGraphics.requireAllParts === "boolean") document.getElementById("fplcGgReqAll").checked = data.groupGraphics.requireAllParts;
+            if (typeof data.groupGraphics.applyColor === "boolean") document.getElementById("fplcGgApplyCol").checked = data.groupGraphics.applyColor;
+            renderGgSets();
+        }
+    }
+
+    function restoreFromLocalStorage() {
+        try {
+            var raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (!raw) return false;
+            var parsed = JSON.parse(raw);
+            applyImportedConfig(parsed);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Auto-save on any input/checkbox/select change inside #fplcTabBar and panes
+    var allInputs = document.querySelectorAll(".fplc-wrap input, .fplc-wrap select, .fplc-wrap textarea");
+    for (var n = 0; n < allInputs.length; n++) {
+        if (allInputs[n].type === "file") continue;
+        allInputs[n].addEventListener("change", saveToLocalStorage);
+        if (allInputs[n].tagName === "TEXTAREA" || allInputs[n].type === "text" || allInputs[n].type === "number") {
+            allInputs[n].addEventListener("input", saveToLocalStorage);
+        }
+    }
+
+    // Save automatically before switching dropdown views or unloading
+    var viewSelector = document.getElementById("viewSelector");
+    if (viewSelector) {
+        viewSelector.addEventListener("change", saveToLocalStorage);
+    }
+    window.addEventListener("beforeunload", saveToLocalStorage);
+
     function invokeCleaner(payload, label) {
+        saveToLocalStorage();
         window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", payload, null, label);
     }
 
@@ -741,8 +910,53 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         invokeCleaner(buildFullPayload(false, ["groupGraphicsEnabled"]), "Group All Sets");
     };
 
+    document.getElementById("fplcBtnExportJson").onclick = function () {
+        var payload = buildFullPayload(false, null);
+        delete payload._fromHtmlUi;
+        delete payload.onlyFlags;
+        payload.exportedAt = new Date().toISOString();
+
+        var jsonStr = JSON.stringify(payload, null, 2);
+        var blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "floor_plan_cleaner_settings.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+
+        safeLog("Export JSON -> Saved floor_plan_cleaner_settings.json (" + stateUi.rules.length + " rules).", "success");
+    };
+
+    var importFileInput = document.getElementById("fplcImportFileInput");
+    document.getElementById("fplcBtnImportJson").onclick = function () {
+        importFileInput.value = "";
+        importFileInput.click();
+    };
+
+    importFileInput.onchange = function (e) {
+        var file = e.target && e.target.files && e.target.files[0];
+        if (!file) return;
+
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            try {
+                var parsed = JSON.parse(String(ev.target.result || ""));
+                applyImportedConfig(parsed);
+                saveToLocalStorage();
+                safeLog("Import JSON -> Loaded settings from " + file.name + ".", "success");
+            } catch (err) {
+                safeLog("Import JSON -> Failed to parse " + file.name + ": " + err.message, "error");
+            }
+        };
+        reader.readAsText(file);
+    };
+
     renderRules();
     renderStyleRows();
     renderGgSets();
+    restoreFromLocalStorage();
 })();
 </script>
