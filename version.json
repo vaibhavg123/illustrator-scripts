@@ -5,12 +5,12 @@
   "defaultView": "home",
   "views": [
     {
-      "vaibhavg123": "home",
+      "ID": "home",
       "label": "🏠 Home Tools",
       "html": "views/home.html"
     },
     {
-      "vaibhavg123": "settings",
+      "ID": "settings",
       "label": "⚙️ Custom Settings UI",
       "html": "views/settings.html"
     }
