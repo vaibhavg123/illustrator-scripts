@@ -1,0 +1,33 @@
+<div class="custom-card">
+    <h4>Batch Export Settings</h4>
+
+    <label class="field-label">Scale Multiplier</label>
+    <input type="number" id="exportScale" class="custom-input" value="2" min="1" max="10" />
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="includeArtboards" checked />
+        <span>Use Artboards</span>
+    </label>
+
+    <button id="runCustomExport" class="tool-btn">Run Custom Export JSX</button>
+
+    <!-- Or use data-jsx for zero-JS declarative buttons -->
+    <button class="tool-btn" data-jsx="https://ID.github.io/illustrator-scripts/jsx/hello.jsx">
+        Quick Test Script
+    </button>
+</div>
+
+<script>
+    document.getElementById("runCustomExport").onclick = function () {
+        var payload = {
+            scale: Number(document.getElementById("exportScale").value) || 1,
+            useArtboards: document.getElementById("includeArtboards").checked
+        };
+
+        // Passes `panelData` directly into your JSX script
+        window.VGTools.runScript(
+            "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/export.jsx",
+            payload
+        );
+    };
+</script>
