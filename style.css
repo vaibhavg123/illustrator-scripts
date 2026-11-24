@@ -251,6 +251,27 @@ body {
     color: #ff9c9c;
 }
 
+.action-btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.tool-btn.secondary {
+    background: #464646;
+    border: 1px solid #5c5c5c;
+}
+
+.tool-btn.secondary:hover {
+    background: #575757;
+}
+
+.tool-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
