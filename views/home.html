@@ -1,4 +1,4 @@
-<!-- Hide Graphic Options (Native HTML UI) -->
+<!-- Hide Graphic Options -->
 <div class="accordion" id="hideGraphicsAccordion">
     <div class="accordion-header active" id="hideGraphicsHeader">
         <span>Hide Graphic Options</span>
@@ -31,8 +31,6 @@
                 <button id="btnRunHideGraphics" class="tool-btn">Hide Selected</button>
                 <button id="btnUnhideAll" class="tool-btn secondary">Unhide All</button>
             </div>
-
-            <div id="hideGraphicsResult" class="result-box"></div>
         </div>
     </div>
 </div>
@@ -47,7 +45,6 @@
     var content = document.getElementById("hideGraphicsContent");
     var hideBtn = document.getElementById("btnRunHideGraphics");
     var unhideBtn = document.getElementById("btnUnhideAll");
-    var resultBox = document.getElementById("hideGraphicsResult");
 
     if (header && content) {
         header.onclick = function () {
@@ -57,17 +54,9 @@
                 content.style.maxHeight = "0px";
             } else {
                 header.classList.add("active");
-                content.style.maxHeight = content.scrollHeight + 30 + "px";
+                content.style.maxHeight = content.scrollHeight + 20 + "px";
             }
         };
-    }
-
-    function showResult(html, isError) {
-        resultBox.innerHTML = html;
-        resultBox.className = "result-box visible" + (isError ? " error" : "");
-        if (header && header.classList.contains("active")) {
-            content.style.maxHeight = content.scrollHeight + 30 + "px";
-        }
     }
 
     function setBusy(isBusy, activeLabel) {
@@ -87,55 +76,23 @@
             };
 
             if (!payload.hideFill && !payload.hideText && !payload.hideDashed && !payload.hideOnlyLines) {
-                showResult("Please check at least one option.", true);
+                window.VGTools.log("Hide Graphics -> Please check at least one option.", "warn");
                 return;
             }
 
             setBusy(true, "hide");
-
-            window.VGTools.runScript("jsx/hide_graphics.jsx", payload, function (res) {
+            window.VGTools.runScript("jsx/hide_graphics.jsx", payload, function () {
                 setBusy(false);
-                try {
-                    var data = JSON.parse(res);
-                    if (!data.ok) {
-                        showResult(data.error || "Operation failed.", true);
-                        return;
-                    }
-                    showResult(
-                        "<strong>Done!</strong><br>" +
-                        "Hidden filled items: <b>" + data.fill + "</b><br>" +
-                        "Hidden dashed lines: <b>" + data.dashed + "</b><br>" +
-                        "Hidden only lines: <b>" + data.lines + "</b><br>" +
-                        "Hidden text frames: <b>" + data.text + "</b>",
-                        false
-                    );
-                } catch (e) {
-                    showResult("Script error: " + String(res), true);
-                }
-            });
+            }, "Hide Graphics");
         };
     }
 
     if (unhideBtn) {
         unhideBtn.onclick = function () {
             setBusy(true, "unhide");
-
-            window.VGTools.runScript("jsx/unhide_graphics.jsx", {}, function (res) {
+            window.VGTools.runScript("jsx/unhide_graphics.jsx", {}, function () {
                 setBusy(false);
-                try {
-                    var data = JSON.parse(res);
-                    if (!data.ok) {
-                        showResult(data.error || "Operation failed.", true);
-                        return;
-                    }
-                    showResult(
-                        "<strong>Restored!</strong> Unhidden items: <b>" + data.unhidden + "</b>",
-                        false
-                    );
-                } catch (e) {
-                    showResult("Script error: " + String(res), true);
-                }
-            });
+            }, "Unhide All");
         };
     }
 })();
