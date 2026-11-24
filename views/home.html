@@ -5,6 +5,29 @@
         <span class="accordion-icon">▼</span>
     </div>
 
+    <div class="accordion" id="templateToolAccordion">
+    <div class="accordion-header" id="templateToolHeader">
+        <span>Template Tool (Test)</span>
+        <span class="accordion-icon">▼</span>
+    </div>
+
+    <div class="accordion-content" id="templateToolContent" style="max-height: 0px;">
+        <div class="hide-options-body">
+            <label class="field-label" for="templateCountInput">Step Count</label>
+            <input type="number" id="templateCountInput" class="custom-input" value="3" min="1" max="50" />
+
+            <label class="field-label" for="templateModeSelect">Mode</label>
+            <select id="templateModeSelect" class="view-dropdown">
+                <option value="default" selected>Default</option>
+                <option value="fast">Fast</option>
+                <option value="detailed">Detailed</option>
+            </select>
+
+            <button id="btnTemplateRun" class="tool-btn">Run Template Tool</button>
+        </div>
+    </div>
+</div>
+
     <div class="accordion-content" id="hideGraphicsContent" style="max-height: 400px;">
         <div class="hide-options-body">
             <label class="checkbox-row">
