@@ -1,0 +1,63 @@
+<!-- views/hide_graphics.html (Standalone HTML + JSX pair) -->
+<div class="custom-card">
+    <h4>Hide Graphic Options</h4>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="standaloneChkFill" checked />
+        <span>Hide Fill (Paths &amp; Compound Paths)</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="standaloneChkText" />
+        <span>Hide Texts (Text Frames)</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="standaloneChkDashed" />
+        <span>Hide Dashed Lines</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="standaloneChkOnlyLines" />
+        <span>Hide Only Lines (Open or Unfilled Strokes)</span>
+    </label>
+
+    <button id="standaloneHideRunBtn" class="tool-btn">Hide Graphics</button>
+</div>
+
+<script>
+(function () {
+    var btn = document.getElementById("standaloneHideRunBtn");
+    if (!btn) return;
+
+    btn.onclick = function () {
+        var payload = {
+            _fromHtmlUi: true,
+            hideFill: document.getElementById("standaloneChkFill").checked,
+            hideText: document.getElementById("standaloneChkText").checked,
+            hideDashed: document.getElementById("standaloneChkDashed").checked,
+            hideOnlyLines: document.getElementById("standaloneChkOnlyLines").checked
+        };
+
+        if (!payload.hideFill && !payload.hideText && !payload.hideDashed && !payload.hideOnlyLines) {
+            if (window.VGTools && window.VGTools.log) {
+                window.VGTools.log("Hide Graphics -> Please check at least one option.", "warn");
+            }
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Hiding...";
+
+        window.VGTools.runScript(
+            "jsx/hide_graphics_standalone.jsx",
+            payload,
+            function () {
+                btn.disabled = false;
+                btn.innerText = "Hide Graphics";
+            },
+            "Hide Graphics"
+        );
+    };
+})();
+</script>
