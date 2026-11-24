@@ -1,9 +1,7 @@
 // jsx/hide_graphics.jsx
 try {
     var reportProgress = function (pct, msg) {
-        if (typeof vgProgress === "function") {
-            vgProgress(pct, msg);
-        }
+        if (typeof vgProgress === "function") vgProgress(pct, msg);
     };
 
     if (!app.documents.length) {
@@ -63,72 +61,82 @@ try {
         }
     }
 
-    function hasFilledSubPath(compoundItem) {
+    function compoundMatches(compoundItem, checkFn) {
         try {
             var paths = compoundItem.pathItems;
             for (var i = 0; i < paths.length; i++) {
-                if (isFilledPath(paths[i])) return true;
+                if (checkFn(paths[i])) return true;
             }
         } catch (e) {}
         return false;
     }
 
-    var totalLayers = doc.layers.length;
+    function processContainer(container) {
+        if (container.layers && container.layers.length > 0) {
+            for (var sl = 0; sl < container.layers.length; sl++) {
+                var subLayer = container.layers[sl];
+                if (!subLayer.visible || subLayer.locked) continue;
+                processContainer(subLayer);
+            }
+        }
 
-    // Process one layer at a time for speed
+        var items = container.pageItems;
+        for (var i = items.length - 1; i >= 0; i--) {
+            var item = items[i];
+            if (item.hidden || item.locked) continue;
+
+            var type = item.typename;
+
+            if (type === "GroupItem") {
+                processContainer(item);
+                continue;
+            }
+
+            if (type === "CompoundPathItem") {
+                if (hideFillEnabled && compoundMatches(item, isFilledPath)) {
+                    item.hidden = true;
+                    hiddenFillCount++;
+                } else if (hideDashedEnabled && compoundMatches(item, isDashedPath)) {
+                    item.hidden = true;
+                    hiddenDashedCount++;
+                } else if (hideOnlyLinesEnabled && compoundMatches(item, isOnlyLine)) {
+                    item.hidden = true;
+                    hiddenOnlyLinesCount++;
+                }
+                continue;
+            }
+
+            if (type === "PathItem") {
+                if (item.clipping) continue;
+
+                if (hideFillEnabled && isFilledPath(item)) {
+                    item.hidden = true;
+                    hiddenFillCount++;
+                } else if (hideDashedEnabled && isDashedPath(item)) {
+                    item.hidden = true;
+                    hiddenDashedCount++;
+                } else if (hideOnlyLinesEnabled && isOnlyLine(item)) {
+                    item.hidden = true;
+                    hiddenOnlyLinesCount++;
+                }
+                continue;
+            }
+
+            if (type === "TextFrame" && hideTextEnabled) {
+                item.hidden = true;
+                hiddenTextCount++;
+            }
+        }
+    }
+
+    var totalLayers = doc.layers.length;
     for (var l = 0; l < totalLayers; l++) {
         var layer = doc.layers[l];
         var pct = 25 + Math.round(((l + 1) / totalLayers) * 70);
         reportProgress(pct, "Layer " + (l + 1) + "/" + totalLayers + ": " + layer.name);
 
         if (!layer.visible || layer.locked) continue;
-
-        if (hideFillEnabled) {
-            var compounds = layer.compoundPathItems;
-            for (var c = compounds.length - 1; c >= 0; c--) {
-                var comp = compounds[c];
-                if (!comp.hidden && !comp.locked && hasFilledSubPath(comp)) {
-                    comp.hidden = true;
-                    hiddenFillCount++;
-                }
-            }
-        }
-
-        var paths = layer.pathItems;
-        for (var p = paths.length - 1; p >= 0; p--) {
-            var path = paths[p];
-            if (path.hidden || path.locked) continue;
-            if (path.parent && path.parent.typename === "CompoundPathItem") continue;
-
-            if (hideFillEnabled && isFilledPath(path)) {
-                path.hidden = true;
-                hiddenFillCount++;
-                continue;
-            }
-
-            if (hideDashedEnabled && isDashedPath(path)) {
-                path.hidden = true;
-                hiddenDashedCount++;
-                continue;
-            }
-
-            if (hideOnlyLinesEnabled && isOnlyLine(path)) {
-                path.hidden = true;
-                hiddenOnlyLinesCount++;
-                continue;
-            }
-        }
-
-        if (hideTextEnabled) {
-            var texts = layer.textFrames;
-            for (var t = texts.length - 1; t >= 0; t--) {
-                var tf = texts[t];
-                if (!tf.hidden && !tf.locked) {
-                    tf.hidden = true;
-                    hiddenTextCount++;
-                }
-            }
-        }
+        processContainer(layer);
     }
 
     app.redraw();
