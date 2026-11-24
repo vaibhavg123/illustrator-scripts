@@ -1,0 +1,151 @@
+<!-- views/floor_plan_cleaner.html -->
+<div class="custom-card">
+    <h4>Floor Plan Label Cleaner v3.0</h4>
+
+    <label class="field-label" for="fplcScope">Scope</label>
+    <select id="fplcScope" class="view-dropdown">
+        <option value="document" selected>Entire document</option>
+        <option value="selection">Selection only</option>
+    </select>
+
+    <label class="field-label" for="fplcStyleSet">Style Set</label>
+    <select id="fplcStyleSet" class="view-dropdown">
+        <option value="standard" selected>Standard</option>
+        <option value="compact">Compact</option>
+    </select>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcRestyle" checked />
+        <span>Rename / restyle labels (5 categories)</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcUpDn" checked />
+        <span>Convert UP / DN labels</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcWrap" checked />
+        <span>Multi-line labels / mappings</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcJunk" checked />
+        <span>Delete junk text</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcLoose" checked />
+        <span>Loose matching</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcDashed" />
+        <span>Update dashed lines</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcAllLines" />
+        <span>Update ALL lines (weight + colour)</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcArrows" />
+        <span>Recolour arrows</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcGroupGfx" />
+        <span>Group matching graphics by W x H</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcCapLayers" />
+        <span>Capitalise all layer names</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcCapText" />
+        <span>Set ALL texts to CAPITAL</span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="fplcDryRun" />
+        <span>Dry run (report only, no edits)</span>
+    </label>
+
+    <div class="action-btn-row">
+        <button id="btnFplcRun" class="tool-btn">Run Cleaner</button>
+        <button id="btnFplcCompact" class="tool-btn secondary">Run Compact</button>
+    </div>
+
+    <button id="btnFplcFullDialog" class="tool-btn secondary">Open Full Rules / Styles Dialog</button>
+</div>
+
+<script>
+(function () {
+    function collectOptions(forceCompact) {
+        var chosenSet = forceCompact ? "compact" : document.getElementById("fplcStyleSet").value;
+        return {
+            _fromHtmlUi: true,
+            openDialog: false,
+            scope: document.getElementById("fplcScope").value,
+            runSet: chosenSet,
+            restyle: true,
+            updnEnabled: document.getElementById("fplcUpDn").checked,
+            wrapLabels: document.getElementById("fplcWrap").checked,
+            removeJunk: document.getElementById("fplcJunk").checked,
+            looseMatch: document.getElementById("fplcLoose").checked,
+            dashedEnabled: document.getElementById("fplcDashed").checked,
+            allLinesEnabled: document.getElementById("fplcAllLines").checked,
+            arrowsEnabled: document.getElementById("fplcArrows").checked,
+            groupGraphicsEnabled: document.getElementById("fplcGroupGfx").checked,
+            capLayersEnabled: document.getElementById("fplcCapLayers").checked,
+            capTextEnabled: document.getElementById("fplcCapText").checked,
+            dryRun: document.getElementById("fplcDryRun").checked,
+            restyleChecked: document.getElementById("fplcRestyle").checked
+        };
+    }
+
+    function runFplc(payload, label) {
+        var btnRun = document.getElementById("btnFplcRun");
+        var btnCompact = document.getElementById("btnFplcCompact");
+        var btnDialog = document.getElementById("btnFplcFullDialog");
+
+        if (btnRun) btnRun.disabled = true;
+        if (btnCompact) btnCompact.disabled = true;
+        if (btnDialog) btnDialog.disabled = true;
+
+        window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", payload, function () {
+            if (btnRun) btnRun.disabled = false;
+            if (btnCompact) btnCompact.disabled = false;
+            if (btnDialog) btnDialog.disabled = false;
+        }, label);
+    }
+
+    var runBtn = document.getElementById("btnFplcRun");
+    if (runBtn) {
+        runBtn.onclick = function () {
+            var opts = collectOptions(false);
+            opts.restyle = opts.restyleChecked;
+            runFplc(opts, "Floor Plan Cleaner");
+        };
+    }
+
+    var compactBtn = document.getElementById("btnFplcCompact");
+    if (compactBtn) {
+        compactBtn.onclick = function () {
+            var opts = collectOptions(true);
+            opts.restyle = true;
+            runFplc(opts, "Floor Plan Cleaner (Compact)");
+        };
+    }
+
+    var dlgBtn = document.getElementById("btnFplcFullDialog");
+    if (dlgBtn) {
+        dlgBtn.onclick = function () {
+            runFplc({ _fromHtmlUi: true, openDialog: true }, "Floor Plan Cleaner Dialog");
+        };
+    }
+})();
+</script>
