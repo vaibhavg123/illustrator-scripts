@@ -62,7 +62,6 @@
         };
         state.logs.push(entry);
 
-        // Keep history reasonable (last 200 entries)
         if (state.logs.length > 200) {
             state.logs.shift();
         }
@@ -89,7 +88,6 @@
         line.appendChild(msgSpan);
         box.appendChild(line);
 
-        // Auto-scroll to latest log
         box.scrollTop = box.scrollHeight;
     }
 
@@ -111,7 +109,6 @@
         var text = lines.join("\n");
         if (!text) return;
 
-        // CEP-safe copy using temporary textarea
         var ta = document.createElement("textarea");
         ta.value = text;
         ta.style.position = "fixed";
@@ -139,7 +136,6 @@
             return;
         }
 
-        // Try parsing JSON returned by JSX (e.g. {"ok":true,"fill":12,"dashed":3,...})
         try {
             var data = JSON.parse(rawRes);
             if (data && typeof data === "object") {
@@ -162,10 +158,104 @@
                 return;
             }
         } catch (e) {
-            // Not JSON — log plain string return directly
+            // Plain text return from JSX
         }
 
         addLog(scriptLabel + " -> " + String(rawRes), "success");
+    }
+
+    // =====================================================
+    // LOG DRAG-TO-RESIZE & FOOTER SYNC
+    // =====================================================
+    var logDragState = {
+        active: false,
+        startY: 0,
+        startHeight: 0,
+        bound: false
+    };
+
+    var LOG_MIN_HEIGHT = 60;
+    var LOG_STORAGE_KEY = "vg_tools_log_height";
+
+    function syncFooterPadding() {
+        var footer = document.querySelector(".footer-info");
+        var logPanel = document.getElementById("vgLogPanel");
+        if (!footer || !logPanel) return;
+        footer.style.paddingBottom = (logPanel.offsetHeight + 16) + "px";
+    }
+
+    function clampLogHeight(desiredHeight) {
+        var maxHeight = Math.max(LOG_MIN_HEIGHT, window.innerHeight - 170);
+        return Math.max(LOG_MIN_HEIGHT, Math.min(maxHeight, desiredHeight));
+    }
+
+    function initLogResizer() {
+        var resizer = document.getElementById("vgLogResizer");
+        var logBox = document.getElementById("vgLogBox");
+        var logPanel = document.getElementById("vgLogPanel");
+        if (!resizer || !logBox || !logPanel) return;
+
+        // Restore saved log height
+        try {
+            var saved = parseInt(localStorage.getItem(LOG_STORAGE_KEY), 10);
+            if (!isNaN(saved) && saved >= LOG_MIN_HEIGHT) {
+                logBox.style.height = clampLogHeight(saved) + "px";
+            }
+        } catch (e) {}
+
+        syncFooterPadding();
+
+        resizer.addEventListener("mousedown", function (e) {
+            if (logPanel.classList.contains("collapsed")) return;
+            e.preventDefault();
+
+            logDragState.active = true;
+            logDragState.startY = e.clientY;
+            logDragState.startHeight = logBox.offsetHeight;
+
+            resizer.classList.add("dragging");
+            document.body.classList.add("vg-resizing-log");
+        });
+
+        // Bind global drag & window resize listeners only once
+        if (!logDragState.bound) {
+            logDragState.bound = true;
+
+            document.addEventListener("mousemove", function (e) {
+                if (!logDragState.active) return;
+                var box = document.getElementById("vgLogBox");
+                if (!box) return;
+
+                var deltaY = logDragState.startY - e.clientY;
+                box.style.height = clampLogHeight(logDragState.startHeight + deltaY) + "px";
+                syncFooterPadding();
+            });
+
+            document.addEventListener("mouseup", function () {
+                if (!logDragState.active) return;
+
+                logDragState.active = false;
+                var handle = document.getElementById("vgLogResizer");
+                var box = document.getElementById("vgLogBox");
+                if (handle) handle.classList.remove("dragging");
+                document.body.classList.remove("vg-resizing-log");
+
+                if (box) {
+                    try {
+                        localStorage.setItem(LOG_STORAGE_KEY, String(box.offsetHeight));
+                    } catch (e) {}
+                }
+            });
+
+            window.addEventListener("resize", function () {
+                var box = document.getElementById("vgLogBox");
+                var panel = document.getElementById("vgLogPanel");
+                if (box && panel && !panel.classList.contains("collapsed")) {
+                    box.style.height = clampLogHeight(box.offsetHeight) + "px";
+                }
+                syncFooterPadding();
+            });
+        }
     }
 
     // =====================================================
@@ -281,8 +371,11 @@
             toggleBtn.onclick = function () {
                 var collapsed = logPanel.classList.toggle("collapsed");
                 toggleBtn.innerText = collapsed ? "▲" : "▼";
+                syncFooterPadding();
             };
         }
+
+        initLogResizer();
     }
 
     // =====================================================
@@ -397,6 +490,7 @@
             if (document.getElementById("buttons")) {
                 createButtons(state.config.buttons || []);
             }
+            syncFooterPadding();
         };
 
         if (!forceReload && state.cache.views[viewId]) {
@@ -639,7 +733,10 @@
     // BOOTSTRAP
     // =====================================================
     Promise.all([loadRemoteCSS(), loadShellUI()])
-        .then(function () { return loadConfig(true); })
+        .then(function () {
+            syncFooterPadding();
+            return loadConfig(true);
+        })
         .catch(function (err) {
             var root = document.getElementById("root");
             if (root) {
