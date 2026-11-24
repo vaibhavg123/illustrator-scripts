@@ -26,7 +26,6 @@
     var CATS = ["main", "secondary", "small", "oname", "fname"];
     var CAT_LABEL = { main: "Main room", secondary: "Secondary", small: "Small", oname: "O_name", fname: "F_name" };
     var EXTRAS = ["dashed", "arrow"];
-    var EXTRA_LABEL = { dashed: "Dashed line", arrow: "Arrows" };
     var UNITS = ["in", "mm", "cm", "pt", "px"];
     var ARROW_GLYPH_RE = /^[\s\u2190-\u21FF\u2B05-\u2B07\u27A1\u2794\u279C-\u27BE\u25B2\u25B3\u25B4\u25B6\u25B7\u25B8\u25BA\u25BC\u25BD\u25BE\u25C0\u25C1\u25C2\u25C4]+$/;
 
@@ -95,15 +94,6 @@
 
     function isAlnum(c) { return /[A-Z0-9]/.test(c); }
 
-    function splitLines(s) {
-        var parts = String(s).split(/\r\n|\r|\n/), out = [];
-        for (var i = 0; i < parts.length; i++) {
-            var t = trim(parts[i]);
-            if (t !== "") out.push(t);
-        }
-        return out;
-    }
-
     function clamp255(v) {
         v = parseInt(v, 10);
         if (isNaN(v)) v = 0;
@@ -117,25 +107,6 @@
 
     function rgbToHex(rgbArr) {
         return "#" + hex2(rgbArr[0]) + hex2(rgbArr[1]) + hex2(rgbArr[2]);
-    }
-
-    function parseHexRGB(hexStr) {
-        var h = trim(hexStr).replace(/^#+/, "");
-        if (/^[0-9a-fA-F]{3}$/.test(h)) {
-            return [
-                parseInt(h.charAt(0) + h.charAt(0), 16),
-                parseInt(h.charAt(1) + h.charAt(1), 16),
-                parseInt(h.charAt(2) + h.charAt(2), 16)
-            ];
-        }
-        if (/^[0-9a-fA-F]{6}$/.test(h)) {
-            return [
-                parseInt(h.substring(0, 2), 16),
-                parseInt(h.substring(2, 4), 16),
-                parseInt(h.substring(4, 6), 16)
-            ];
-        }
-        return null;
     }
 
     function makeRGB(rgbArr) {
@@ -1500,20 +1471,23 @@
         };
     }
 
-    function openFullDialog(st, doc) {
-        var d = new Window("dialog", APP_TITLE + " - Quick Options");
+    function applyOnly(cfg, only) {
+        var flags = ["restyle", "wrapLabels", "removeJunk", "moveOptNames", "dashedEnabled",
+                     "groupGraphicsEnabled", "allLinesEnabled", "arrowsEnabled",
+                     "capLayersEnabled", "capTextEnabled"];
+        for (var i = 0; i < flags.length; i++) {
+            var keep = false;
+            for (var j = 0; j < only.length; j++) {
+                if (only[j] === flags[i]) { keep = true; break; }
+            }
+            cfg[flags[i]] = keep;
+        }
+    }
+
+    function openQuickDialog(st) {
+        var d = new Window("dialog", APP_TITLE + " - Quick Run");
         d.orientation = "column";
         d.alignChildren = "fill";
-
-        var gScope = d.add("group");
-        gScope.add("statictext", undefined, "Scope:");
-        var ddScope = gScope.add("dropdownlist", undefined, ["document", "selection"]);
-        ddScope.selection = st.cfg.scope === "selection" ? 1 : 0;
-
-        var gSet = d.add("group");
-        gSet.add("statictext", undefined, "Style Set:");
-        var ddSet = gSet.add("dropdownlist", undefined, ["standard", "compact"]);
-        ddSet.selection = st.cfg.runSet === "compact" ? 1 : 0;
 
         var cRestyle = d.add("checkbox", undefined, "Rename / restyle labels");
         cRestyle.value = st.cfg.restyle;
@@ -1534,8 +1508,6 @@
         var accepted = false;
         bCancel.onClick = function () { d.close(0); };
         bOk.onClick = function () {
-            st.cfg.scope = ddScope.selection && ddScope.selection.index === 1 ? "selection" : "document";
-            st.cfg.runSet = ddSet.selection && ddSet.selection.index === 1 ? "compact" : "standard";
             st.cfg.restyle = cRestyle.value;
             st.cfg.removeJunk = cJunk.value;
             st.cfg.dashedEnabled = cDashed.value;
@@ -1560,30 +1532,43 @@
         var hasUiData = (typeof panelData !== "undefined" && panelData && panelData._fromHtmlUi === true);
 
         if (hasUiData) {
-            if (panelData.openDialog === true) {
-                var okDlg = openFullDialog(st, doc);
-                if (!okDlg) {
-                    return '{"ok":false,"error":"Dialog cancelled."}';
+            if (panelData.renameLayer && panelData.renameLayer.oldName && panelData.renameLayer.newName) {
+                var foundLayer = null;
+                walkLayersPlain(doc.layers, function (L) {
+                    if (!foundLayer && L.name === panelData.renameLayer.oldName) foundLayer = L;
+                }, "", true);
+                if (!foundLayer) {
+                    return '{"ok":false,"error":"Layer not found: ' + escapeJson(panelData.renameLayer.oldName) + '"}';
                 }
-            } else {
-                st.cfg.scope = (panelData.scope === "selection") ? "selection" : "document";
-                st.cfg.runSet = (panelData.runSet === "compact") ? "compact" : "standard";
-                if (typeof panelData.restyle === "boolean") st.cfg.restyle = panelData.restyle;
-                if (typeof panelData.updnEnabled === "boolean") st.cfg.updnEnabled = panelData.updnEnabled;
-                if (typeof panelData.wrapLabels === "boolean") st.cfg.wrapLabels = panelData.wrapLabels;
-                if (typeof panelData.removeJunk === "boolean") st.cfg.removeJunk = panelData.removeJunk;
-                if (typeof panelData.looseMatch === "boolean") st.cfg.looseMatch = panelData.looseMatch;
-                if (typeof panelData.dashedEnabled === "boolean") st.cfg.dashedEnabled = panelData.dashedEnabled;
-                if (typeof panelData.allLinesEnabled === "boolean") st.cfg.allLinesEnabled = panelData.allLinesEnabled;
-                if (typeof panelData.arrowsEnabled === "boolean") st.cfg.arrowsEnabled = panelData.arrowsEnabled;
-                if (typeof panelData.groupGraphicsEnabled === "boolean") st.cfg.groupGraphicsEnabled = panelData.groupGraphicsEnabled;
-                if (typeof panelData.capLayersEnabled === "boolean") st.cfg.capLayersEnabled = panelData.capLayersEnabled;
-                if (typeof panelData.capTextEnabled === "boolean") st.cfg.capTextEnabled = panelData.capTextEnabled;
-                if (typeof panelData.dryRun === "boolean") st.cfg.dryRun = panelData.dryRun;
+                foundLayer.name = String(panelData.renameLayer.newName);
+                report(100, "Layer renamed.");
+                return '{"ok":true,"message":"Renamed layer to ' + escapeJson(foundLayer.name) + '"}';
+            }
+
+            if (panelData.cfg) {
+                for (var ck in panelData.cfg) {
+                    if (hasOwn(st.cfg, ck) && hasOwn(panelData.cfg, ck)) {
+                        st.cfg[ck] = panelData.cfg[ck];
+                    }
+                }
+            }
+            if (panelData.rules instanceof Array && panelData.rules.length > 0) st.rules = panelData.rules;
+            if (panelData.styleSets) st.styleSets = panelData.styleSets;
+            if (panelData.optPatterns instanceof Array) st.optPatterns = panelData.optPatterns;
+            if (panelData.wrapTexts instanceof Array) st.wrapTexts = panelData.wrapTexts;
+            if (panelData.junkExact instanceof Array) st.junkExact = panelData.junkExact;
+            if (panelData.junkRegex instanceof Array) st.junkRegex = panelData.junkRegex;
+            if (panelData.dashed) st.dashed = panelData.dashed;
+            if (panelData.allLines) st.allLines = panelData.allLines;
+            if (panelData.arrows) st.arrows = panelData.arrows;
+            if (panelData.universal) st.universal = panelData.universal;
+            if (panelData.groupGraphics) st.groupGraphics = panelData.groupGraphics;
+
+            if (panelData.onlyFlags instanceof Array) {
+                applyOnly(st.cfg, panelData.onlyFlags);
             }
         } else {
-            var standaloneOk = openFullDialog(st, doc);
-            if (!standaloneOk) {
+            if (!openQuickDialog(st)) {
                 return '{"ok":false,"error":"Cancelled."}';
             }
         }
