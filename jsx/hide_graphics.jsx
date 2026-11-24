@@ -1,112 +1,147 @@
-<!-- Hide Graphic Options (Native HTML UI) -->
-<div class="accordion" id="hideGraphicsAccordion">
-    <div class="accordion-header active" id="hideGraphicsHeader">
-        <span>Hide Graphic Options</span>
-        <span class="accordion-icon">▼</span>
-    </div>
+// jsx/hide_graphics.jsx
+try {
+    var reportProgress = function (pct, msg) {
+        if (typeof vgProgress === "function") {
+            vgProgress(pct, msg);
+        }
+    };
 
-    <div class="accordion-content" id="hideGraphicsContent" style="max-height: 400px;">
-        <div class="hide-options-body">
-            <label class="checkbox-row">
-                <input type="checkbox" id="chkHideFill" checked />
-                <span>Hide Fill (Paths &amp; Compound Paths)</span>
-            </label>
-
-            <label class="checkbox-row">
-                <input type="checkbox" id="chkHideText" />
-                <span>Hide Texts (Text Frames)</span>
-            </label>
-
-            <label class="checkbox-row">
-                <input type="checkbox" id="chkHideDashed" />
-                <span>Hide Dashed Lines</span>
-            </label>
-
-            <label class="checkbox-row">
-                <input type="checkbox" id="chkHideOnlyLines" />
-                <span>Hide Only Lines (Open or Unfilled Strokes)</span>
-            </label>
-
-            <button id="btnRunHideGraphics" class="tool-btn">Hide Selected Types</button>
-
-            <div id="hideGraphicsResult" class="result-box"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Dynamic sections & buttons from version.json -->
-<div id="sections"></div>
-<div id="buttons"></div>
-
-<script>
-(function () {
-    var header = document.getElementById("hideGraphicsHeader");
-    var content = document.getElementById("hideGraphicsContent");
-    var runBtn = document.getElementById("btnRunHideGraphics");
-    var resultBox = document.getElementById("hideGraphicsResult");
-
-    // Accordion toggle
-    if (header && content) {
-        header.onclick = function () {
-            var isOpen = header.classList.contains("active");
-            if (isOpen) {
-                header.classList.remove("active");
-                content.style.maxHeight = "0px";
-            } else {
-                header.classList.add("active");
-                content.style.maxHeight = content.scrollHeight + 30 + "px";
-            }
-        };
+    if (!app.documents.length) {
+        reportProgress(100, "No document open.");
+        return '{"ok":false,"error":"Please open an Illustrator document first."}';
     }
 
-    function showResult(html, isError) {
-        resultBox.innerHTML = html;
-        resultBox.className = "result-box visible" + (isError ? " error" : "");
-        if (header.classList.contains("active")) {
-            content.style.maxHeight = content.scrollHeight + 30 + "px";
+    var opts = (typeof panelData !== "undefined" && panelData) ? panelData : {};
+    var hideFillEnabled      = Boolean(opts.hideFill);
+    var hideTextEnabled      = Boolean(opts.hideText);
+    var hideDashedEnabled    = Boolean(opts.hideDashed);
+    var hideOnlyLinesEnabled = Boolean(opts.hideOnlyLines);
+
+    if (!hideFillEnabled && !hideTextEnabled && !hideDashedEnabled && !hideOnlyLinesEnabled) {
+        reportProgress(100, "Nothing selected.");
+        return '{"ok":false,"error":"Nothing selected. Check at least one option."}';
+    }
+
+    var doc = app.activeDocument;
+    var hiddenFillCount = 0;
+    var hiddenTextCount = 0;
+    var hiddenDashedCount = 0;
+    var hiddenOnlyLinesCount = 0;
+
+    function isFilledPath(pathItem) {
+        try {
+            return Boolean(pathItem.filled && pathItem.fillColor && pathItem.fillColor.typename !== "NoColor");
+        } catch (e) {
+            return false;
         }
     }
 
-    if (runBtn) {
-        runBtn.onclick = function () {
-            var payload = {
-                hideFill: document.getElementById("chkHideFill").checked,
-                hideText: document.getElementById("chkHideText").checked,
-                hideDashed: document.getElementById("chkHideDashed").checked,
-                hideOnlyLines: document.getElementById("chkHideOnlyLines").checked
-            };
+    function hasStroke(pathItem) {
+        try {
+            return Boolean(pathItem.stroked && pathItem.strokeWidth > 0 && pathItem.strokeColor && pathItem.strokeColor.typename !== "NoColor");
+        } catch (e) {
+            return false;
+        }
+    }
 
-            if (!payload.hideFill && !payload.hideText && !payload.hideDashed && !payload.hideOnlyLines) {
-                showResult("Please check at least one option.", true);
-                return;
+    function isDashedPath(pathItem) {
+        try {
+            if (!hasStroke(pathItem)) return false;
+            var dashArray = pathItem.strokeDashes;
+            return Boolean(dashArray && dashArray.length > 0);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function isOnlyLine(pathItem) {
+        try {
+            if (!hasStroke(pathItem)) return false;
+            return Boolean(!pathItem.closed || !isFilledPath(pathItem));
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function hasFilledSubPath(compoundItem) {
+        try {
+            var paths = compoundItem.pathItems;
+            for (var i = 0; i < paths.length; i++) {
+                if (isFilledPath(paths[i])) return true;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    var totalLayers = doc.layers.length;
+
+    // Process one layer at a time for speed
+    for (var l = 0; l < totalLayers; l++) {
+        var layer = doc.layers[l];
+        var pct = 25 + Math.round(((l + 1) / totalLayers) * 70);
+        reportProgress(pct, "Layer " + (l + 1) + "/" + totalLayers + ": " + layer.name);
+
+        if (!layer.visible || layer.locked) continue;
+
+        if (hideFillEnabled) {
+            var compounds = layer.compoundPathItems;
+            for (var c = compounds.length - 1; c >= 0; c--) {
+                var comp = compounds[c];
+                if (!comp.hidden && !comp.locked && hasFilledSubPath(comp)) {
+                    comp.hidden = true;
+                    hiddenFillCount++;
+                }
+            }
+        }
+
+        var paths = layer.pathItems;
+        for (var p = paths.length - 1; p >= 0; p--) {
+            var path = paths[p];
+            if (path.hidden || path.locked) continue;
+            if (path.parent && path.parent.typename === "CompoundPathItem") continue;
+
+            if (hideFillEnabled && isFilledPath(path)) {
+                path.hidden = true;
+                hiddenFillCount++;
+                continue;
             }
 
-            runBtn.disabled = true;
-            runBtn.innerText = "Hiding...";
+            if (hideDashedEnabled && isDashedPath(path)) {
+                path.hidden = true;
+                hiddenDashedCount++;
+                continue;
+            }
 
-            window.VGTools.runScript("jsx/hide_graphics.jsx", payload, function (res) {
-                runBtn.disabled = false;
-                runBtn.innerText = "Hide Selected Types";
+            if (hideOnlyLinesEnabled && isOnlyLine(path)) {
+                path.hidden = true;
+                hiddenOnlyLinesCount++;
+                continue;
+            }
+        }
 
-                try {
-                    var data = JSON.parse(res);
-                    if (!data.ok) {
-                        showResult(data.error || "Operation failed.", true);
-                        return;
-                    }
-                    showResult(
-                        "<strong>Done!</strong><br>" +
-                        "Filled items: <b>" + data.fill + "</b> &nbsp;|&nbsp; " +
-                        "Dashed lines: <b>" + data.dashed + "</b><br>" +
-                        "Only lines: <b>" + data.lines + "</b> &nbsp;|&nbsp; " +
-                        "Text frames: <b>" + data.text + "</b>",
-                        false
-                    );
-                } catch (e) {
-                    showResult("Completed.", false);
+        if (hideTextEnabled) {
+            var texts = layer.textFrames;
+            for (var t = texts.length - 1; t >= 0; t--) {
+                var tf = texts[t];
+                if (!tf.hidden && !tf.locked) {
+                    tf.hidden = true;
+                    hiddenTextCount++;
                 }
-            });
-        };
+            }
+        }
     }
-})();
-</script>
+
+    app.redraw();
+    reportProgress(100, "Done!");
+
+    return '{"ok":true' +
+        ',"fill":' + hiddenFillCount +
+        ',"dashed":' + hiddenDashedCount +
+        ',"lines":' + hiddenOnlyLinesCount +
+        ',"text":' + hiddenTextCount + '}';
+
+} catch (err) {
+    var msg = String(err.message || err).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, " ");
+    if (typeof vgProgress === "function") vgProgress(100, "Error: " + msg);
+    return '{"ok":false,"error":"JSX Error (Line ' + (err.line || "?") + '): ' + msg + '"}';
+}
