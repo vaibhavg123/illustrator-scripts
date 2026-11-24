@@ -5,12 +5,12 @@
   "defaultView": "home",
   "views": [
     {
-      "id": "home",
+      "vaibhavg123": "home",
       "label": "🏠 Home Tools",
       "html": "views/home.html"
     },
     {
-      "id": "settings",
+      "vaibhavg123": "settings",
       "label": "⚙️ Custom Settings UI",
       "html": "views/settings.html"
     }
@@ -22,15 +22,15 @@
       "buttons": [
         {
           "label": "Align+Spacing Text",
-          "script": "https://ID.github.io/illustrator-scripts/jsx/centeraligntexts.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/centeraligntexts.jsx"
         },
         {
           "label": "Join Text",
-          "script": "https://ID.github.io/illustrator-scripts/jsx/jointexts.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/jointexts.jsx"
         },
         {
           "label": "Rotate Text",
-          "script": "https://ID.github.io/illustrator-scripts/jsx/rotate.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/rotate.jsx"
         }
       ]
     },
@@ -40,15 +40,15 @@
       "buttons": [
         {
           "label": "Fill",
-          "script": "https://ID.github.io/illustrator-scripts/jsx/SelPaths.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelPaths.jsx"
         },
         {
           "label": "Dashed",
-          "script": "https://ID.github.io/illustrator-scripts/jsx/SelDash.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelDash.jsx"
         },
         {
           "label": "Alphabets",
-          "script": "https://ID.github.io/illustrator-scripts/jsx/SelAlphabets.jsx"
+          "script": "https://vaibhavg123.github.io/illustrator-scripts/jsx/SelAlphabets.jsx"
         }
       ]
     }
@@ -64,27 +64,27 @@
     },
     {
       "label": "Welcome To VG Tools",
-      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/hello.jsx"
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/hello.jsx"
     },
     {
       "label": "Create Layers: Text, Fill, Lines",
-      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/create.jsx"
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/create.jsx"
     },
     {
       "label": "Same Size Text",
-      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/textsize.jsx"
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/textsize.jsx"
     },
     {
       "label": "Sort Layers",
-      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/SortLayerItems.jsx"
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/SortLayerItems.jsx"
     },
     {
       "label": "Export PNG",
-      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/export.jsx"
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/export.jsx"
     },
     {
       "label": "Create Circles",
-      "script": "https://raw.githubusercontent.com/ID/illustrator-scripts/main/jsx/circles.jsx"
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/circles.jsx"
     }
   ]
 }
