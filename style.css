@@ -374,6 +374,50 @@ body {
     color: #f87171;
 }
 
+/* DRAG-TO-RESIZE HANDLE FOR ACTIVITY LOG */
+.log-resizer {
+    height: 6px;
+    width: 100%;
+    cursor: ns-resize;
+    background: #2b2b2b;
+    position: relative;
+    transition: background 0.15s ease;
+}
+
+.log-resizer::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 2px;
+    border-radius: 2px;
+    background: #5a5a5a;
+}
+
+.log-resizer:hover,
+.log-resizer.dragging {
+    background: #0078d4;
+}
+
+.log-resizer:hover::after,
+.log-resizer.dragging::after {
+    background: #ffffff;
+}
+
+.log-panel.collapsed .log-resizer {
+    display: none;
+}
+
+/* Lock resize cursor across the whole panel while dragging */
+body.vg-resizing-log,
+body.vg-resizing-log * {
+    cursor: ns-resize !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
