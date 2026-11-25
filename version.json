@@ -21,7 +21,7 @@
     },
     {
       "id": "artboard_organizer",
-      "label": "📐 Artboard Layout Organizer",
+      "label": "⚙️ Artboard Layout Organizer",
       "html": "views/artboard_organizer.html"
     },
     {
