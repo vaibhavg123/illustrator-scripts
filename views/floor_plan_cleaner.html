@@ -1,10 +1,10 @@
 <!-- views/floor_plan_cleaner.html -->
 <div class="fplc-wrap">
-    <!-- Top Header & Primary Actions -->
+    <!-- Header -->
     <div class="fplc-header">
-        <div>
+        <div class="fplc-title-block">
             <h4>Floor Plan Label Cleaner</h4>
-            <span class="fplc-badge">v3.0 • Full HTML Panel</span>
+            <span class="fplc-badge">v3.1 • Full HTML Panel</span>
         </div>
         <div class="fplc-top-actions">
             <button type="button" id="fplcBtnRunCompact" class="tool-btn secondary fplc-mini-btn">Compact</button>
@@ -12,19 +12,19 @@
         </div>
     </div>
 
-    <!-- Tab Bar -->
-    <div class="fplc-tabs" id="fplcTabBar">
+    <!-- Tabs -->
+    <div class="fplc-tabs" id="fplcTabBar" role="tablist">
         <button type="button" class="fplc-tab active" data-tab="fplcTabRun">Run</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabRules">Rules</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabStyles">Styles</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabLists">Lists</button>
-        <button type="button" class="fplc-tab" data-tab="fplcTabDashed">Dashed</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabDashed">Lines</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabUniversal">Universal</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabLayers">Layers</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabGroupGfx">Groups</button>
     </div>
 
-    <!-- 1. RUN TAB -->
+    <!-- 1. RUN -->
     <div id="fplcTabRun" class="fplc-tab-pane active">
         <div class="custom-card">
             <div class="fplc-section-title">Scope &amp; Style Set</div>
@@ -44,7 +44,7 @@
                     </select>
                 </div>
             </div>
-            <div id="fplcStyleSummary" class="fplc-summary-line">Main 9 | Secondary 8 | Small 6 | O_name 6 | F_name 6 (pt)</div>
+            <div id="fplcStyleSummary" class="fplc-summary-line"></div>
         </div>
 
         <div class="custom-card">
@@ -87,7 +87,7 @@
         </div>
     </div>
 
-    <!-- 2. RULES TAB -->
+    <!-- 2. RULES -->
     <div id="fplcTabRules" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-row-gap">
@@ -127,11 +127,10 @@
                 <button type="button" id="fplcBtnResetRules" class="tool-btn secondary">Defaults</button>
             </div>
 
-            <!-- Inline Scan Unrecognised Text Drawer -->
             <div id="fplcScanDrawer" class="fplc-scan-drawer" style="display:none;">
                 <div class="fplc-row-gap">
                     <span class="fplc-section-title">Unrecognised Texts in Document</span>
-                    <button type="button" id="fplcBtnCloseScan" class="log-btn">✕</button>
+                    <button type="button" id="fplcBtnCloseScan" class="log-btn" aria-label="Close">✕</button>
                 </div>
                 <div id="fplcScanList" class="fplc-list-box"></div>
                 <div class="fplc-grid-2">
@@ -154,7 +153,7 @@
         </div>
     </div>
 
-    <!-- 3. STYLES TAB -->
+    <!-- 3. STYLES -->
     <div id="fplcTabStyles" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-row-gap">
@@ -186,7 +185,7 @@
         </div>
     </div>
 
-    <!-- 4. LISTS TAB -->
+    <!-- 4. LISTS -->
     <div id="fplcTabLists" class="fplc-tab-pane">
         <div class="custom-card">
             <label class="field-label" for="fplcOptPatterns">Option Notes (substring match, 1 per line)</label>
@@ -222,7 +221,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         </div>
     </div>
 
-    <!-- 5. DASHED TAB -->
+    <!-- 5. LINES -->
     <div id="fplcTabDashed" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-section-title">Dashed Line Settings</div>
@@ -235,16 +234,16 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             </div>
             <div class="fplc-grid-3">
                 <div>
-                    <label class="field-label">Weight (pt)</label>
-                    <input type="number" id="fplcDashWeight" class="custom-input" value="0.5" step="0.1" />
+                    <label class="field-label" for="fplcDashWeight">Weight (pt)</label>
+                    <input type="number" id="fplcDashWeight" class="custom-input" value="0.5" step="0.1" min="0.01" />
                 </div>
                 <div>
-                    <label class="field-label">Dash (pt)</label>
-                    <input type="number" id="fplcDashLen" class="custom-input" value="3" step="0.5" />
+                    <label class="field-label" for="fplcDashLen">Dash (pt)</label>
+                    <input type="number" id="fplcDashLen" class="custom-input" value="3" step="0.5" min="0.1" />
                 </div>
                 <div>
-                    <label class="field-label">Space (pt)</label>
-                    <input type="number" id="fplcDashSpace" class="custom-input" value="2" step="0.5" />
+                    <label class="field-label" for="fplcDashSpace">Space (pt)</label>
+                    <input type="number" id="fplcDashSpace" class="custom-input" value="2" step="0.5" min="0" />
                 </div>
             </div>
         </div>
@@ -255,13 +254,13 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             <div class="fplc-grid-2">
                 <div>
                     <label class="checkbox-row"><input type="checkbox" id="fplcAllWeightOn" checked /><span>Weight (pt)</span></label>
-                    <input type="number" id="fplcAllWeight" class="custom-input" value="0.5" step="0.1" />
+                    <input type="number" id="fplcAllWeight" class="custom-input" value="0.5" step="0.1" min="0.01" />
                 </div>
                 <div>
                     <label class="checkbox-row"><input type="checkbox" id="fplcAllColorOn" checked /><span>Colour</span></label>
                     <div class="fplc-color-pair">
                         <input type="color" id="fplcAllColorPicker" class="fplc-picker" value="#000000" />
-                        <input type="text" id="fplcAllHex" class="custom-input fplc-hex-inp" value="#000000" />
+                        <input type="text" id="fplcAllHex" class="custom-input fplc-hex-inp" value="#000000" maxlength="7" />
                     </div>
                 </div>
             </div>
@@ -271,7 +270,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         </div>
     </div>
 
-    <!-- 6. UNIVERSAL TAB -->
+    <!-- 6. UNIVERSAL -->
     <div id="fplcTabUniversal" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-section-title">Universal Transforms</div>
@@ -290,7 +289,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         </div>
     </div>
 
-    <!-- 7. LAYERS TAB -->
+    <!-- 7. LAYERS -->
     <div id="fplcTabLayers" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-row-gap">
@@ -300,7 +299,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 
             <div id="fplcLayersList" class="fplc-list-box fplc-list-tall"></div>
 
-            <label class="field-label" for="fplcNewLayerName">Selected Layer Name (double-click list item to quick rename)</label>
+            <label class="field-label" for="fplcNewLayerName">Selected Layer Name (double-click a layer to edit its name)</label>
             <input type="text" id="fplcNewLayerName" class="custom-input" placeholder="Select a layer above..." />
 
             <div class="action-btn-row">
@@ -310,7 +309,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         </div>
     </div>
 
-    <!-- 8. GROUP GRAPHICS TAB -->
+    <!-- 8. GROUPS -->
     <div id="fplcTabGroupGfx" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-section-title">Group Sets &amp; Colour</div>
@@ -318,11 +317,11 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
                 <select id="fplcGgSetSelect" class="view-dropdown"></select>
                 <div class="fplc-color-pair">
                     <input type="color" id="fplcGgColorPicker" class="fplc-picker" value="#545454" />
-                    <input type="text" id="fplcGgColor" class="custom-input fplc-hex-inp" value="#545454" />
+                    <input type="text" id="fplcGgColor" class="custom-input fplc-hex-inp" value="#545454" maxlength="7" />
                 </div>
             </div>
 
-            <div class="action-btn-row">
+            <div class="action-btn-row fplc-nowrap">
                 <input type="text" id="fplcGgSetNameInput" class="custom-input" placeholder="Set name..." />
                 <button type="button" id="fplcBtnGgAddSet" class="tool-btn secondary fplc-mini-btn">+ New</button>
                 <button type="button" id="fplcBtnGgRenameSet" class="tool-btn secondary fplc-mini-btn">Rename</button>
@@ -334,15 +333,15 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             <div class="fplc-section-title">Parts (Width x Height) — double-click a part to edit</div>
             <div class="fplc-grid-3">
                 <div>
-                    <label class="field-label">Width (W)</label>
-                    <input type="number" id="fplcGgW" class="custom-input" step="0.1" placeholder="10" />
+                    <label class="field-label" for="fplcGgW">Width (W)</label>
+                    <input type="number" id="fplcGgW" class="custom-input" step="0.1" min="0" placeholder="10" />
                 </div>
                 <div>
-                    <label class="field-label">Height (H)</label>
-                    <input type="number" id="fplcGgH" class="custom-input" step="0.1" placeholder="5" />
+                    <label class="field-label" for="fplcGgH">Height (H)</label>
+                    <input type="number" id="fplcGgH" class="custom-input" step="0.1" min="0" placeholder="5" />
                 </div>
                 <div>
-                    <label class="field-label">Unit</label>
+                    <label class="field-label" for="fplcGgUnit">Unit</label>
                     <select id="fplcGgUnit" class="view-dropdown">
                         <option value="in" selected>in</option>
                         <option value="mm">mm</option>
@@ -355,6 +354,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 
             <div class="action-btn-row">
                 <button type="button" id="fplcBtnGgAddPart" class="tool-btn">+ Add Part</button>
+                <button type="button" id="fplcBtnGgCancelPart" class="tool-btn secondary" style="display:none;">Cancel Edit</button>
                 <button type="button" id="fplcBtnGgClearParts" class="tool-btn secondary">Clear Parts</button>
             </div>
 
@@ -365,12 +365,12 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             <div class="fplc-section-title">Proximity &amp; Grouping <span id="fplcGgUnitHint" class="fplc-pill">in</span></div>
             <div class="fplc-grid-2">
                 <div>
-                    <label class="field-label">Tolerance (+/-)</label>
-                    <input type="number" id="fplcGgTol" class="custom-input" value="0.05" step="0.01" />
+                    <label class="field-label" for="fplcGgTol">Tolerance (+/-)</label>
+                    <input type="number" id="fplcGgTol" class="custom-input" value="0.05" step="0.01" min="0" />
                 </div>
                 <div>
-                    <label class="field-label">Max Gap</label>
-                    <input type="number" id="fplcGgGap" class="custom-input" value="2.0" step="0.1" />
+                    <label class="field-label" for="fplcGgGap">Max Gap</label>
+                    <input type="number" id="fplcGgGap" class="custom-input" value="2.0" step="0.1" min="0" />
                 </div>
             </div>
             <label class="checkbox-row"><input type="checkbox" id="fplcGgRot" /><span>Allow rotated (W &lt;-&gt; H)</span></label>
@@ -381,12 +381,15 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         </div>
     </div>
 
-    <!-- Report Viewer Modal -->
+    <!-- Status line (replaces alert/prompt, which CEP panels block) -->
+    <div id="fplcStatus" class="fplc-status" role="status" aria-live="polite" style="display:none;"></div>
+
+    <!-- Report modal -->
     <div id="fplcReportModal" class="fplc-modal" style="display:none;">
         <div class="fplc-modal-inner">
             <div class="fplc-row-gap">
                 <span class="fplc-section-title">Floor Plan Cleaner — Last Report</span>
-                <button type="button" id="fplcBtnCloseReport" class="log-btn">✕</button>
+                <button type="button" id="fplcBtnCloseReport" class="log-btn" aria-label="Close">✕</button>
             </div>
             <textarea id="fplcReportText" class="fplc-textarea fplc-report-area" readonly></textarea>
             <div class="action-btn-row">
@@ -398,79 +401,93 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 </div>
 
 <style>
-.fplc-wrap { display: flex; flex-direction: column; gap: 8px; }
+.fplc-wrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fplc-wrap *, .fplc-wrap *::before, .fplc-wrap *::after { box-sizing: border-box; }
+.fplc-wrap button { cursor: pointer; }
+.fplc-wrap button:focus-visible, .fplc-wrap input:focus-visible,
+.fplc-wrap select:focus-visible, .fplc-wrap textarea:focus-visible { outline: 2px solid #4aa3ff; outline-offset: 1px; }
+
 .fplc-header {
+    position: sticky; top: 0; z-index: 20;
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding: 8px 10px; background: #1f242b; border: 1px solid #333b46; border-radius: 8px;
 }
-.fplc-header h4 { margin: 0; font-size: 13px; color: #f3f6fa; }
+.fplc-title-block { min-width: 0; }
+.fplc-header h4 { margin: 0; font-size: 13px; color: #f3f6fa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fplc-badge { font-size: 10px; color: #7cc0ff; }
-.fplc-top-actions { display: flex; gap: 6px; }
-.fplc-mini-btn { width: auto; padding: 5px 9px; margin: 0; font-size: 11px; white-space: nowrap; }
+.fplc-top-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.fplc-mini-btn { width: auto !important; padding: 5px 9px; margin: 0 !important; font-size: 11px; white-space: nowrap; flex: 0 0 auto !important; }
 .fplc-compact-select { width: auto !important; min-width: 105px; margin: 0 !important; padding: 4px 7px !important; font-size: 11px !important; }
 .fplc-summary-line { font-size: 10px; color: #9fb0c3; margin-top: 6px; }
 
+/* single scrollable tab row instead of a wrapping block */
 .fplc-tabs {
-    display: flex; flex-wrap: wrap; gap: 4px; background: #1b1e24;
+    position: sticky; top: 52px; z-index: 19;
+    display: flex; flex-wrap: nowrap; gap: 4px; background: #1b1e24; overflow-x: auto;
     padding: 5px; border-radius: 8px; border: 1px solid #2f3540;
+    scrollbar-width: thin; scrollbar-color: #485363 #1b1e24;
 }
 .fplc-tab {
+    flex: 0 0 auto;
     background: #282d36; color: #c7d0dc; border: 1px solid #38404c;
-    border-radius: 5px; padding: 4px 8px; font-size: 11px; cursor: pointer;
+    border-radius: 5px; padding: 4px 9px; font-size: 11px; white-space: nowrap;
 }
 .fplc-tab:hover { background: #323944; color: #fff; }
 .fplc-tab.active { background: #1f78d1; border-color: #1f78d1; color: #fff; font-weight: 600; }
 
-.fplc-tab-pane { display: none; flex-direction: column; gap: 8px; }
+.fplc-tab-pane { display: none; flex-direction: column; gap: 8px; min-width: 0; }
 .fplc-tab-pane.active { display: flex; }
 
 .fplc-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #8cc2ff; letter-spacing: 0.5px; margin-bottom: 4px; }
 .fplc-pill { font-size: 10px; padding: 2px 6px; border-radius: 999px; background: #2c333d; color: #cfd8e3; white-space: nowrap; }
-.fplc-row-gap { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.fplc-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.fplc-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.fplc-row-gap { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.fplc-row-gap > input, .fplc-row-gap > select { flex: 1 1 auto; min-width: 0; }
+.fplc-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fplc-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 300px) {
+    .fplc-grid-2, .fplc-grid-3 { grid-template-columns: minmax(0, 1fr); }
+}
+
+.fplc-wrap .action-btn-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.fplc-wrap .action-btn-row > .tool-btn { flex: 1 1 auto; width: auto; min-width: 0; margin: 0; }
+.fplc-wrap .action-btn-row.fplc-nowrap { flex-wrap: nowrap; }
+.fplc-wrap .action-btn-row.fplc-nowrap > .custom-input { flex: 1 1 auto; min-width: 0; margin: 0; }
+.fplc-wrap .custom-input, .fplc-wrap .view-dropdown { max-width: 100%; }
 
 .fplc-color-pair { display: flex; align-items: center; gap: 5px; }
-.fplc-picker { width: 26px; height: 26px; padding: 0; border: 1px solid #444d59; border-radius: 4px; background: transparent; cursor: pointer; flex-shrink: 0; }
+.fplc-picker { width: 26px; height: 26px; padding: 0; border: 1px solid #444d59; border-radius: 4px; background: transparent; flex-shrink: 0; }
 .fplc-hex-inp { width: 76px !important; padding: 4px 6px !important; font-family: Consolas, monospace; font-size: 11px !important; margin: 0 !important; }
 .fplc-size-inp { width: 54px !important; padding: 4px 6px !important; font-size: 11px !important; margin: 0 !important; }
 
 .fplc-style-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
-.fplc-style-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 6px; background: #23272e; border-radius: 5px; }
-.fplc-style-label { font-size: 11px; color: #dce3ec; flex: 1; }
+.fplc-style-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: #23272e; border-radius: 5px; }
+.fplc-style-label { font-size: 11px; color: #dce3ec; flex: 1; min-width: 0; }
 
 .fplc-textarea {
     width: 100%; padding: 6px 8px; border: 1px solid #39414d; border-radius: 6px;
     background: #20242a; color: #e6ecf2; font-family: Consolas, monospace; font-size: 11px;
-    box-sizing: border-box; resize: vertical; margin-bottom: 6px;
+    resize: vertical; margin-bottom: 6px; white-space: pre; overflow: auto;
 }
 
-.fplc-rules-scroll,
-.fplc-list-box {
+.fplc-rules-scroll, .fplc-list-box {
     max-height: 140px; min-height: 75px; overflow-y: auto; overflow-x: hidden; flex-shrink: 0;
     background: #171b20; border: 1px solid #343d49; border-radius: 7px; padding: 6px;
-    display: flex; flex-direction: column; gap: 5px; font-size: 11px; margin-top: 4px;
+    display: flex; flex-direction: column; gap: 5px; font-size: 11px; margin-top: 6px;
     scrollbar-width: thin; scrollbar-color: #485363 #171b20;
 }
-.fplc-rules-scroll { max-height: 210px; }
-.fplc-list-tall { max-height: 170px; }
-.fplc-rules-scroll::-webkit-scrollbar,
-.fplc-list-box::-webkit-scrollbar { width: 7px; }
-.fplc-rules-scroll::-webkit-scrollbar-track,
-.fplc-list-box::-webkit-scrollbar-track { background: #171b20; border-radius: 6px; }
-.fplc-rules-scroll::-webkit-scrollbar-thumb,
-.fplc-list-box::-webkit-scrollbar-thumb { background: #485363; border-radius: 6px; }
+.fplc-rules-scroll { max-height: 260px; }
+.fplc-list-tall { max-height: 200px; }
+.fplc-rules-scroll::-webkit-scrollbar, .fplc-list-box::-webkit-scrollbar { width: 7px; }
+.fplc-rules-scroll::-webkit-scrollbar-track, .fplc-list-box::-webkit-scrollbar-track { background: #171b20; border-radius: 6px; }
+.fplc-rules-scroll::-webkit-scrollbar-thumb, .fplc-list-box::-webkit-scrollbar-thumb { background: #485363; border-radius: 6px; }
 
-.fplc-rule-card,
-.fplc-list-item {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+.fplc-rule-card, .fplc-list-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;
     padding: 6px 8px; background: #242933; border: 1px solid #323a47; border-radius: 5px;
-    cursor: pointer; color: #e0e6ed;
+    cursor: pointer; color: #e0e6ed; user-select: none;
 }
-.fplc-rule-card:hover,
-.fplc-list-item:hover { background: #2c3340; border-color: #495568; }
-.fplc-rule-card.selected,
-.fplc-list-item.selected { background: #1f334a; border-color: #4aa3ff; }
+.fplc-rule-card:hover, .fplc-list-item:hover { background: #2c3340; border-color: #495568; }
+.fplc-rule-card.selected, .fplc-list-item.selected { background: #1f334a; border-color: #4aa3ff; }
 
 .fplc-rule-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .fplc-rule-top { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
@@ -481,7 +498,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 .fplc-cat-oname { background: #4c1d95; color: #ede9fe; }
 .fplc-cat-fname { background: #78350f; color: #fef3c7; }
 .fplc-exact-tag { font-size: 9px; padding: 1px 5px; border-radius: 4px; background: #3b2f13; color: #fcd34d; border: 1px solid #785a1c; }
-.fplc-rule-final { font-size: 11px; font-weight: 700; color: #f8fafc; word-break: break-word; }
+.fplc-rule-final { font-size: 11px; font-weight: 700; color: #f8fafc; word-break: break-word; min-width: 0; }
 .fplc-rule-keys { font-size: 10px; color: #9fb0c3; line-height: 1.35; word-break: break-word; }
 .fplc-rule-del { flex-shrink: 0; padding: 2px 6px; font-size: 10px; line-height: 1.2; }
 .fplc-rule-empty { padding: 14px 10px; text-align: center; font-size: 11px; color: #8b99ab; }
@@ -492,25 +509,36 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     border-radius: 7px; display: flex; flex-direction: column; gap: 6px;
 }
 
+.fplc-status {
+    position: sticky; bottom: 0; z-index: 15;
+    padding: 6px 10px; border-radius: 6px; font-size: 11px; line-height: 1.35;
+    background: #1f334a; border: 1px solid #4aa3ff; color: #e6f1ff; word-break: break-word;
+}
+.fplc-status.error { background: #3a1a1a; border-color: #d65b5b; color: #ffdede; }
+.fplc-status.success { background: #16301f; border-color: #3fa760; color: #d9ffe5; }
+
 .fplc-modal {
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72); z-index: 9999;
     display: flex; align-items: center; justify-content: center; padding: 10px;
 }
 .fplc-modal-inner {
-    width: 100%; max-width: 520px; background: #1e232a; border: 1px solid #3b4554;
+    width: 100%; max-width: 520px; max-height: 100%; background: #1e232a; border: 1px solid #3b4554;
     border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;
 }
-.fplc-report-area { height: 260px; margin: 0; font-size: 10px; }
+.fplc-report-area { height: 260px; max-height: 60vh; margin: 0; font-size: 10px; }
 </style>
 
 <script>
 (function () {
     var LOCAL_STORAGE_KEY = "vg_fplc_v3_settings_state";
+    var JSX_PATH = "jsx/floor_plan_cleaner.jsx";
+    var restoring = false;
 
     var CAT_NAMES = {
         main: "Main room", secondary: "Secondary", small: "Small",
         oname: "O_name", fname: "F_name", dashed: "Dashed line", arrow: "Arrows"
     };
+    var STYLE_KEYS = ["main", "secondary", "small", "oname", "fname", "dashed", "arrow"];
 
     var DEFAULT_STYLES = {
         standard: {
@@ -600,35 +628,70 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         return r;
     }
 
+    function defaultGgSets() {
+        return [
+            { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
+            { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
+        ];
+    }
+
     var stateUi = {
         rules: buildDefaultRules(),
         styleSets: JSON.parse(JSON.stringify(DEFAULT_STYLES)),
-        ggSets: [
-            { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
-            { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
-        ],
+        ggSets: defaultGgSets(),
         layersCache: [],
         scanFound: [],
         activeGgIdx: 0,
         editingRuleIdx: -1,
+        editingPartIdx: -1,
         selectedLayerName: ""
     };
+
+    function $(id) { return document.getElementById(id); }
 
     function safeLog(msg, type) {
         if (window.VGTools && typeof window.VGTools.log === "function") {
             window.VGTools.log(msg, type || "info");
         }
+        showStatus(msg, type);
+    }
+
+    var statusTimer = null;
+    function showStatus(msg, type) {
+        var el = $("fplcStatus");
+        if (!el) return;
+        el.textContent = msg;
+        el.className = "fplc-status" + (type === "error" ? " error" : (type === "success" ? " success" : ""));
+        el.style.display = "block";
+        clearTimeout(statusTimer);
+        statusTimer = setTimeout(function () { el.style.display = "none"; }, 5000);
+    }
+
+    // FIX: every host call goes through here, so a missing VGTools bridge can't throw
+    function runJsx(payload, cb, label) {
+        if (!window.VGTools || typeof window.VGTools.runScript !== "function") {
+            showStatus("Host bridge (VGTools) not available - cannot talk to Illustrator.", "error");
+            return false;
+        }
+        window.VGTools.runScript(JSX_PATH, payload, cb || null, label);
+        return true;
+    }
+
+    function parseReply(raw) {
+        try { return typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return null; }
     }
 
     function toHex(rgb) {
-        var r = Math.max(0, Math.min(255, parseInt(rgb[0], 10) || 0)).toString(16).toUpperCase();
-        var g = Math.max(0, Math.min(255, parseInt(rgb[1], 10) || 0)).toString(16).toUpperCase();
-        var b = Math.max(0, Math.min(255, parseInt(rgb[2], 10) || 0)).toString(16).toUpperCase();
-        return "#" + (r.length < 2 ? "0" + r : r) + (g.length < 2 ? "0" + g : g) + (b.length < 2 ? "0" + b : b);
+        function h(v) {
+            var s = Math.max(0, Math.min(255, parseInt(v, 10) || 0)).toString(16).toUpperCase();
+            return s.length < 2 ? "0" + s : s;
+        }
+        return "#" + h(rgb[0]) + h(rgb[1]) + h(rgb[2]);
     }
 
     function parseHex(hexStr) {
         var h = String(hexStr || "").trim().replace(/^#+/, "");
+        if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
         if (/^[0-9a-fA-F]{6}$/.test(h)) {
             return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
         }
@@ -636,13 +699,30 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     }
 
     function splitLines(id) {
-        var el = document.getElementById(id);
+        var el = $(id);
         if (!el) return [];
         return String(el.value || "").split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
     }
 
+    // debounce so typing in textareas doesn't rebuild the whole payload on every key
+    var saveTimer = null;
+    function saveToLocalStorage() {
+        if (restoring) return;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveNow, 200);
+    }
+    function saveNow() {
+        if (restoring) return;
+        try {
+            var snap = buildFullPayload(false, null);
+            delete snap._fromHtmlUi;
+            delete snap.onlyFlags;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(snap));
+        } catch (e) {}
+    }
+
     function syncPair(idA, idB) {
-        var a = document.getElementById(idA), b = document.getElementById(idB);
+        var a = $(idA), b = $(idB);
         if (!a || !b) return;
         a.addEventListener("change", function () { b.checked = a.checked; saveToLocalStorage(); });
         b.addEventListener("change", function () { a.checked = b.checked; saveToLocalStorage(); });
@@ -654,51 +734,89 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     syncPair("fplcCapText", "fplcUnivCapText");
 
     function updateStyleSummary() {
-        var setName = document.getElementById("fplcRunSet").value || "standard";
+        var setName = $("fplcRunSet").value || "standard";
         var s = stateUi.styleSets[setName] || stateUi.styleSets.standard;
-        var el = document.getElementById("fplcStyleSummary");
+        var el = $("fplcStyleSummary");
         if (el && s) {
             el.textContent = "Main " + s.main.size + " | Secondary " + s.secondary.size +
                 " | Small " + s.small.size + " | O_name " + s.oname.size + " | F_name " + s.fname.size + " (pt)";
         }
     }
-    document.getElementById("fplcRunSet").addEventListener("change", updateStyleSummary);
+    $("fplcRunSet").addEventListener("change", updateStyleSummary);
 
-    // Tabs switching
-    var tabButtons = document.querySelectorAll("#fplcTabBar .fplc-tab");
-    for (var i = 0; i < tabButtons.length; i++) {
-        tabButtons[i].onclick = function () {
-            var targetId = this.getAttribute("data-tab");
-            for (var j = 0; j < tabButtons.length; j++) tabButtons[j].classList.remove("active");
-            var panes = document.querySelectorAll(".fplc-tab-pane");
-            for (var k = 0; k < panes.length; k++) panes[k].classList.remove("active");
-            this.classList.add("active");
-            var targetPane = document.getElementById(targetId);
-            if (targetPane) targetPane.classList.add("active");
-            if (targetId === "fplcTabLayers") refreshLayersViaJsx();
-            saveToLocalStorage();
-        };
+    // FIX: imported/old settings could miss keys and crash renderStyleRows - always merge over defaults
+    function mergeStyleSets(src) {
+        var out = JSON.parse(JSON.stringify(DEFAULT_STYLES));
+        if (!src || typeof src !== "object") return out;
+        for (var setName in out) {
+            if (!out.hasOwnProperty(setName) || !src[setName]) continue;
+            for (var i = 0; i < STYLE_KEYS.length; i++) {
+                var k = STYLE_KEYS[i], from = src[setName][k], to = out[setName][k];
+                if (!from) continue;
+                if (typeof to.size === "number") {
+                    var sz = parseFloat(from.size);
+                    if (!isNaN(sz) && sz > 0) to.size = sz;
+                }
+                if (from.color && from.color.length === 3) {
+                    to.color = [
+                        Math.max(0, Math.min(255, parseInt(from.color[0], 10) || 0)),
+                        Math.max(0, Math.min(255, parseInt(from.color[1], 10) || 0)),
+                        Math.max(0, Math.min(255, parseInt(from.color[2], 10) || 0))
+                    ];
+                }
+            }
+        }
+        return out;
     }
 
-    // Rules rendering & editing
+    function sanitizeRules(arr) {
+        var out = [];
+        for (var i = 0; i < arr.length; i++) {
+            var r = arr[i];
+            if (r && CAT_NAMES.hasOwnProperty(r.cat) && r.cat !== "dashed" && r.cat !== "arrow" && typeof r.text === "string") {
+                out.push({ cat: r.cat, text: r.text, keys: Array.isArray(r.keys) ? r.keys.map(String) : [], exact: !!r.exact });
+            }
+        }
+        return out;
+    }
+
+    // ---------- Tabs ----------
+    var tabButtons = document.querySelectorAll("#fplcTabBar .fplc-tab");
+    function activateTab(btn) {
+        var targetId = btn.getAttribute("data-tab");
+        var j, k;
+        for (j = 0; j < tabButtons.length; j++) tabButtons[j].classList.remove("active");
+        var panes = document.querySelectorAll(".fplc-tab-pane");
+        for (k = 0; k < panes.length; k++) panes[k].classList.remove("active");
+        btn.classList.add("active");
+        var targetPane = $(targetId);
+        if (targetPane) targetPane.classList.add("active");
+        if (targetId === "fplcTabLayers" && !restoring) refreshLayersViaJsx();
+        saveToLocalStorage();
+    }
+    for (var ti = 0; ti < tabButtons.length; ti++) {
+        tabButtons[ti].onclick = function () { activateTab(this); };
+    }
+
+    // ---------- Rules ----------
     function syncRuleFormButton() {
-        var btn = document.getElementById("fplcBtnSaveRule");
+        var btn = $("fplcBtnSaveRule");
         if (btn) btn.textContent = stateUi.editingRuleIdx >= 0 ? "Update Rule" : "+ Add Rule";
     }
 
     function clearRuleForm() {
         stateUi.editingRuleIdx = -1;
-        document.getElementById("fplcRuleFinal").value = "";
-        document.getElementById("fplcRuleKeys").value = "";
-        document.getElementById("fplcRuleExact").checked = false;
+        $("fplcRuleFinal").value = "";
+        $("fplcRuleKeys").value = "";
+        $("fplcRuleExact").checked = false;
         syncRuleFormButton();
         renderRules();
     }
 
     function renderRules() {
-        var box = document.getElementById("fplcRulesList");
-        var countEl = document.getElementById("fplcRuleCount");
-        var filterVal = String((document.getElementById("fplcRuleFilter") || {}).value || "").trim().toLowerCase();
+        var box = $("fplcRulesList");
+        var countEl = $("fplcRuleCount");
+        var filterVal = String(($("fplcRuleFilter") || {}).value || "").trim().toLowerCase();
         if (!box) return;
 
         box.innerHTML = "";
@@ -747,10 +865,10 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             (function (idx, ruleObj) {
                 card.onclick = function () {
                     stateUi.editingRuleIdx = idx;
-                    document.getElementById("fplcRuleCat").value = ruleObj.cat || "main";
-                    document.getElementById("fplcRuleFinal").value = ruleObj.text || "";
-                    document.getElementById("fplcRuleKeys").value = Array.isArray(ruleObj.keys) ? ruleObj.keys.join(", ") : "";
-                    document.getElementById("fplcRuleExact").checked = !!ruleObj.exact;
+                    $("fplcRuleCat").value = ruleObj.cat || "main";
+                    $("fplcRuleFinal").value = ruleObj.text || "";
+                    $("fplcRuleKeys").value = Array.isArray(ruleObj.keys) ? ruleObj.keys.join(", ") : "";
+                    $("fplcRuleExact").checked = !!ruleObj.exact;
                     syncRuleFormButton();
                     renderRules();
                 };
@@ -760,6 +878,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             delBtn.type = "button";
             delBtn.className = "log-btn fplc-rule-del";
             delBtn.textContent = "✕";
+            delBtn.title = "Delete rule";
             (function (idx) {
                 delBtn.onclick = function (e) {
                     if (e && e.stopPropagation) e.stopPropagation();
@@ -787,13 +906,13 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         if (countEl) countEl.textContent = shown + "/" + stateUi.rules.length;
     }
 
-    document.getElementById("fplcRuleFilter").oninput = renderRules;
-    document.getElementById("fplcBtnClearRuleForm").onclick = clearRuleForm;
-    document.getElementById("fplcBtnSaveRule").onclick = function () {
-        var cat = document.getElementById("fplcRuleCat").value;
-        var finalText = String(document.getElementById("fplcRuleFinal").value || "").trim().toUpperCase();
-        var rawKeys = String(document.getElementById("fplcRuleKeys").value || "");
-        var exact = document.getElementById("fplcRuleExact").checked;
+    $("fplcRuleFilter").oninput = renderRules;
+    $("fplcBtnClearRuleForm").onclick = clearRuleForm;
+    $("fplcBtnSaveRule").onclick = function () {
+        var cat = $("fplcRuleCat").value;
+        var finalText = String($("fplcRuleFinal").value || "").trim().toUpperCase();
+        var rawKeys = String($("fplcRuleKeys").value || "");
+        var exact = $("fplcRuleExact").checked;
         if (!finalText) { safeLog("Floor Plan Cleaner -> Final text is required.", "warn"); return; }
         var keys = rawKeys.split(",").map(function (k) { return k.trim(); }).filter(Boolean);
         var entry = { cat: cat, text: finalText, keys: keys, exact: exact };
@@ -805,15 +924,15 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         clearRuleForm();
         saveToLocalStorage();
     };
-    document.getElementById("fplcBtnResetRules").onclick = function () {
+    $("fplcBtnResetRules").onclick = function () {
         stateUi.rules = buildDefaultRules();
         clearRuleForm();
         saveToLocalStorage();
     };
 
-    // Scan Document Unrecognised Texts
+    // ---------- Scan ----------
     function renderScanList() {
-        var box = document.getElementById("fplcScanList");
+        var box = $("fplcScanList");
         box.innerHTML = "";
         if (!stateUi.scanFound.length) {
             box.innerHTML = "<div class='fplc-rule-empty'>Every text frame is already covered by a rule, list, or junk pattern.</div>";
@@ -840,55 +959,53 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         }
     }
 
-    document.getElementById("fplcBtnScanDoc").onclick = function () {
+    $("fplcBtnScanDoc").onclick = function () {
         var payload = buildFullPayload(false, null);
         payload.action = "scanUnmatched";
-        window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", payload, function (raw) {
-            try {
-                var parsed = JSON.parse(raw);
-                if (parsed && Array.isArray(parsed.found)) {
-                    stateUi.scanFound = parsed.found;
-                    document.getElementById("fplcScanDrawer").style.display = "flex";
-                    renderScanList();
-                }
-            } catch (e) {}
+        runJsx(payload, function (raw) {
+            var parsed = parseReply(raw);
+            if (parsed && parsed.ok && Array.isArray(parsed.found)) {
+                stateUi.scanFound = parsed.found;
+                $("fplcScanDrawer").style.display = "flex";
+                renderScanList();
+            } else {
+                safeLog("Scan -> " + ((parsed && parsed.error) || "No usable reply from Illustrator."), "error");
+            }
         }, "Scan Document");
     };
-    document.getElementById("fplcBtnCloseScan").onclick = function () {
-        document.getElementById("fplcScanDrawer").style.display = "none";
-    };
-    document.getElementById("fplcBtnScanSelectAll").onclick = function () {
+    $("fplcBtnCloseScan").onclick = function () { $("fplcScanDrawer").style.display = "none"; };
+    $("fplcBtnScanSelectAll").onclick = function () {
         var cbs = document.querySelectorAll(".fplc-scan-cb");
         for (var i = 0; i < cbs.length; i++) cbs[i].checked = true;
     };
-    document.getElementById("fplcBtnScanAddSelected").onclick = function () {
+    $("fplcBtnScanAddSelected").onclick = function () {
         var cbs = document.querySelectorAll(".fplc-scan-cb:checked");
         if (!cbs.length) { safeLog("Scan -> Select at least one text.", "warn"); return; }
-        var cat = document.getElementById("fplcScanAddCat").value;
-        var exact = document.getElementById("fplcScanExact").checked;
+        var cat = $("fplcScanAddCat").value;
+        var exact = $("fplcScanExact").checked;
         for (var i = 0; i < cbs.length; i++) {
             var val = cbs[i].value;
             stateUi.rules.push({ cat: cat, text: val, keys: [val], exact: exact });
         }
-        document.getElementById("fplcScanDrawer").style.display = "none";
-        document.getElementById("fplcRuleFilter").value = "";
+        $("fplcScanDrawer").style.display = "none";
+        $("fplcRuleFilter").value = "";
         renderRules();
         saveToLocalStorage();
         safeLog("Scan -> Added " + cbs.length + " rule(s) to " + (CAT_NAMES[cat] || cat) + ".", "success");
     };
 
-    // Styles rendering
+    // ---------- Styles ----------
     function renderStyleRows() {
-        var setName = document.getElementById("fplcEditStyleSet").value || "standard";
-        var container = document.getElementById("fplcStyleRows");
+        var setName = $("fplcEditStyleSet").value || "standard";
+        var container = $("fplcStyleRows");
         var setObj = stateUi.styleSets[setName];
         if (!container || !setObj) return;
         container.innerHTML = "";
 
-        var keys = ["main", "secondary", "small", "oname", "fname", "dashed", "arrow"];
-        for (var i = 0; i < keys.length; i++) {
-            var k = keys[i];
+        for (var i = 0; i < STYLE_KEYS.length; i++) {
+            var k = STYLE_KEYS[i];
             var entry = setObj[k];
+            if (!entry) continue;
             var hasSize = typeof entry.size === "number";
             var row = document.createElement("div");
             row.className = "fplc-style-row";
@@ -904,6 +1021,8 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
                 sizeInp.className = "custom-input fplc-size-inp";
                 sizeInp.value = entry.size;
                 sizeInp.step = "0.5";
+                sizeInp.min = "1";
+                sizeInp.title = "Size (pt)";
                 (function (objRef, inpRef) {
                     inpRef.onchange = function () {
                         var v = parseFloat(inpRef.value);
@@ -911,6 +1030,8 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
                             objRef.size = v;
                             updateStyleSummary();
                             saveToLocalStorage();
+                        } else {
+                            inpRef.value = objRef.size;
                         }
                     };
                 })(entry, sizeInp);
@@ -921,12 +1042,13 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             var picker = document.createElement("input");
             picker.type = "color";
             picker.className = "fplc-picker";
-            picker.value = hexVal;
+            picker.value = hexVal.toLowerCase();
 
             var hexInp = document.createElement("input");
             hexInp.type = "text";
             hexInp.className = "custom-input fplc-hex-inp";
             hexInp.value = hexVal;
+            hexInp.maxLength = 7;
 
             (function (objRef, pRef, hRef) {
                 pRef.oninput = function () {
@@ -939,8 +1061,10 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
                         objRef.color = rgb;
                         var formatted = toHex(rgb);
                         hRef.value = formatted;
-                        pRef.value = formatted;
+                        pRef.value = formatted.toLowerCase();
                         saveToLocalStorage();
+                    } else {
+                        hRef.value = toHex(objRef.color);
                     }
                 };
             })(entry, picker, hexInp);
@@ -952,19 +1076,21 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         updateStyleSummary();
     }
 
-    document.getElementById("fplcEditStyleSet").onchange = function () { renderStyleRows(); saveToLocalStorage(); };
+    $("fplcEditStyleSet").onchange = function () { renderStyleRows(); saveToLocalStorage(); };
 
-    var allPicker = document.getElementById("fplcAllColorPicker");
-    var allHex = document.getElementById("fplcAllHex");
+    var allPicker = $("fplcAllColorPicker");
+    var allHex = $("fplcAllHex");
     allPicker.oninput = function () { allHex.value = String(allPicker.value || "#000000").toUpperCase(); saveToLocalStorage(); };
     allHex.onchange = function () {
         var rgb = parseHex(allHex.value);
-        if (rgb) { var f = toHex(rgb); allHex.value = f; allPicker.value = f; saveToLocalStorage(); }
+        if (rgb) { var f = toHex(rgb); allHex.value = f; allPicker.value = f.toLowerCase(); saveToLocalStorage(); }
+        else { allHex.value = String(allPicker.value).toUpperCase(); }
     };
 
-    // Layers tab
+    // ---------- Layers ----------
+    // FIX: window.prompt() is blocked in CEP panels, so renaming now happens in the name field
     function renderLayersList() {
-        var box = document.getElementById("fplcLayersList");
+        var box = $("fplcLayersList");
         if (!box) return;
         box.innerHTML = "";
         if (!stateUi.layersCache || !stateUi.layersCache.length) {
@@ -978,8 +1104,11 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 
             var nameSpan = document.createElement("span");
             nameSpan.className = "fplc-rule-final";
-            var indent = new Array((info.depth || 0) + 1).join("  · ");
-            nameSpan.textContent = (info.depth > 0 ? indent + " " : "") + info.name;
+            var depth = info.depth || 0;
+            var indent = "";
+            for (var d = 0; d < depth; d++) indent += "· ";
+            nameSpan.textContent = indent + info.name;
+            nameSpan.style.flex = "1";
 
             var metaSpan = document.createElement("span");
             metaSpan.className = "fplc-layer-meta";
@@ -991,24 +1120,16 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             (function (layerName) {
                 item.onclick = function () {
                     stateUi.selectedLayerName = layerName;
-                    document.getElementById("fplcNewLayerName").value = layerName;
+                    $("fplcNewLayerName").value = layerName;
                     renderLayersList();
                 };
                 item.ondblclick = function () {
-                    var nm = prompt("Rename layer:", layerName);
-                    if (nm === null) return;
-                    nm = nm.trim();
-                    if (!nm) return;
-                    window.VGTools.runScript(
-                        "jsx/floor_plan_cleaner.jsx",
-                        { _fromHtmlUi: true, renameLayer: { oldName: layerName, newName: nm } },
-                        function () {
-                            stateUi.selectedLayerName = nm;
-                            document.getElementById("fplcNewLayerName").value = nm;
-                            refreshLayersViaJsx();
-                        },
-                        "Rename Layer"
-                    );
+                    stateUi.selectedLayerName = layerName;
+                    var inp = $("fplcNewLayerName");
+                    inp.value = layerName;
+                    renderLayersList();
+                    inp.focus();
+                    inp.select();
                 };
             })(info.name);
             box.appendChild(item);
@@ -1016,55 +1137,60 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     }
 
     function refreshLayersViaJsx() {
-        var incSub = document.getElementById("fplcLayersShowSub").checked;
-        window.VGTools.runScript(
-            "jsx/floor_plan_cleaner.jsx",
-            { _fromHtmlUi: true, action: "listLayers", includeSub: incSub },
-            function (raw) {
-                try {
-                    var parsed = JSON.parse(raw);
-                    if (parsed && Array.isArray(parsed.layers)) stateUi.layersCache = parsed.layers;
-                } catch (e) {}
-                renderLayersList();
-            },
-            "List Layers"
-        );
+        runJsx({ _fromHtmlUi: true, action: "listLayers", includeSub: $("fplcLayersShowSub").checked }, function (raw) {
+            var parsed = parseReply(raw);
+            if (parsed && parsed.ok && Array.isArray(parsed.layers)) stateUi.layersCache = parsed.layers;
+            else if (parsed && parsed.error) { stateUi.layersCache = []; showStatus(parsed.error, "error"); }
+            renderLayersList();
+        }, "List Layers");
     }
 
-    document.getElementById("fplcBtnRefreshLayers").onclick = refreshLayersViaJsx;
-    document.getElementById("fplcLayersShowSub").onchange = function () { refreshLayersViaJsx(); saveToLocalStorage(); };
-    document.getElementById("fplcBtnRenameLayer").onclick = function () {
-        var newName = String(document.getElementById("fplcNewLayerName").value || "").trim();
+    function renameSelectedLayer(newName, label) {
+        runJsx({ _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: newName } }, function (raw) {
+            var parsed = parseReply(raw);
+            if (parsed && parsed.ok === false) { safeLog("Rename Layer -> " + parsed.error, "error"); return; }
+            stateUi.selectedLayerName = newName;
+            $("fplcNewLayerName").value = newName;
+            refreshLayersViaJsx();
+        }, label);
+    }
+
+    $("fplcBtnRefreshLayers").onclick = refreshLayersViaJsx;
+    $("fplcLayersShowSub").onchange = function () { refreshLayersViaJsx(); saveToLocalStorage(); };
+    $("fplcBtnRenameLayer").onclick = function () {
+        var newName = String($("fplcNewLayerName").value || "").trim();
         if (!stateUi.selectedLayerName || !newName) { safeLog("Rename Layer -> Select a layer and enter a new name.", "warn"); return; }
-        window.VGTools.runScript(
-            "jsx/floor_plan_cleaner.jsx",
-            { _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: newName } },
-            function () { stateUi.selectedLayerName = newName; refreshLayersViaJsx(); },
-            "Rename Layer"
-        );
+        if (newName === stateUi.selectedLayerName) return;
+        renameSelectedLayer(newName, "Rename Layer");
     };
-    document.getElementById("fplcBtnUpperLayer").onclick = function () {
+    $("fplcNewLayerName").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") $("fplcBtnRenameLayer").click();
+    });
+    $("fplcBtnUpperLayer").onclick = function () {
         if (!stateUi.selectedLayerName) { safeLog("Uppercase Layer -> Select a layer first.", "warn"); return; }
         var up = stateUi.selectedLayerName.toUpperCase();
-        document.getElementById("fplcNewLayerName").value = up;
-        window.VGTools.runScript(
-            "jsx/floor_plan_cleaner.jsx",
-            { _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: up } },
-            function () { stateUi.selectedLayerName = up; refreshLayersViaJsx(); },
-            "Uppercase Layer"
-        );
+        if (up === stateUi.selectedLayerName) return;
+        renameSelectedLayer(up, "Uppercase Layer");
     };
 
-    // Group Graphics tab
-    var ggPicker = document.getElementById("fplcGgColorPicker");
-    var ggHex = document.getElementById("fplcGgColor");
+    // ---------- Group Graphics ----------
+    var ggPicker = $("fplcGgColorPicker");
+    var ggHex = $("fplcGgColor");
+
+    function currentGgSet() { return stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0]; }
+
+    function setPartEditMode(idx) {
+        stateUi.editingPartIdx = idx;
+        $("fplcBtnGgAddPart").textContent = idx >= 0 ? "Update Part" : "+ Add Part";
+        $("fplcBtnGgCancelPart").style.display = idx >= 0 ? "" : "none";
+    }
 
     function renderGgSets() {
-        var sel = document.getElementById("fplcGgSetSelect");
-        var partsBox = document.getElementById("fplcGgPartsList");
-        var nameInp = document.getElementById("fplcGgSetNameInput");
-        var unitVal = document.getElementById("fplcGgUnit").value || "in";
-        var unitHint = document.getElementById("fplcGgUnitHint");
+        var sel = $("fplcGgSetSelect");
+        var partsBox = $("fplcGgPartsList");
+        var nameInp = $("fplcGgSetNameInput");
+        var unitVal = $("fplcGgUnit").value || "in";
+        var unitHint = $("fplcGgUnitHint");
         if (unitHint) unitHint.textContent = unitVal;
         if (!sel || !partsBox) return;
 
@@ -1078,42 +1204,45 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         if (stateUi.activeGgIdx >= stateUi.ggSets.length) stateUi.activeGgIdx = 0;
         sel.value = stateUi.activeGgIdx;
 
-        var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
+        var curSet = currentGgSet();
         var hex = toHex(curSet.color);
         ggHex.value = hex;
-        ggPicker.value = hex;
-        if (nameInp) nameInp.value = curSet.name;
+        ggPicker.value = hex.toLowerCase();
+        if (nameInp && document.activeElement !== nameInp) nameInp.value = curSet.name;
 
         partsBox.innerHTML = "";
+        if (!curSet.items.length) {
+            partsBox.innerHTML = "<div class='fplc-rule-empty'>No parts yet. Add a W x H above.</div>";
+        }
         for (var p = 0; p < curSet.items.length; p++) {
             var row = document.createElement("div");
-            row.className = "fplc-list-item";
+            row.className = "fplc-list-item" + (stateUi.editingPartIdx === p ? " selected" : "");
             var span = document.createElement("span");
+            span.className = "fplc-rule-final";
+            span.style.flex = "1";
             span.textContent = "Part " + (p + 1) + ": " + curSet.items[p].w + " x " + curSet.items[p].h + " " + unitVal;
             (function (pIdx, partObj) {
-                row.ondblclick = function () {
-                    var newW = prompt("Edit Part " + (pIdx + 1) + " Width (" + unitVal + "):", String(partObj.w));
-                    if (newW === null) return;
-                    var newH = prompt("Edit Part " + (pIdx + 1) + " Height (" + unitVal + "):", String(partObj.h));
-                    if (newH === null) return;
-                    var wv = parseFloat(newW), hv = parseFloat(newH);
-                    if (!isNaN(wv) && wv >= 0 && !isNaN(hv) && hv >= 0) {
-                        partObj.w = wv;
-                        partObj.h = hv;
-                        renderGgSets();
-                        saveToLocalStorage();
-                    }
+                var startEdit = function () {
+                    $("fplcGgW").value = partObj.w;
+                    $("fplcGgH").value = partObj.h;
+                    setPartEditMode(pIdx);
+                    renderGgSets();
+                    $("fplcGgW").focus();
                 };
+                row.onclick = startEdit;
+                row.ondblclick = startEdit;
             })(p, curSet.items[p]);
 
             var rmBtn = document.createElement("button");
             rmBtn.type = "button";
             rmBtn.className = "log-btn";
             rmBtn.textContent = "✕";
+            rmBtn.title = "Remove part";
             (function (pIdx) {
                 rmBtn.onclick = function (e) {
                     if (e && e.stopPropagation) e.stopPropagation();
                     curSet.items.splice(pIdx, 1);
+                    setPartEditMode(-1);
                     renderGgSets();
                     saveToLocalStorage();
                 };
@@ -1124,67 +1253,89 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         }
     }
 
-    document.getElementById("fplcGgUnit").onchange = function () { renderGgSets(); saveToLocalStorage(); };
+    $("fplcGgUnit").onchange = function () { renderGgSets(); saveToLocalStorage(); };
     ggPicker.oninput = function () {
         var rgb = parseHex(ggPicker.value);
-        if (rgb && stateUi.ggSets[stateUi.activeGgIdx]) {
-            stateUi.ggSets[stateUi.activeGgIdx].color = rgb;
-            ggHex.value = toHex(rgb);
+        if (rgb && currentGgSet()) {
+            currentGgSet().color = rgb;
             renderGgSets();
             saveToLocalStorage();
         }
     };
     ggHex.onchange = function () {
         var rgb = parseHex(ggHex.value);
-        if (rgb && stateUi.ggSets[stateUi.activeGgIdx]) {
-            stateUi.ggSets[stateUi.activeGgIdx].color = rgb;
+        if (rgb && currentGgSet()) {
+            currentGgSet().color = rgb;
             renderGgSets();
             saveToLocalStorage();
+        } else {
+            ggHex.value = toHex(currentGgSet().color);
         }
     };
-    document.getElementById("fplcGgSetSelect").onchange = function () { stateUi.activeGgIdx = parseInt(this.value, 10) || 0; renderGgSets(); saveToLocalStorage(); };
-    document.getElementById("fplcBtnGgAddSet").onclick = function () {
-        var name = String(document.getElementById("fplcGgSetNameInput").value || "").trim() || ("Group " + (stateUi.ggSets.length + 1));
+    $("fplcGgSetSelect").onchange = function () {
+        stateUi.activeGgIdx = parseInt(this.value, 10) || 0;
+        setPartEditMode(-1);
+        $("fplcGgSetNameInput").value = "";
+        renderGgSets();
+        saveToLocalStorage();
+    };
+    $("fplcBtnGgAddSet").onclick = function () {
+        var name = String($("fplcGgSetNameInput").value || "").trim() || ("Group " + (stateUi.ggSets.length + 1));
         stateUi.ggSets.push({ name: name, color: [84, 84, 84], items: [] });
         stateUi.activeGgIdx = stateUi.ggSets.length - 1;
+        setPartEditMode(-1);
+        $("fplcGgSetNameInput").value = "";
         renderGgSets();
         saveToLocalStorage();
     };
-    document.getElementById("fplcBtnGgRenameSet").onclick = function () {
-        var name = String(document.getElementById("fplcGgSetNameInput").value || "").trim();
-        if (!name || !stateUi.ggSets[stateUi.activeGgIdx]) return;
-        stateUi.ggSets[stateUi.activeGgIdx].name = name;
+    $("fplcBtnGgRenameSet").onclick = function () {
+        var name = String($("fplcGgSetNameInput").value || "").trim();
+        if (!name || !currentGgSet()) { safeLog("Group Graphics -> Type a new set name first.", "warn"); return; }
+        currentGgSet().name = name;
         renderGgSets();
         saveToLocalStorage();
     };
-    document.getElementById("fplcBtnGgDelSet").onclick = function () {
+    $("fplcBtnGgDelSet").onclick = function () {
         if (stateUi.ggSets.length <= 1) { safeLog("Group Graphics -> Keep at least one group set.", "warn"); return; }
         stateUi.ggSets.splice(stateUi.activeGgIdx, 1);
         stateUi.activeGgIdx = 0;
+        setPartEditMode(-1);
         renderGgSets();
         saveToLocalStorage();
     };
-    document.getElementById("fplcBtnGgAddPart").onclick = function () {
-        var wVal = parseFloat(document.getElementById("fplcGgW").value);
-        var hVal = parseFloat(document.getElementById("fplcGgH").value);
-        if (isNaN(wVal) || isNaN(hVal)) { safeLog("Group Graphics -> Enter valid W and H numbers.", "warn"); return; }
-        var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
-        curSet.items.push({ w: wVal, h: hVal });
-        document.getElementById("fplcGgW").value = "";
-        document.getElementById("fplcGgH").value = "";
+    $("fplcBtnGgAddPart").onclick = function () {
+        var wVal = parseFloat($("fplcGgW").value);
+        var hVal = parseFloat($("fplcGgH").value);
+        if (isNaN(wVal) || isNaN(hVal) || wVal < 0 || hVal < 0) { safeLog("Group Graphics -> Enter valid W and H numbers.", "warn"); return; }
+        var curSet = currentGgSet();
+        if (stateUi.editingPartIdx >= 0 && curSet.items[stateUi.editingPartIdx]) {
+            curSet.items[stateUi.editingPartIdx] = { w: wVal, h: hVal };
+        } else {
+            curSet.items.push({ w: wVal, h: hVal });
+        }
+        $("fplcGgW").value = "";
+        $("fplcGgH").value = "";
+        setPartEditMode(-1);
         renderGgSets();
         saveToLocalStorage();
     };
-    document.getElementById("fplcBtnGgClearParts").onclick = function () {
-        var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
-        curSet.items = [];
+    $("fplcBtnGgCancelPart").onclick = function () {
+        $("fplcGgW").value = "";
+        $("fplcGgH").value = "";
+        setPartEditMode(-1);
+        renderGgSets();
+    };
+    $("fplcBtnGgClearParts").onclick = function () {
+        currentGgSet().items = [];
+        setPartEditMode(-1);
         renderGgSets();
         saveToLocalStorage();
     };
 
+    // ---------- Payload ----------
     function buildFullPayload(forceCompact, onlyFlags) {
-        var ggRgb = parseHex(ggHex.value) || [84, 84, 84];
-        if (stateUi.ggSets[stateUi.activeGgIdx]) stateUi.ggSets[stateUi.activeGgIdx].color = ggRgb;
+        var ggRgb = parseHex(ggHex.value) || (currentGgSet() ? currentGgSet().color : [84, 84, 84]);
+        if (currentGgSet()) currentGgSet().color = ggRgb;
         var allRgb = parseHex(allHex.value) || [0, 0, 0];
         var activeTabBtn = document.querySelector("#fplcTabBar .fplc-tab.active");
 
@@ -1193,23 +1344,23 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             _activeTab: activeTabBtn ? activeTabBtn.getAttribute("data-tab") : "fplcTabRun",
             onlyFlags: onlyFlags || null,
             cfg: {
-                scope: document.getElementById("fplcScopeSelect").value,
-                runSet: forceCompact ? "compact" : document.getElementById("fplcRunSet").value,
-                restyle: forceCompact ? true : document.getElementById("fplcRestyle").checked,
-                updnEnabled: document.getElementById("fplcUpDn").checked,
-                wrapLabels: document.getElementById("fplcWrap").checked,
-                removeJunk: document.getElementById("fplcJunk").checked,
-                looseMatch: document.getElementById("fplcLoose").checked,
-                moveOptNames: document.getElementById("fplcOpt").checked,
-                allLinesEnabled: document.getElementById("fplcAllLines").checked,
-                dashedEnabled: document.getElementById("fplcDashed").checked,
-                arrowsEnabled: document.getElementById("fplcArrows").checked,
-                groupGraphicsEnabled: document.getElementById("fplcGroupGfx").checked,
-                capLayersEnabled: document.getElementById("fplcCapLayers").checked,
-                capTextEnabled: document.getElementById("fplcCapText").checked,
-                reportEnabled: document.getElementById("fplcReport").checked,
-                reportItems: document.getElementById("fplcReportItems").checked,
-                dryRun: document.getElementById("fplcDryRun").checked
+                scope: $("fplcScopeSelect").value,
+                runSet: forceCompact ? "compact" : $("fplcRunSet").value,
+                restyle: forceCompact ? true : $("fplcRestyle").checked,
+                updnEnabled: $("fplcUpDn").checked,
+                wrapLabels: $("fplcWrap").checked,
+                removeJunk: $("fplcJunk").checked,
+                looseMatch: $("fplcLoose").checked,
+                moveOptNames: $("fplcOpt").checked,
+                allLinesEnabled: $("fplcAllLines").checked,
+                dashedEnabled: $("fplcDashed").checked,
+                arrowsEnabled: $("fplcArrows").checked,
+                groupGraphicsEnabled: $("fplcGroupGfx").checked,
+                capLayersEnabled: $("fplcCapLayers").checked,
+                capTextEnabled: $("fplcCapText").checked,
+                reportEnabled: $("fplcReport").checked,
+                reportItems: $("fplcReportItems").checked,
+                dryRun: $("fplcDryRun").checked
             },
             rules: stateUi.rules,
             styleSets: stateUi.styleSets,
@@ -1219,146 +1370,154 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             junkRegex: splitLines("fplcJunkRegex"),
             dashed: {
                 enabled: true,
-                applyWeight: document.getElementById("fplcDashWeightOn").checked,
-                applyDashSpace: document.getElementById("fplcDashSpaceOn").checked,
-                applyColor: document.getElementById("fplcDashColorOn").checked,
-                selectAfter: document.getElementById("fplcDashSelect").checked,
-                strokeWeight: parseFloat(document.getElementById("fplcDashWeight").value) || 0.5,
-                dash: parseFloat(document.getElementById("fplcDashLen").value) || 3,
-                space: parseFloat(document.getElementById("fplcDashSpace").value) || 2
+                applyWeight: $("fplcDashWeightOn").checked,
+                applyDashSpace: $("fplcDashSpaceOn").checked,
+                applyColor: $("fplcDashColorOn").checked,
+                selectAfter: $("fplcDashSelect").checked,
+                strokeWeight: parseFloat($("fplcDashWeight").value) || 0.5,
+                dash: parseFloat($("fplcDashLen").value) || 3,
+                space: isNaN(parseFloat($("fplcDashSpace").value)) ? 2 : parseFloat($("fplcDashSpace").value)
             },
             allLines: {
-                applyWeight: document.getElementById("fplcAllWeightOn").checked,
-                weight: parseFloat(document.getElementById("fplcAllWeight").value) || 0.5,
-                applyColor: document.getElementById("fplcAllColorOn").checked,
+                applyWeight: $("fplcAllWeightOn").checked,
+                weight: parseFloat($("fplcAllWeight").value) || 0.5,
+                applyColor: $("fplcAllColorOn").checked,
                 color: allRgb,
-                skipDashed: document.getElementById("fplcAllSkipDashed").checked,
-                selectAfter: document.getElementById("fplcAllSelect").checked
+                skipDashed: $("fplcAllSkipDashed").checked,
+                selectAfter: $("fplcAllSelect").checked
             },
             arrows: {
-                detectTriangles: document.getElementById("fplcArrowTri").checked,
-                triMax: parseFloat(document.getElementById("fplcArrowTriMax").value) || 24,
-                detectGlyphs: document.getElementById("fplcArrowGlyph").checked,
-                keywords: String(document.getElementById("fplcArrowKw").value || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean)
+                detectTriangles: $("fplcArrowTri").checked,
+                triMax: parseFloat($("fplcArrowTriMax").value) || 24,
+                detectGlyphs: $("fplcArrowGlyph").checked,
+                keywords: String($("fplcArrowKw").value || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean)
             },
             universal: {
-                layersIncludeSub: document.getElementById("fplcUnivLayerSub").checked,
-                textMode: document.getElementById("fplcUnivTextMode").value,
-                selectTexts: document.getElementById("fplcUnivSelectTexts").checked
+                layersIncludeSub: $("fplcUnivLayerSub").checked,
+                textMode: $("fplcUnivTextMode").value,
+                selectTexts: $("fplcUnivSelectTexts").checked
             },
             groupGraphics: {
-                unit: document.getElementById("fplcGgUnit").value,
-                tolerance: parseFloat(document.getElementById("fplcGgTol").value) || 0.05,
-                maxGap: parseFloat(document.getElementById("fplcGgGap").value) || 2.0,
-                allowRotated: document.getElementById("fplcGgRot").checked,
-                useVisibleBounds: document.getElementById("fplcGgVis").checked,
-                requireAllParts: document.getElementById("fplcGgReqAll").checked,
-                applyColor: document.getElementById("fplcGgApplyCol").checked,
+                unit: $("fplcGgUnit").value,
+                tolerance: isNaN(parseFloat($("fplcGgTol").value)) ? 0.05 : parseFloat($("fplcGgTol").value),
+                maxGap: isNaN(parseFloat($("fplcGgGap").value)) ? 2.0 : parseFloat($("fplcGgGap").value),
+                allowRotated: $("fplcGgRot").checked,
+                useVisibleBounds: $("fplcGgVis").checked,
+                requireAllParts: $("fplcGgReqAll").checked,
+                applyColor: $("fplcGgApplyCol").checked,
                 sets: stateUi.ggSets
             }
         };
     }
 
-    function saveToLocalStorage() {
-        try {
-            var snap = buildFullPayload(false, null);
-            delete snap._fromHtmlUi;
-            delete snap.onlyFlags;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(snap));
-        } catch (e) {}
-    }
+    function setChecked(id, val) { var el = $(id); if (el && typeof val === "boolean") el.checked = val; }
+    function setValue(id, val) { var el = $(id); if (el && val !== undefined && val !== null) el.value = val; }
 
     function applyImportedConfig(data) {
         if (!data || typeof data !== "object") { safeLog("Import JSON -> Invalid structure.", "error"); return; }
-        if (data._activeTab) {
-            var activeTabBtn = document.querySelector('#fplcTabBar .fplc-tab[data-tab="' + data._activeTab + '"]');
-            if (activeTabBtn) activeTabBtn.click();
-        }
-        if (data.cfg) {
-            if (data.cfg.scope) document.getElementById("fplcScopeSelect").value = data.cfg.scope;
-            if (data.cfg.runSet) document.getElementById("fplcRunSet").value = data.cfg.runSet;
-            if (typeof data.cfg.restyle === "boolean") document.getElementById("fplcRestyle").checked = data.cfg.restyle;
-            if (typeof data.cfg.updnEnabled === "boolean") document.getElementById("fplcUpDn").checked = data.cfg.updnEnabled;
-            if (typeof data.cfg.wrapLabels === "boolean") document.getElementById("fplcWrap").checked = data.cfg.wrapLabels;
-            if (typeof data.cfg.removeJunk === "boolean") document.getElementById("fplcJunk").checked = data.cfg.removeJunk;
-            if (typeof data.cfg.looseMatch === "boolean") document.getElementById("fplcLoose").checked = data.cfg.looseMatch;
-            if (typeof data.cfg.moveOptNames === "boolean") document.getElementById("fplcOpt").checked = data.cfg.moveOptNames;
-            if (typeof data.cfg.allLinesEnabled === "boolean") {
-                document.getElementById("fplcAllLines").checked = data.cfg.allLinesEnabled;
-                document.getElementById("fplcAllLinesTab").checked = data.cfg.allLinesEnabled;
+        var wasRestoring = restoring;
+        restoring = true;
+        try {
+            if (data._activeTab) {
+                var activeTabBtn = document.querySelector('#fplcTabBar .fplc-tab[data-tab="' + data._activeTab + '"]');
+                if (activeTabBtn) activateTab(activeTabBtn);
             }
-            if (typeof data.cfg.dashedEnabled === "boolean") {
-                document.getElementById("fplcDashed").checked = data.cfg.dashedEnabled;
-                document.getElementById("fplcDashEnabled").checked = data.cfg.dashedEnabled;
+            var c = data.cfg;
+            if (c) {
+                if (c.scope) setValue("fplcScopeSelect", c.scope);
+                if (c.runSet) setValue("fplcRunSet", c.runSet);
+                setChecked("fplcRestyle", c.restyle);
+                setChecked("fplcUpDn", c.updnEnabled);
+                setChecked("fplcWrap", c.wrapLabels);
+                setChecked("fplcJunk", c.removeJunk);
+                setChecked("fplcLoose", c.looseMatch);
+                setChecked("fplcOpt", c.moveOptNames);
+                setChecked("fplcAllLines", c.allLinesEnabled); setChecked("fplcAllLinesTab", c.allLinesEnabled);
+                setChecked("fplcDashed", c.dashedEnabled); setChecked("fplcDashEnabled", c.dashedEnabled);
+                setChecked("fplcArrows", c.arrowsEnabled); setChecked("fplcArrowsTab", c.arrowsEnabled);
+                setChecked("fplcGroupGfx", c.groupGraphicsEnabled);
+                setChecked("fplcCapLayers", c.capLayersEnabled); setChecked("fplcUnivCapLayers", c.capLayersEnabled);
+                setChecked("fplcCapText", c.capTextEnabled); setChecked("fplcUnivCapText", c.capTextEnabled);
+                setChecked("fplcReport", c.reportEnabled);
+                setChecked("fplcReportItems", c.reportItems);
+                setChecked("fplcDryRun", c.dryRun);
             }
-            if (typeof data.cfg.arrowsEnabled === "boolean") {
-                document.getElementById("fplcArrows").checked = data.cfg.arrowsEnabled;
-                document.getElementById("fplcArrowsTab").checked = data.cfg.arrowsEnabled;
+            if (Array.isArray(data.rules)) {
+                var good = sanitizeRules(data.rules);
+                if (good.length) { stateUi.rules = good; stateUi.editingRuleIdx = -1; syncRuleFormButton(); renderRules(); }
             }
-            if (typeof data.cfg.groupGraphicsEnabled === "boolean") document.getElementById("fplcGroupGfx").checked = data.cfg.groupGraphicsEnabled;
-            if (typeof data.cfg.capLayersEnabled === "boolean") {
-                document.getElementById("fplcCapLayers").checked = data.cfg.capLayersEnabled;
-                document.getElementById("fplcUnivCapLayers").checked = data.cfg.capLayersEnabled;
+            if (data.styleSets && typeof data.styleSets === "object") { stateUi.styleSets = mergeStyleSets(data.styleSets); renderStyleRows(); }
+            if (Array.isArray(data.optPatterns)) setValue("fplcOptPatterns", data.optPatterns.join("\n"));
+            if (Array.isArray(data.wrapTexts)) setValue("fplcWrapTexts", data.wrapTexts.join("\n"));
+            if (Array.isArray(data.junkExact)) setValue("fplcJunkExact", data.junkExact.join("\n"));
+            if (Array.isArray(data.junkRegex)) setValue("fplcJunkRegex", data.junkRegex.join("\n"));
+            var d = data.dashed;
+            if (d) {
+                setChecked("fplcDashWeightOn", d.applyWeight);
+                setChecked("fplcDashSpaceOn", d.applyDashSpace);
+                setChecked("fplcDashColorOn", d.applyColor);
+                setChecked("fplcDashSelect", d.selectAfter);
+                if (typeof d.strokeWeight === "number") setValue("fplcDashWeight", d.strokeWeight);
+                if (typeof d.dash === "number") setValue("fplcDashLen", d.dash);
+                if (typeof d.space === "number") setValue("fplcDashSpace", d.space);
             }
-            if (typeof data.cfg.capTextEnabled === "boolean") {
-                document.getElementById("fplcCapText").checked = data.cfg.capTextEnabled;
-                document.getElementById("fplcUnivCapText").checked = data.cfg.capTextEnabled;
+            var a = data.allLines;
+            if (a) {
+                setChecked("fplcAllWeightOn", a.applyWeight);
+                if (typeof a.weight === "number") setValue("fplcAllWeight", a.weight);
+                setChecked("fplcAllColorOn", a.applyColor);
+                if (Array.isArray(a.color) && a.color.length === 3) {
+                    var aHex = toHex(a.color);
+                    allHex.value = aHex;
+                    allPicker.value = aHex.toLowerCase();
+                }
+                setChecked("fplcAllSkipDashed", a.skipDashed);
+                setChecked("fplcAllSelect", a.selectAfter);
             }
-            if (typeof data.cfg.reportEnabled === "boolean") document.getElementById("fplcReport").checked = data.cfg.reportEnabled;
-            if (typeof data.cfg.reportItems === "boolean") document.getElementById("fplcReportItems").checked = data.cfg.reportItems;
-            if (typeof data.cfg.dryRun === "boolean") document.getElementById("fplcDryRun").checked = data.cfg.dryRun;
-        }
-        if (Array.isArray(data.rules)) { stateUi.rules = data.rules; renderRules(); }
-        if (data.styleSets && typeof data.styleSets === "object") { stateUi.styleSets = data.styleSets; renderStyleRows(); }
-        if (Array.isArray(data.optPatterns)) document.getElementById("fplcOptPatterns").value = data.optPatterns.join("\n");
-        if (Array.isArray(data.wrapTexts)) document.getElementById("fplcWrapTexts").value = data.wrapTexts.join("\n");
-        if (Array.isArray(data.junkExact)) document.getElementById("fplcJunkExact").value = data.junkExact.join("\n");
-        if (Array.isArray(data.junkRegex)) document.getElementById("fplcJunkRegex").value = data.junkRegex.join("\n");
-        if (data.dashed) {
-            if (typeof data.dashed.applyWeight === "boolean") document.getElementById("fplcDashWeightOn").checked = data.dashed.applyWeight;
-            if (typeof data.dashed.applyDashSpace === "boolean") document.getElementById("fplcDashSpaceOn").checked = data.dashed.applyDashSpace;
-            if (typeof data.dashed.applyColor === "boolean") document.getElementById("fplcDashColorOn").checked = data.dashed.applyColor;
-            if (typeof data.dashed.selectAfter === "boolean") document.getElementById("fplcDashSelect").checked = data.dashed.selectAfter;
-            if (typeof data.dashed.strokeWeight === "number") document.getElementById("fplcDashWeight").value = data.dashed.strokeWeight;
-            if (typeof data.dashed.dash === "number") document.getElementById("fplcDashLen").value = data.dashed.dash;
-            if (typeof data.dashed.space === "number") document.getElementById("fplcDashSpace").value = data.dashed.space;
-        }
-        if (data.allLines) {
-            if (typeof data.allLines.applyWeight === "boolean") document.getElementById("fplcAllWeightOn").checked = data.allLines.applyWeight;
-            if (typeof data.allLines.weight === "number") document.getElementById("fplcAllWeight").value = data.allLines.weight;
-            if (typeof data.allLines.applyColor === "boolean") document.getElementById("fplcAllColorOn").checked = data.allLines.applyColor;
-            if (Array.isArray(data.allLines.color) && data.allLines.color.length === 3) {
-                var aHex = toHex(data.allLines.color);
-                allHex.value = aHex;
-                allPicker.value = aHex;
+            var ar = data.arrows;
+            if (ar) {
+                setChecked("fplcArrowTri", ar.detectTriangles);
+                if (typeof ar.triMax === "number") setValue("fplcArrowTriMax", ar.triMax);
+                setChecked("fplcArrowGlyph", ar.detectGlyphs);
+                if (Array.isArray(ar.keywords)) setValue("fplcArrowKw", ar.keywords.join(", "));
             }
-            if (typeof data.allLines.skipDashed === "boolean") document.getElementById("fplcAllSkipDashed").checked = data.allLines.skipDashed;
-            if (typeof data.allLines.selectAfter === "boolean") document.getElementById("fplcAllSelect").checked = data.allLines.selectAfter;
+            var u = data.universal;
+            if (u) {
+                setChecked("fplcUnivLayerSub", u.layersIncludeSub);
+                if (u.textMode) setValue("fplcUnivTextMode", u.textMode);
+                setChecked("fplcUnivSelectTexts", u.selectTexts);
+            }
+            var g = data.groupGraphics;
+            if (g) {
+                if (g.unit) setValue("fplcGgUnit", g.unit);
+                if (typeof g.tolerance === "number") setValue("fplcGgTol", g.tolerance);
+                if (typeof g.maxGap === "number") setValue("fplcGgGap", g.maxGap);
+                setChecked("fplcGgRot", g.allowRotated);
+                setChecked("fplcGgVis", g.useVisibleBounds);
+                setChecked("fplcGgReqAll", g.requireAllParts);
+                setChecked("fplcGgApplyCol", g.applyColor);
+                if (Array.isArray(g.sets) && g.sets.length > 0) {
+                    var sets = [];
+                    for (var s = 0; s < g.sets.length; s++) {
+                        var gs = g.sets[s];
+                        if (!gs) continue;
+                        var col = (Array.isArray(gs.color) && gs.color.length === 3) ? gs.color : [84, 84, 84];
+                        var items = [];
+                        var rawItems = Array.isArray(gs.items) ? gs.items : [];
+                        for (var q = 0; q < rawItems.length; q++) {
+                            var w = parseFloat(rawItems[q] && rawItems[q].w), h = parseFloat(rawItems[q] && rawItems[q].h);
+                            if (!isNaN(w) && !isNaN(h)) items.push({ w: w, h: h });
+                        }
+                        sets.push({ name: String(gs.name || ("Group " + (sets.length + 1))), color: col, items: items });
+                    }
+                    if (sets.length) { stateUi.ggSets = sets; stateUi.activeGgIdx = 0; setPartEditMode(-1); }
+                }
+                renderGgSets();
+            }
+            updateStyleSummary();
+        } finally {
+            restoring = wasRestoring;
         }
-        if (data.arrows) {
-            if (typeof data.arrows.detectTriangles === "boolean") document.getElementById("fplcArrowTri").checked = data.arrows.detectTriangles;
-            if (typeof data.arrows.triMax === "number") document.getElementById("fplcArrowTriMax").value = data.arrows.triMax;
-            if (typeof data.arrows.detectGlyphs === "boolean") document.getElementById("fplcArrowGlyph").checked = data.arrows.detectGlyphs;
-            if (Array.isArray(data.arrows.keywords)) document.getElementById("fplcArrowKw").value = data.arrows.keywords.join(", ");
-        }
-        if (data.universal) {
-            if (typeof data.universal.layersIncludeSub === "boolean") document.getElementById("fplcUnivLayerSub").checked = data.universal.layersIncludeSub;
-            if (data.universal.textMode) document.getElementById("fplcUnivTextMode").value = data.universal.textMode;
-            if (typeof data.universal.selectTexts === "boolean") document.getElementById("fplcUnivSelectTexts").checked = data.universal.selectTexts;
-        }
-        if (data.groupGraphics && Array.isArray(data.groupGraphics.sets) && data.groupGraphics.sets.length > 0) {
-            stateUi.ggSets = data.groupGraphics.sets;
-            stateUi.activeGgIdx = 0;
-            if (data.groupGraphics.unit) document.getElementById("fplcGgUnit").value = data.groupGraphics.unit;
-            if (typeof data.groupGraphics.tolerance === "number") document.getElementById("fplcGgTol").value = data.groupGraphics.tolerance;
-            if (typeof data.groupGraphics.maxGap === "number") document.getElementById("fplcGgGap").value = data.groupGraphics.maxGap;
-            if (typeof data.groupGraphics.allowRotated === "boolean") document.getElementById("fplcGgRot").checked = data.groupGraphics.allowRotated;
-            if (typeof data.groupGraphics.useVisibleBounds === "boolean") document.getElementById("fplcGgVis").checked = data.groupGraphics.useVisibleBounds;
-            if (typeof data.groupGraphics.requireAllParts === "boolean") document.getElementById("fplcGgReqAll").checked = data.groupGraphics.requireAllParts;
-            if (typeof data.groupGraphics.applyColor === "boolean") document.getElementById("fplcGgApplyCol").checked = data.groupGraphics.applyColor;
-            renderGgSets();
-        }
-        updateStyleSummary();
     }
 
     function restoreFromLocalStorage() {
@@ -1379,102 +1538,109 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         }
     }
 
-    var viewSelector = document.getElementById("viewSelector");
-    if (viewSelector) viewSelector.addEventListener("change", saveToLocalStorage);
-    window.addEventListener("beforeunload", saveToLocalStorage);
+    var viewSelector = $("viewSelector");
+    if (viewSelector) viewSelector.addEventListener("change", saveNow);
+    window.addEventListener("beforeunload", saveNow);
 
+    // ---------- Run buttons ----------
     function invokeCleaner(payload, label) {
-        saveToLocalStorage();
-        window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", payload, null, label);
+        saveNow();
+        runJsx(payload, function (raw) {
+            var parsed = parseReply(raw);
+            if (!parsed) return;
+            if (parsed.ok === false) safeLog(label + " -> " + (parsed.error || "Failed."), "error");
+            else if (parsed.message) safeLog(label + " -> " + parsed.message, "success");
+        }, label);
     }
 
-    document.getElementById("fplcBtnRunMain").onclick = function () { invokeCleaner(buildFullPayload(false, null), "Floor Plan Cleaner"); };
-    document.getElementById("fplcBtnRunCompact").onclick = function () { invokeCleaner(buildFullPayload(true, null), "Floor Plan Cleaner (Compact)"); };
-    document.getElementById("fplcBtnApplyArrowsNow").onclick = function () { invokeCleaner(buildFullPayload(false, ["arrowsEnabled"]), "Apply Arrow Colour"); };
-    document.getElementById("fplcBtnApplyAllLinesNow").onclick = function () { invokeCleaner(buildFullPayload(false, ["allLinesEnabled"]), "Apply All Lines"); };
-    document.getElementById("fplcBtnApplyUnivNow").onclick = function () {
+    $("fplcBtnRunMain").onclick = function () { invokeCleaner(buildFullPayload(false, null), "Floor Plan Cleaner"); };
+    $("fplcBtnRunCompact").onclick = function () { invokeCleaner(buildFullPayload(true, null), "Floor Plan Cleaner (Compact)"); };
+    $("fplcBtnApplyArrowsNow").onclick = function () { invokeCleaner(buildFullPayload(false, ["arrowsEnabled"]), "Apply Arrow Colour"); };
+    $("fplcBtnApplyAllLinesNow").onclick = function () { invokeCleaner(buildFullPayload(false, ["allLinesEnabled"]), "Apply All Lines"); };
+    $("fplcBtnApplyUnivNow").onclick = function () {
         var flags = [];
-        if (document.getElementById("fplcUnivCapLayers").checked) flags.push("capLayersEnabled");
-        if (document.getElementById("fplcUnivCapText").checked) flags.push("capTextEnabled");
+        if ($("fplcUnivCapLayers").checked) flags.push("capLayersEnabled");
+        if ($("fplcUnivCapText").checked) flags.push("capTextEnabled");
         if (!flags.length) { safeLog("Universal -> Tick at least one Universal option first.", "warn"); return; }
         invokeCleaner(buildFullPayload(false, flags), "Apply Universal");
     };
-    document.getElementById("fplcBtnGgRunNow").onclick = function () {
+    $("fplcBtnGgRunNow").onclick = function () {
         var payload = buildFullPayload(false, null);
         payload.action = "groupOnly";
         invokeCleaner(payload, "Group All Sets Now");
     };
-    document.getElementById("fplcBtnSaveJsxSettings").onclick = function () {
+    $("fplcBtnSaveJsxSettings").onclick = function () {
         var payload = buildFullPayload(false, null);
         payload.action = "saveSettings";
         invokeCleaner(payload, "Save Settings");
     };
 
-    // Report Modal
-    var reportModal = document.getElementById("fplcReportModal");
-    var reportText = document.getElementById("fplcReportText");
-    document.getElementById("fplcBtnViewReport").onclick = function () {
-        window.VGTools.runScript("jsx/floor_plan_cleaner.jsx", { _fromHtmlUi: true, action: "getLastReport" }, function (raw) {
-            try {
-                var parsed = JSON.parse(raw);
-                if (parsed && parsed.ok && parsed.report) {
-                    reportText.value = parsed.report;
-                    reportModal.style.display = "flex";
-                }
-            } catch (e) {}
+    // ---------- Report modal ----------
+    var reportModal = $("fplcReportModal");
+    var reportText = $("fplcReportText");
+    $("fplcBtnViewReport").onclick = function () {
+        runJsx({ _fromHtmlUi: true, action: "getLastReport" }, function (raw) {
+            var parsed = parseReply(raw);
+            if (parsed && parsed.ok && parsed.report) {
+                reportText.value = parsed.report;
+                reportModal.style.display = "flex";
+            } else {
+                safeLog("Report -> " + ((parsed && parsed.error) || "No report available."), "warn");
+            }
         }, "View Last Report");
     };
-    document.getElementById("fplcBtnCloseReport").onclick = function () { reportModal.style.display = "none"; };
-    document.getElementById("fplcBtnCopyReport").onclick = function () {
+    $("fplcBtnCloseReport").onclick = function () { reportModal.style.display = "none"; };
+    reportModal.addEventListener("click", function (e) { if (e.target === reportModal) reportModal.style.display = "none"; });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && reportModal.style.display !== "none") reportModal.style.display = "none";
+    });
+    $("fplcBtnCopyReport").onclick = function () {
         reportText.select();
-        try { document.execCommand("copy"); safeLog("Report copied to clipboard.", "info"); } catch (e) {}
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        safeLog(ok ? "Report copied to clipboard." : "Copy failed - select the text and press Ctrl/Cmd+C.", ok ? "success" : "warn");
     };
-    document.getElementById("fplcBtnDownloadReport").onclick = function () {
-        var blob = new Blob([reportText.value || ""], { type: "text/plain;charset=utf-8" });
+    function downloadBlob(text, mime, filename) {
+        var blob = new Blob([text], { type: mime });
         var url = URL.createObjectURL(blob);
         var link = document.createElement("a");
         link.href = url;
-        link.download = "FloorPlanLabelCleaner_report.txt";
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+    $("fplcBtnDownloadReport").onclick = function () {
+        downloadBlob(reportText.value || "", "text/plain;charset=utf-8", "FloorPlanLabelCleaner_report.txt");
     };
 
-    document.getElementById("fplcBtnResetAll").onclick = function () {
+    // ---------- Reset / export / import ----------
+    $("fplcBtnResetAll").onclick = function () {
         try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch (e) {}
         stateUi.rules = buildDefaultRules();
         stateUi.styleSets = JSON.parse(JSON.stringify(DEFAULT_STYLES));
-        stateUi.ggSets = [
-            { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
-            { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
-        ];
+        stateUi.ggSets = defaultGgSets();
         stateUi.activeGgIdx = 0;
+        setPartEditMode(-1);
         clearRuleForm();
         renderStyleRows();
         renderGgSets();
-        safeLog("Floor Plan Cleaner -> Reset all UI settings to defaults.", "info");
+        safeLog("Floor Plan Cleaner -> Reset rules, styles and group sets to defaults.", "info");
+        saveToLocalStorage();
     };
 
-    document.getElementById("fplcBtnExportJson").onclick = function () {
+    $("fplcBtnExportJson").onclick = function () {
         var payload = buildFullPayload(false, null);
         delete payload._fromHtmlUi;
         delete payload.onlyFlags;
         payload.exportedAt = new Date().toISOString();
-        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement("a");
-        link.href = url;
-        link.download = "floor_plan_cleaner_settings.json";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+        downloadBlob(JSON.stringify(payload, null, 2), "application/json;charset=utf-8", "floor_plan_cleaner_settings.json");
         safeLog("Export JSON -> Saved floor_plan_cleaner_settings.json (" + stateUi.rules.length + " rules).", "success");
     };
 
-    var importFileInput = document.getElementById("fplcImportFileInput");
-    document.getElementById("fplcBtnImportJson").onclick = function () { importFileInput.value = ""; importFileInput.click(); };
+    var importFileInput = $("fplcImportFileInput");
+    $("fplcBtnImportJson").onclick = function () { importFileInput.value = ""; importFileInput.click(); };
     importFileInput.onchange = function (e) {
         var file = e.target && e.target.files && e.target.files[0];
         if (!file) return;
@@ -1482,19 +1648,23 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         reader.onload = function (ev) {
             try {
                 applyImportedConfig(JSON.parse(String(ev.target.result || "")));
-                saveToLocalStorage();
+                saveNow();
                 safeLog("Import JSON -> Loaded settings from " + file.name + ".", "success");
             } catch (err) {
                 safeLog("Import JSON -> Failed to parse " + file.name + ": " + err.message, "error");
             }
         };
+        reader.onerror = function () { safeLog("Import JSON -> Could not read " + file.name + ".", "error"); };
         reader.readAsText(file);
     };
 
+    // ---------- Init ----------
     renderRules();
     renderStyleRows();
     renderGgSets();
     renderLayersList();
-    restoreFromLocalStorage();
+    updateStyleSummary();
+    restoring = true;
+    try { restoreFromLocalStorage(); } finally { restoring = false; }
 })();
 </script>
