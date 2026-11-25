@@ -1,7 +1,6 @@
-#target illustrator
 /*
  =====================================================================
-  FLOOR PLAN LABEL CLEANER v3.1  (CEP + Standalone ExtendScript)
+  FLOOR PLAN LABEL CLEANER v3.2  (CEP + Standalone ExtendScript)
  =====================================================================
 */
 
@@ -23,8 +22,56 @@
             .replace(/[\u0000-\u001F\u2028\u2029]/g, " ");
     }
 
+
+    function toJson(v) {
+        var i, out, k;
+        if (v === null || v === undefined) return "null";
+        if (typeof v === "number") return isFinite(v) ? String(v) : "null";
+        if (typeof v === "boolean") return v ? "true" : "false";
+        if (typeof v === "string") return '"' + escapeJson(v) + '"';
+        if (v instanceof Array) {
+            out = [];
+            for (i = 0; i < v.length; i++) out.push(toJson(v[i]));
+            return "[" + out.join(",") + "]";
+        }
+        out = [];
+        for (k in v) if (hasOwn(v, k)) out.push('"' + escapeJson(k) + '":' + toJson(v[k]));
+        return "{" + out.join(",") + "}";
+    }
+
+    // "0.2.1" -> doc.layers[0].layers[2].layers[1]
+    function layerByIdx(doc, idxStr) {
+        if (idxStr === undefined || idxStr === null || String(idxStr) === "") return null;
+        var parts = String(idxStr).split("."), cur = doc.layers, layer = null;
+        for (var i = 0; i < parts.length; i++) {
+            var n = parseInt(parts[i], 10);
+            if (isNaN(n) || n < 0 || n >= cur.length) return null;
+            layer = cur[n];
+            cur = layer.layers;
+        }
+        return layer;
+    }
+
+    // The panel host does not always hand back the script's return value ("no return value"),
+    // so every reply is ALSO written to a small file the panel can read (stamped with the request id).
+    function stampAndStore(out) {
+        var id = "";
+        try { if (typeof panelData !== "undefined" && panelData && panelData.reqId) id = String(panelData.reqId); } catch (e0) {}
+        var s = String(out);
+        if (id !== "" && s.charAt(0) === "{") s = '{"reqId":"' + escapeJson(id) + '",' + s.substring(1);
+        try {
+            RESULT_FILE.encoding = "UTF-8";
+            RESULT_FILE.open("w");
+            RESULT_FILE.write(s);
+            RESULT_FILE.close();
+        } catch (e1) { try { RESULT_FILE.close(); } catch (e2) {} }
+        try { $.global.vgLastResult = s; } catch (e3) {}
+        return s;
+    }
+
     var SETTINGS_FILE = new File(Folder.userData + "/FloorPlanLabelCleaner_settings.txt");
     var REPORT_FILE = new File(Folder.userData + "/FloorPlanLabelCleaner_last_report.txt");
+    var RESULT_FILE = new File(Folder.userData + "/FloorPlanLabelCleaner_result.json");
     var EOL = ($.os.indexOf("Windows") !== -1) ? "\r\n" : "\n";
     var CATS = ["main", "secondary", "small", "oname", "fname"];
     var CAT_LABEL = { main: "Main room", secondary: "Secondary", small: "Small", oname: "O_name", fname: "F_name" };
@@ -1473,23 +1520,62 @@
         var secs = Math.round((new Date().getTime() - t0) / 100) / 10;
         var L = [];
         L.push(DRY ? "*** DRY RUN - NOTHING WAS CHANGED ***" : "Finished in " + secs + " s.");
-        L.push("Style set: " + setName.toUpperCase());
-        L.push("Frames scanned: " + stats.scanned + " | Junk removed: " + stats.removed + " | Errors: " + stats.errors);
-        L.push("Labels -> Main: " + stats.main + ", Secondary: " + stats.secondary + ", Small: " + stats.small +
-               ", O_name: " + stats.oname + ", F_name: " + stats.fname + ", UP/DN: " + stats.updn);
-        if (doAll) L.push("All lines updated: " + stats.allUpdated + "/" + stats.allFound);
-        if (doDashed) L.push("Dashed lines updated: " + stats.dashedUpdated + "/" + stats.dashedFound);
-        if (doArrows) L.push("Arrows recoloured: " + stats.arrowsUpdated + "/" + stats.arrowsFound);
-        if (ggRes) L.push("Graphic groups created: " + ggRes.groupsCreated + " (" + ggRes.itemsGrouped + " items)");
-        if (cfg.capLayersEnabled) L.push("Layers capitalised: " + stats.layersCapped);
-        if (capText) L.push("Texts set to CAPITAL: " + stats.capped);
+        L.push("Style set: " + setName.toUpperCase() + "  (main " + set.main.size + " pt, secondary " +
+               set.secondary.size + " pt, small " + set.small.size + " pt, O_name " + set.oname.size +
+               " pt, F_name " + set.fname.size + " pt)");
+        L.push("");
+        L.push("RUN SUMMARY");
+        L.push("Frames scanned:        " + stats.scanned);
+        L.push("Option notes skipped:  " + stats.optMatched);
+        L.push("Main labels:           " + stats.main);
+        L.push("Secondary labels:      " + stats.secondary);
+        L.push("Small labels:          " + stats.small);
+        L.push("O_name labels:         " + stats.oname);
+        L.push("F_name labels:         " + stats.fname);
+        L.push("UP / DN:               " + stats.updn);
+        L.push("Multi-line labels:     " + stats.wrapped);
+        L.push("Text-only replacements: " + stats.textOnly);
+        L.push("Junk removed:          " + stats.removed);
+        L.push("Empty frames skipped:  " + stats.empty);
+        if (capText) L.push("Texts set to CAPITAL:  " + stats.capped + (up.selectTexts ? "   (selected: " + stats.selectedTexts + ")" : ""));
+        if (cfg.capLayersEnabled) L.push("Layer names capitalised: " + stats.layersCapped + " of " + stats.layersSeen);
+        if (doAll) {
+            L.push("All lines found:      " + stats.allFound);
+            L.push("All lines updated:    " + stats.allUpdated + "   (weight " + (allCfg.applyWeight ? allCfg.weight + " pt" : "unchanged") +
+                   ", colour " + (allCfg.applyColor ? rgbToHex(allCfg.color) : "unchanged") + ")");
+        }
+        if (doDashed) {
+            L.push("Dashed lines found:    " + stats.dashedFound);
+            L.push("Dashed lines updated:  " + stats.dashedUpdated);
+        }
+        if (doArrows) {
+            L.push("Arrows found:          " + stats.arrowsFound);
+            L.push("Arrows recoloured:     " + stats.arrowsUpdated + "   (" + rgbToHex(set.arrow ? set.arrow.color : [0, 0, 0]) + ")");
+        }
+        if (ggRes) {
+            L.push("Graphic sets total:    " + ggRes.groupsCreated + " groups (" + ggRes.itemsGrouped + " items)");
+            for (var ps = 0; ps < ggRes.perSet.length; ps++) {
+                var pInfo = ggRes.perSet[ps];
+                L.push("  - " + pInfo.name + " (" + pInfo.hex + "): " + pInfo.groupsCreated + " groups, " + pInfo.itemsGrouped + " items");
+            }
+        }
+        L.push("Errors:                " + stats.errors);
+        if (ctx.badRegex.length) {
+            L.push("");
+            L.push("Ignored invalid junk patterns: " + ctx.badRegex.join("  |  "));
+        }
+        if (cfg.restyle || cfg.wrapLabels) {
+            var ulist = [];
+            for (var uk in unmatched) if (hasOwn(unmatched, uk)) ulist.push({ t: uk, n: unmatched[uk] });
+            ulist.sort(function (x, y) { return y.n - x.n; });
+            L.push("");
+            L.push("UNRECOGNISED TEXT (" + ulist.length + " unique) - use Rules > Scan Doc to add them:");
+            for (var uj = 0; uj < ulist.length; uj++) L.push("  " + ulist[uj].n + " x  " + ulist[uj].t);
+        }
         if (errorLog.length) {
             L.push("");
-            L.push("Errors (first " + errorLog.length + "):");
-            for (var ei = 0; ei < errorLog.length; ei++) L.push("  " + errorLog[ei]);
-        }
-        if (ctx.badRegex.length) {
-            L.push("Invalid junk regex ignored: " + ctx.badRegex.join("  ,  "));
+            L.push("ERRORS (first 10):");
+            for (var e2 = 0; e2 < errorLog.length; e2++) L.push("  " + errorLog[e2]);
         }
         if (auditLines) L = L.concat(auditLines);
 
@@ -1527,20 +1613,21 @@
         }
     }
 
-    // FIX: ES3-safe (function declarations inside blocks are not legal) – hoisted to function level
-    function collectLayerMeta(layers, depth, incSub, itemsJson) {
+    function collectLayerMeta(layers, depth, incSub, itemsJson, prefix) {
         for (var li = 0; li < layers.length; li++) {
             var L = layers[li];
+            var idx = prefix === "" ? String(li) : prefix + "." + li;
             var itemCnt = 0;
             try { itemCnt = L.pageItems.length; } catch (eCnt) {}
             itemsJson.push(
                 '{"name":"' + escapeJson(L.name) +
+                '","idx":"' + idx +
                 '","depth":' + depth +
                 ',"items":' + itemCnt +
                 ',"visible":' + (L.visible ? 'true' : 'false') +
                 ',"locked":' + (L.locked ? 'true' : 'false') + '}'
             );
-            if (incSub && L.layers.length) collectLayerMeta(L.layers, depth + 1, incSub, itemsJson);
+            if (incSub && L.layers.length) collectLayerMeta(L.layers, depth + 1, incSub, itemsJson, idx);
         }
     }
 
@@ -1566,18 +1653,38 @@
         if (hasUiData) {
             if (panelData.action === "listLayers") {
                 var itemsJson = [];
-                collectLayerMeta(doc.layers, 0, Boolean(panelData.includeSub), itemsJson);
+                collectLayerMeta(doc.layers, 0, Boolean(panelData.includeSub), itemsJson, "");
                 report(100, "Layers loaded.");
                 return '{"ok":true,"message":"Loaded ' + itemsJson.length + ' layers","layers":[' + itemsJson.join(",") + ']}';
             }
 
-            if (panelData.renameLayer && panelData.renameLayer.oldName && panelData.renameLayer.newName) {
-                var foundLayer = null;
-                walkLayersPlain(doc.layers, function (L) {
-                    if (!foundLayer && L.name === panelData.renameLayer.oldName) foundLayer = L;
-                }, "", true);
+            if (panelData.action === "selectionInfo") {
+                var selN = 0;
+                try { selN = doc.selection ? doc.selection.length : 0; } catch (eSn) {}
+                return '{"ok":true,"selected":' + selN + '}';
+            }
+
+            if (panelData.action === "getSettings") {
+                return '{"ok":true,"message":"Loaded saved settings","settings":' + toJson(st) + '}';
+            }
+
+            if (panelData.layerOp) {
+                var opLayer = layerByIdx(doc, panelData.layerOp.idx);
+                if (!opLayer) return '{"ok":false,"error":"Layer not found."}';
+                if (panelData.layerOp.op === "toggleVisible") opLayer.visible = !opLayer.visible;
+                else if (panelData.layerOp.op === "toggleLocked") opLayer.locked = !opLayer.locked;
+                return '{"ok":true,"message":"Layer updated"}';
+            }
+
+            if (panelData.renameLayer && panelData.renameLayer.newName) {
+                var foundLayer = layerByIdx(doc, panelData.renameLayer.idx);
+                if (!foundLayer && panelData.renameLayer.oldName) {
+                    walkLayersPlain(doc.layers, function (L) {
+                        if (!foundLayer && L.name === panelData.renameLayer.oldName) foundLayer = L;
+                    }, "", true);
+                }
                 if (!foundLayer) {
-                    return '{"ok":false,"error":"Layer not found: ' + escapeJson(panelData.renameLayer.oldName) + '"}';
+                    return '{"ok":false,"error":"Layer not found."}';
                 }
                 foundLayer.name = String(panelData.renameLayer.newName);
                 report(100, "Layer renamed.");
@@ -1651,9 +1758,9 @@
     }
 
     try {
-        return executeFloorPlanCleaner();
+        return stampAndStore(executeFloorPlanCleaner());
     } catch (err) {
         report(100, "Error: " + escapeJson(err.message || err));
-        return '{"ok":false,"error":"JSX Error (Line ' + (err.line || "?") + '): ' + escapeJson(err.message || err) + '"}';
+        return stampAndStore('{"ok":false,"error":"JSX Error (Line ' + (err.line || "?") + '): ' + escapeJson(err.message || err) + '"}');
     }
 })();
