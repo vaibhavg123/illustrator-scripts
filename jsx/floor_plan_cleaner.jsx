@@ -1,27 +1,28 @@
 #target illustrator
 /*
  =====================================================================
-  FLOOR PLAN LABEL CLEANER v3.0  (CEP + Standalone ExtendScript)
+  FLOOR PLAN LABEL CLEANER v3.1  (CEP + Standalone ExtendScript)
  =====================================================================
 */
 
 (function () {
     function report(pct, msg) {
         if (typeof vgProgress === "function") {
-            vgProgress(pct, msg);
+            try { vgProgress(pct, msg); } catch (e) {}
         }
     }
 
+    // FIX: also strips remaining control chars / line separators so the JSON the panel parses never breaks
     function escapeJson(str) {
         return String(str === null || str === undefined ? "" : str)
             .replace(/\\/g, "\\\\")
             .replace(/"/g, '\\"')
             .replace(/\r/g, "\\r")
             .replace(/\n/g, "\\n")
-            .replace(/\t/g, "\\t");
+            .replace(/\t/g, "\\t")
+            .replace(/[\u0000-\u001F\u2028\u2029]/g, " ");
     }
 
-    var APP_TITLE = "Floor Plan Label Cleaner v3.0";
     var SETTINGS_FILE = new File(Folder.userData + "/FloorPlanLabelCleaner_settings.txt");
     var REPORT_FILE = new File(Folder.userData + "/FloorPlanLabelCleaner_last_report.txt");
     var EOL = ($.os.indexOf("Windows") !== -1) ? "\r\n" : "\n";
@@ -381,12 +382,18 @@
         }
     }
 
+    // Used for BOTH the saved settings file and the live panel payload (validated, never replaces wholesale)
     function mergeState(st, saved) {
         var k, s, c;
+        if (!saved) return;
         if (saved.cfg) {
             for (k in st.cfg) {
-                if (hasOwn(st.cfg, k) && hasOwn(saved.cfg, k)) st.cfg[k] = saved.cfg[k];
+                if (hasOwn(st.cfg, k) && hasOwn(saved.cfg, k) && saved.cfg[k] !== null && saved.cfg[k] !== undefined) {
+                    st.cfg[k] = saved.cfg[k];
+                }
             }
+            if (st.cfg.runSet !== "standard" && st.cfg.runSet !== "compact") st.cfg.runSet = "standard";
+            if (st.cfg.scope !== "document" && st.cfg.scope !== "selection") st.cfg.scope = "document";
         }
         if (saved.dashed) {
             mergeBool(st.dashed, saved.dashed, "enabled");
@@ -474,7 +481,7 @@
                     good.push({ cat: r.cat, text: r.text, keys: r.keys, exact: !!r.exact });
                 }
             }
-            st.rules = good;
+            if (good.length > 0) st.rules = good;   // FIX: never end up with zero rules from a bad payload
         }
     }
 
@@ -740,8 +747,14 @@
         }
     }
 
+    function hasSelection(doc) {
+        try { return !!(doc.selection && doc.selection.length); } catch (e) { return false; }
+    }
+
     function forEachScope(doc, scope, kind, fn, noUnlock) {
-        if (scope === "selection" && doc.selection && doc.selection.length) {
+        if (scope === "selection") {
+            // FIX: "selection" with nothing selected used to silently fall through to the WHOLE document
+            if (!hasSelection(doc)) return;
             var out = [];
             collectSel(doc.selection, kind, out);
             fn(out, "(selection)");
@@ -817,7 +830,8 @@
 
     function collectGraphicCandidates(doc, scope, out) {
         var i;
-        if (scope === "selection" && doc.selection && doc.selection.length) {
+        if (scope === "selection") {
+            if (!hasSelection(doc)) return;   // FIX: same selection fall-through bug
             for (i = 0; i < doc.selection.length; i++) collectGraphicNode(doc.selection[i], out);
         } else {
             for (i = 0; i < doc.layers.length; i++) collectGraphicFromLayer(doc.layers[i], out);
@@ -866,196 +880,198 @@
         var maxGapPt = toPoints(gg.maxGap, unit);
 
         var savedLayers = unlockAllLayers(doc);
-        var candidates = [];
-        collectGraphicCandidates(doc, st.cfg.scope, candidates);
+        try {
+            var candidates = [];
+            collectGraphicCandidates(doc, st.cfg.scope, candidates);
 
-        var needDedupe = (st.cfg.scope === "selection" && doc.selection && doc.selection.length > 0);
-        var pool = [];
-        var seenHandles = [];
-        for (var i = 0; i < candidates.length; i++) {
-            var item = candidates[i];
-            try { if (item.guides || item.clipping) continue; } catch (eG) {}
-            if (needDedupe) {
+            // FIX: always de-duplicate (nested items were being collected twice)
+            var pool = [];
+            var seenHandles = [];
+            for (var i = 0; i < candidates.length; i++) {
+                var item = candidates[i];
+                try { if (item.guides || item.clipping) continue; } catch (eG) {}
                 if (isInArray(seenHandles, item)) continue;
                 seenHandles.push(item);
-            }
-            var b = getItemBounds(item, gg.useVisibleBounds);
-            if (!b || (b.w === 0 && b.h === 0)) continue;
-            pool.push({ item: item, bounds: b, globallyUsed: false });
-        }
-
-        if (!DRY) {
-            try { doc.selection = null; } catch (eSel) {}
-        }
-
-        for (var setIdx = 0; setIdx < gg.sets.length; setIdx++) {
-            var gSet = gg.sets[setIdx];
-            var setStats = {
-                name: gSet.name || ("Group " + (setIdx + 1)),
-                hex: rgbToHex(gSet.color || [84, 84, 84]),
-                partsCount: gSet.items ? gSet.items.length : 0,
-                matched: 0, groupsCreated: 0, itemsGrouped: 0, incompleteSkipped: 0
-            };
-
-            if (!gSet.items || gSet.items.length === 0) {
-                res.perSet.push(setStats);
-                continue;
+                var b = getItemBounds(item, gg.useVisibleBounds);
+                if (!b || (b.w === 0 && b.h === 0)) continue;
+                pool.push({ item: item, bounds: b, globallyUsed: false });
             }
 
-            var targets = [];
-            for (var s = 0; s < gSet.items.length; s++) {
-                targets.push({
-                    idx: s,
-                    wPt: toPoints(gSet.items[s].w, unit),
-                    hPt: toPoints(gSet.items[s].h, unit)
-                });
+            if (!DRY) {
+                try { doc.selection = null; } catch (eSel) {}
             }
 
-            var matched = [];
-            for (var pIdx = 0; pIdx < pool.length; pIdx++) {
-                var entry = pool[pIdx];
-                if (entry.globallyUsed) continue;
+            for (var setIdx = 0; setIdx < gg.sets.length; setIdx++) {
+                var gSet = gg.sets[setIdx];
+                var setStats = {
+                    name: gSet.name || ("Group " + (setIdx + 1)),
+                    hex: rgbToHex(gSet.color || [84, 84, 84]),
+                    partsCount: gSet.items ? gSet.items.length : 0,
+                    matched: 0, groupsCreated: 0, itemsGrouped: 0, incompleteSkipped: 0
+                };
 
-                var matchedSlots = [];
-                for (var t = 0; t < targets.length; t++) {
-                    if (matchesTargetSize(entry.bounds.w, entry.bounds.h, targets[t].wPt, targets[t].hPt, tolPt, gg.allowRotated)) {
-                        matchedSlots.push(t);
-                    }
-                }
-                if (matchedSlots.length > 0) {
-                    matched.push({
-                        poolEntry: entry, item: entry.item, bounds: entry.bounds,
-                        slots: matchedSlots, used: false
-                    });
-                }
-            }
-
-            for (var a = 0; a < matched.length; a++) {
-                if (matched[a].item.typename !== "GroupItem") continue;
-                for (var c = 0; c < matched.length; c++) {
-                    if (a === c) continue;
-                    var par = matched[c].item.parent;
-                    while (par && par.typename !== "Layer" && par.typename !== "Document") {
-                        if (par === matched[a].item) {
-                            matched[a].used = true;
-                            break;
-                        }
-                        par = par.parent;
-                    }
-                    if (matched[a].used) break;
-                }
-            }
-
-            var active = [];
-            for (var m = 0; m < matched.length; m++) {
-                if (!matched[m].used) active.push(matched[m]);
-            }
-            setStats.matched = active.length;
-            res.matchedTotal += active.length;
-
-            var setsToGroup = [];
-            for (var idx0 = 0; idx0 < active.length; idx0++) {
-                var anchor = active[idx0];
-                if (anchor.used) continue;
-
-                var canStartSlot0 = false;
-                for (var sl = 0; sl < anchor.slots.length; sl++) {
-                    if (anchor.slots[sl] === 0) { canStartSlot0 = true; break; }
-                }
-                if (!canStartSlot0) continue;
-
-                var chosen = [anchor];
-                var missing = false;
-
-                for (var slotIdx = 1; slotIdx < targets.length; slotIdx++) {
-                    var bestCand = null;
-                    var bestDist = Infinity;
-
-                    for (var candIdx = 0; candIdx < active.length; candIdx++) {
-                        var cand = active[candIdx];
-                        if (cand.used || cand === anchor) continue;
-                        if (isInArray(chosen, cand)) continue;
-
-                        var fitsSlot = false;
-                        for (var cs = 0; cs < cand.slots.length; cs++) {
-                            if (cand.slots[cs] === slotIdx) { fitsSlot = true; break; }
-                        }
-                        if (!fitsSlot) continue;
-
-                        var minGap = Infinity;
-                        for (var cm = 0; cm < chosen.length; cm++) {
-                            var gDist = boundsGap(chosen[cm].bounds, cand.bounds);
-                            if (gDist < minGap) minGap = gDist;
-                        }
-
-                        if (minGap <= maxGapPt && minGap < bestDist) {
-                            bestDist = minGap;
-                            bestCand = cand;
-                        }
-                    }
-
-                    if (bestCand) {
-                        chosen.push(bestCand);
-                    } else {
-                        missing = true;
-                        break;
-                    }
-                }
-
-                if (missing && gg.requireAllParts) {
-                    setStats.incompleteSkipped++;
-                    res.incompleteSkipped++;
+                if (!gSet.items || gSet.items.length === 0) {
+                    res.perSet.push(setStats);
                     continue;
                 }
 
-                if (chosen.length >= 2 || targets.length === 1) {
-                    for (var u = 0; u < chosen.length; u++) {
-                        chosen[u].used = true;
-                        chosen[u].poolEntry.globallyUsed = true;
-                    }
-                    setsToGroup.push(chosen);
-                } else {
-                    setStats.incompleteSkipped++;
-                    res.incompleteSkipped++;
+                var targets = [];
+                for (var s = 0; s < gSet.items.length; s++) {
+                    targets.push({
+                        idx: s,
+                        wPt: toPoints(gSet.items[s].w, unit),
+                        hPt: toPoints(gSet.items[s].h, unit)
+                    });
                 }
-            }
 
-            var setRGB = makeRGB(gSet.color || [84, 84, 84]);
-            if (!DRY) {
-                for (var gIdx = 0; gIdx < setsToGroup.length; gIdx++) {
-                    var setItems = setsToGroup[gIdx];
-                    try {
-                        var container = setItems[0].item.parent;
-                        var grp = container.groupItems.add();
-                        grp.name = setStats.name + "_" + (gIdx + 1);
-                        for (var k = 0; k < setItems.length; k++) {
-                            var itObj = setItems[k].item;
-                            itObj.move(grp, ElementPlacement.PLACEATEND);
-                            if (gg.applyColor) applyColorToGraphic(itObj, setRGB);
-                            setStats.itemsGrouped++;
-                            res.itemsGrouped++;
+                var matched = [];
+                for (var pIdx = 0; pIdx < pool.length; pIdx++) {
+                    var entry = pool[pIdx];
+                    if (entry.globallyUsed) continue;
+
+                    var matchedSlots = [];
+                    for (var t = 0; t < targets.length; t++) {
+                        if (matchesTargetSize(entry.bounds.w, entry.bounds.h, targets[t].wPt, targets[t].hPt, tolPt, gg.allowRotated)) {
+                            matchedSlots.push(t);
                         }
-                        grp.selected = true;
-                        setStats.groupsCreated++;
-                        res.groupsCreated++;
-                    } catch (eGrp) {
-                        res.errors++;
-                        if (res.details.length < 10) res.details.push(setStats.name + " #" + (gIdx + 1) + ": " + eGrp);
+                    }
+                    if (matchedSlots.length > 0) {
+                        matched.push({
+                            poolEntry: entry, item: entry.item, bounds: entry.bounds,
+                            slots: matchedSlots, used: false
+                        });
                     }
                 }
-            } else {
-                setStats.groupsCreated = setsToGroup.length;
-                res.groupsCreated += setsToGroup.length;
-                for (var dIdx = 0; dIdx < setsToGroup.length; dIdx++) {
-                    setStats.itemsGrouped += setsToGroup[dIdx].length;
-                    res.itemsGrouped += setsToGroup[dIdx].length;
+
+                // a matched group that contains another matched item is skipped in favour of its children
+                for (var a = 0; a < matched.length; a++) {
+                    if (matched[a].item.typename !== "GroupItem") continue;
+                    for (var c = 0; c < matched.length; c++) {
+                        if (a === c) continue;
+                        var par = matched[c].item.parent;
+                        while (par && par.typename !== "Layer" && par.typename !== "Document") {
+                            if (par === matched[a].item) {
+                                matched[a].used = true;
+                                break;
+                            }
+                            par = par.parent;
+                        }
+                        if (matched[a].used) break;
+                    }
                 }
+
+                var active = [];
+                for (var m = 0; m < matched.length; m++) {
+                    if (!matched[m].used) active.push(matched[m]);
+                }
+                setStats.matched = active.length;
+                res.matchedTotal += active.length;
+
+                var setsToGroup = [];
+                for (var idx0 = 0; idx0 < active.length; idx0++) {
+                    var anchor = active[idx0];
+                    if (anchor.used) continue;
+
+                    var canStartSlot0 = false;
+                    for (var sl = 0; sl < anchor.slots.length; sl++) {
+                        if (anchor.slots[sl] === 0) { canStartSlot0 = true; break; }
+                    }
+                    if (!canStartSlot0) continue;
+
+                    var chosen = [anchor];
+                    var missing = false;
+
+                    for (var slotIdx = 1; slotIdx < targets.length; slotIdx++) {
+                        var bestCand = null;
+                        var bestDist = Infinity;
+
+                        for (var candIdx = 0; candIdx < active.length; candIdx++) {
+                            var cand = active[candIdx];
+                            if (cand.used || cand === anchor) continue;
+                            if (isInArray(chosen, cand)) continue;
+
+                            var fitsSlot = false;
+                            for (var cs = 0; cs < cand.slots.length; cs++) {
+                                if (cand.slots[cs] === slotIdx) { fitsSlot = true; break; }
+                            }
+                            if (!fitsSlot) continue;
+
+                            var minGap = Infinity;
+                            for (var cm = 0; cm < chosen.length; cm++) {
+                                var gDist = boundsGap(chosen[cm].bounds, cand.bounds);
+                                if (gDist < minGap) minGap = gDist;
+                            }
+
+                            if (minGap <= maxGapPt && minGap < bestDist) {
+                                bestDist = minGap;
+                                bestCand = cand;
+                            }
+                        }
+
+                        if (bestCand) {
+                            chosen.push(bestCand);
+                        } else {
+                            missing = true;
+                            break;
+                        }
+                    }
+
+                    if (missing && gg.requireAllParts) {
+                        setStats.incompleteSkipped++;
+                        res.incompleteSkipped++;
+                        continue;
+                    }
+
+                    if (chosen.length >= 2 || targets.length === 1) {
+                        for (var u = 0; u < chosen.length; u++) {
+                            chosen[u].used = true;
+                            chosen[u].poolEntry.globallyUsed = true;
+                        }
+                        setsToGroup.push(chosen);
+                    } else {
+                        setStats.incompleteSkipped++;
+                        res.incompleteSkipped++;
+                    }
+                }
+
+                var setRGB = makeRGB(gSet.color || [84, 84, 84]);
+                if (!DRY) {
+                    for (var gIdx = 0; gIdx < setsToGroup.length; gIdx++) {
+                        var setItems = setsToGroup[gIdx];
+                        try {
+                            var container = setItems[0].item.parent;
+                            var grp = container.groupItems.add();
+                            grp.name = setStats.name + "_" + (gIdx + 1);
+                            for (var k = 0; k < setItems.length; k++) {
+                                var itObj = setItems[k].item;
+                                itObj.move(grp, ElementPlacement.PLACEATEND);
+                                if (gg.applyColor) applyColorToGraphic(itObj, setRGB);
+                                setStats.itemsGrouped++;
+                                res.itemsGrouped++;
+                            }
+                            grp.selected = true;
+                            setStats.groupsCreated++;
+                            res.groupsCreated++;
+                        } catch (eGrp) {
+                            res.errors++;
+                            if (res.details.length < 10) res.details.push(setStats.name + " #" + (gIdx + 1) + ": " + eGrp);
+                        }
+                    }
+                } else {
+                    setStats.groupsCreated = setsToGroup.length;
+                    res.groupsCreated += setsToGroup.length;
+                    for (var dIdx = 0; dIdx < setsToGroup.length; dIdx++) {
+                        setStats.itemsGrouped += setsToGroup[dIdx].length;
+                        res.itemsGrouped += setsToGroup[dIdx].length;
+                    }
+                }
+
+                res.perSet.push(setStats);
             }
-
-            res.perSet.push(setStats);
+        } finally {
+            // FIX: layers are restored even if grouping throws
+            restoreLayers(savedLayers);
         }
-
-        restoreLayers(savedLayers);
         return res;
     }
 
@@ -1301,7 +1317,7 @@
                         return;
                     }
 
-                    var d = cache[t];
+                    var d = hasOwn(cache, t) ? cache[t] : null;
                     if (!d) { d = decideText(ctx, cfg, t); cache[t] = d; }
 
                     if (d.k === "junk") {
@@ -1467,6 +1483,14 @@
         if (ggRes) L.push("Graphic groups created: " + ggRes.groupsCreated + " (" + ggRes.itemsGrouped + " items)");
         if (cfg.capLayersEnabled) L.push("Layers capitalised: " + stats.layersCapped);
         if (capText) L.push("Texts set to CAPITAL: " + stats.capped);
+        if (errorLog.length) {
+            L.push("");
+            L.push("Errors (first " + errorLog.length + "):");
+            for (var ei = 0; ei < errorLog.length; ei++) L.push("  " + errorLog[ei]);
+        }
+        if (ctx.badRegex.length) {
+            L.push("Invalid junk regex ignored: " + ctx.badRegex.join("  ,  "));
+        }
         if (auditLines) L = L.concat(auditLines);
 
         var fullReportText = L.join(EOL);
@@ -1485,7 +1509,8 @@
                 ',"dashed":' + stats.dashedUpdated +
                 ',"lines":' + stats.allUpdated +
                 ',"errors":' + stats.errors + '}',
-            report: fullReportText
+            report: fullReportText,
+            summary: summaryMsg
         };
     }
 
@@ -1502,25 +1527,21 @@
         }
     }
 
-    function applyPanelOverrides(st, pd) {
-        if (pd.cfg) {
-            for (var ck in pd.cfg) {
-                if (hasOwn(st.cfg, ck) && hasOwn(pd.cfg, ck)) {
-                    st.cfg[ck] = pd.cfg[ck];
-                }
-            }
+    // FIX: ES3-safe (function declarations inside blocks are not legal) – hoisted to function level
+    function collectLayerMeta(layers, depth, incSub, itemsJson) {
+        for (var li = 0; li < layers.length; li++) {
+            var L = layers[li];
+            var itemCnt = 0;
+            try { itemCnt = L.pageItems.length; } catch (eCnt) {}
+            itemsJson.push(
+                '{"name":"' + escapeJson(L.name) +
+                '","depth":' + depth +
+                ',"items":' + itemCnt +
+                ',"visible":' + (L.visible ? 'true' : 'false') +
+                ',"locked":' + (L.locked ? 'true' : 'false') + '}'
+            );
+            if (incSub && L.layers.length) collectLayerMeta(L.layers, depth + 1, incSub, itemsJson);
         }
-        if (pd.rules instanceof Array && pd.rules.length > 0) st.rules = pd.rules;
-        if (pd.styleSets) st.styleSets = pd.styleSets;
-        if (pd.optPatterns instanceof Array) st.optPatterns = pd.optPatterns;
-        if (pd.wrapTexts instanceof Array) st.wrapTexts = pd.wrapTexts;
-        if (pd.junkExact instanceof Array) st.junkExact = pd.junkExact;
-        if (pd.junkRegex instanceof Array) st.junkRegex = pd.junkRegex;
-        if (pd.dashed) st.dashed = pd.dashed;
-        if (pd.allLines) st.allLines = pd.allLines;
-        if (pd.arrows) st.arrows = pd.arrows;
-        if (pd.universal) st.universal = pd.universal;
-        if (pd.groupGraphics) st.groupGraphics = pd.groupGraphics;
     }
 
     function executeFloorPlanCleaner() {
@@ -1544,26 +1565,8 @@
 
         if (hasUiData) {
             if (panelData.action === "listLayers") {
-                var incSub = Boolean(panelData.includeSub);
                 var itemsJson = [];
-                function collectLayerMeta(layers, depth) {
-                    for (var li = 0; li < layers.length; li++) {
-                        var L = layers[li];
-                        var itemCnt = 0;
-                        try { itemCnt = L.pageItems.length; } catch (eCnt) {}
-                        itemsJson.push(
-                            '{"name":"' + escapeJson(L.name) +
-                            '","depth":' + depth +
-                            ',"items":' + itemCnt +
-                            ',"visible":' + (L.visible ? 'true' : 'false') +
-                            ',"locked":' + (L.locked ? 'true' : 'false') + '}'
-                        );
-                        if (incSub && L.layers.length) {
-                            collectLayerMeta(L.layers, depth + 1);
-                        }
-                    }
-                }
-                collectLayerMeta(doc.layers, 0);
+                collectLayerMeta(doc.layers, 0, Boolean(panelData.includeSub), itemsJson);
                 report(100, "Layers loaded.");
                 return '{"ok":true,"message":"Loaded ' + itemsJson.length + ' layers","layers":[' + itemsJson.join(",") + ']}';
             }
@@ -1581,7 +1584,7 @@
                 return '{"ok":true,"message":"Renamed layer to ' + escapeJson(foundLayer.name) + '"}';
             }
 
-            applyPanelOverrides(st, panelData);
+            mergeState(st, panelData);   // FIX: validated merge instead of blind overwrite
 
             if (panelData.action === "saveSettings") {
                 var savedOk = saveState(st, SETTINGS_FILE);
@@ -1590,7 +1593,15 @@
                     ? '{"ok":true,"message":"Settings saved to UserData"}'
                     : '{"ok":false,"error":"Could not write settings file."}';
             }
+        }
 
+        // FIX: refuse to run on "Selection Only" when nothing is selected
+        if (st.cfg.scope === "selection" && !hasSelection(doc)) {
+            report(100, "Nothing selected.");
+            return '{"ok":false,"error":"Scope is \\"Selection Only\\" but nothing is selected."}';
+        }
+
+        if (hasUiData) {
             if (panelData.action === "scanUnmatched") {
                 report(40, "Scanning document for unrecognised text...");
                 var found = scanUnmatched(doc, st);
@@ -1632,6 +1643,10 @@
         saveState(st, SETTINGS_FILE);
         var outcome = runCleaner(doc, st, st.cfg.runSet);
         report(100, "Floor Plan Cleaner finished.");
+        // standalone (no panel): show a result dialog so the run is not silent
+        if (!hasUiData) {
+            try { alert(outcome.summary); } catch (eAl) {}
+        }
         return outcome.json;
     }
 
