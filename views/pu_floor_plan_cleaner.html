@@ -1,48 +1,49 @@
 <!-- views/layer_organizer.html -->
-<div class="custom-card" style="dispaly=none;">
+<div class="custom-card">
     <h4>Auto Clean PDF File</h4>
+    <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
+        First release all - Clipping mask, compond path, path-Clean UP and Ungroup
+    </p>
+    <div style="dispaly=none;">
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkText" checked />
+            <span>1. Move Text Frames → <b>text</b></span>
+        </label>
+    
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkFill" checked />
+            <span>2. Move Filled Paths → <b>fill</b></span>
+        </label>
+    
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkZeroSize" checked />
+            <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
+        </label>
+    
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkStroke" checked />
+            <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
+        </label>
+    
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkDashed" checked />
+            <span>5. Move Dashed Lines → <b>dashed</b></span>
+        </label>
+    
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkLine" checked />
+            <span>6. Move Remaining Graphics → <b>line</b></span>
+        </label>
+    
+        <label class="checkbox-row">
+            <input type="checkbox" id="loChkReorder" checked />
+            <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
+        </label>
+    </div>
+    <button type="button" id="loBtnRun" class="tool-btn">▶ Run Layer Organizer</button>
     <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
         Moves visible, unlocked artwork into organized layers and orders them top-to-bottom.
     </p>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkText" checked />
-        <span>1. Move Text Frames → <b>text</b></span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkFill" checked />
-        <span>2. Move Filled Paths → <b>fill</b></span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkZeroSize" checked />
-        <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkStroke" checked />
-        <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkDashed" checked />
-        <span>5. Move Dashed Lines → <b>dashed</b></span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkLine" checked />
-        <span>6. Move Remaining Graphics → <b>line</b></span>
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" id="loChkReorder" checked />
-        <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
-    </label>
-</div>
-
-<div class="action-btn-row">
-        <button type="button" id="loBtnRun" class="tool-btn">▶ Run Layer Organizer</button>
 </div>
 
 <div class="action-btn-row">
