@@ -1,0 +1,117 @@
+<!-- views/layer_organizer.html -->
+<div class="custom-card">
+    <h4>Layer Organizer (Auto-Sort)</h4>
+    <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
+        Moves visible, unlocked artwork into organized layers and orders them top-to-bottom.
+    </p>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkText" checked />
+        <span>1. Move Text Frames → <b>text</b></span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkFill" checked />
+        <span>2. Move Filled Paths → <b>fill</b></span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkZeroSize" checked />
+        <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkStroke" checked />
+        <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkDashed" checked />
+        <span>5. Move Dashed Lines → <b>dashed</b></span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkLine" checked />
+        <span>6. Move Remaining Graphics → <b>line</b></span>
+    </label>
+
+    <label class="checkbox-row">
+        <input type="checkbox" id="loChkReorder" checked />
+        <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
+    </label>
+
+    <button type="button" id="loBtnRun" class="tool-btn">▶ Run Layer Organizer</button>
+</div>
+
+<script>
+(function () {
+    var STORAGE_KEY = "vg_layer_organizer_opts";
+    var ids = ["loChkText", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
+
+    function saveOpts() {
+        var data = {};
+        for (var i = 0; i < ids.length; i++) {
+            var el = document.getElementById(ids[i]);
+            if (el) data[ids[i]] = el.checked;
+        }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function loadOpts() {
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            for (var i = 0; i < ids.length; i++) {
+                var el = document.getElementById(ids[i]);
+                if (el && typeof data[ids[i]] === "boolean") el.checked = data[ids[i]];
+            }
+        } catch (e) {}
+    }
+
+    for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (el) el.addEventListener("change", saveOpts);
+    }
+
+    var runBtn = document.getElementById("loBtnRun");
+    if (runBtn) {
+        runBtn.onclick = function () {
+            var payload = {
+                _fromHtmlUi: true,
+                runText: document.getElementById("loChkText").checked,
+                runFill: document.getElementById("loChkFill").checked,
+                runZeroSize: document.getElementById("loChkZeroSize").checked,
+                runStroke: document.getElementById("loChkStroke").checked,
+                runDashed: document.getElementById("loChkDashed").checked,
+                runLine: document.getElementById("loChkLine").checked,
+                runReorder: document.getElementById("loChkReorder").checked
+            };
+
+            if (!payload.runText && !payload.runFill && !payload.runZeroSize &&
+                !payload.runStroke && !payload.runDashed && !payload.runLine && !payload.runReorder) {
+                if (window.VGTools && window.VGTools.log) {
+                    window.VGTools.log("Layer Organizer -> Please check at least one step.", "warn");
+                }
+                return;
+            }
+
+            saveOpts();
+            runBtn.disabled = true;
+            runBtn.innerText = "Organizing...";
+
+            window.VGTools.runScript(
+                "jsx/layer_organizer.jsx",
+                payload,
+                function () {
+                    runBtn.disabled = false;
+                    runBtn.innerText = "▶ Run Layer Organizer";
+                },
+                "Layer Organizer"
+            );
+        };
+    }
+
+    loadOpts();
+})();
+</script>
