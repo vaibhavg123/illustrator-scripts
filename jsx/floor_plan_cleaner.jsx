@@ -388,10 +388,10 @@
             },
             rules: rules,
             optPatterns: ["Floor Plan", "End Unit", "At End Unit", "Basement", "Steps Option"],
-            wrapTexts: ["WALK-IN CLOSET", "UPSTAIRS LIVING", "MASTER BEDROOM", "OWNER'S SUITE",
+            wrapTexts: ["WALK-IN CLOSET", "UPSTAIRS LIVING", "PRIMARY BEDROOM", "OWNER'S SUITE",
                         "OWNER'S BATH", "OWNER'S BEDROOM", "DINING ROOM", "COVERED PORCH",
                         "FRENCH DOOR", "FAMILY ROOM", "GREAT/nROOM",
-                        "PRIMARY BATH => MASTER/nBATH"],
+                        "PRIMARY BATH => PRIMARY/nBATH"],
             junkExact: ["PER ELEVATION"],
             junkRegex: [
                 "^SCALE:",
