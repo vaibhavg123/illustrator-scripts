@@ -41,7 +41,7 @@
             fill: 0,
             stroke: 0,
             dashed: 0,
-            line: 0,
+            lines: 0,
             zeroSize: 0
         };
 
@@ -143,7 +143,7 @@
                         layer.name === "text" ||
                         layer.name === "fill" ||
                         layer.name === "stroke" ||
-                        layer.name === "line" ||
+                        layer.name === "lines" ||
                         layer.name === "dashed" ||
                         layer.name === "zero_size" ||
                         layer.locked ||
@@ -312,13 +312,13 @@
         }
 
         // =========================
-        // SCRIPT 4B: REMAINING GRAPHICS -> "line"
+        // SCRIPT 4B: REMAINING GRAPHICS -> "lins"
         // =========================
         if (opts.runLine) {
-            report(88, "Moving remaining graphics to 'line'...");
+            report(88, "Moving remaining graphics to 'lines'...");
             (function () {
                 var lineLayer;
-                try { lineLayer = doc.layers.getByName("line"); } catch (e) { lineLayer = doc.layers.add(); lineLayer.name = "line"; }
+                try { lineLayer = doc.layers.getByName("lines"); } catch (e) { lineLayer = doc.layers.add(); lineLayer.name = "line"; }
 
                 for (var l = 0; l < doc.layers.length; l++) {
                     var layer = doc.layers[l];
@@ -326,7 +326,7 @@
                         layer.name === "text" ||
                         layer.name === "fill" ||
                         layer.name === "stroke" ||
-                        layer.name === "line" ||
+                        layer.name === "lines" ||
                         layer.name === "dashed" ||
                         layer.name === "zero_size" ||
                         layer.locked ||
@@ -354,7 +354,7 @@
         if (opts.runReorder) {
             report(96, "Reordering layers...");
             try {
-                var orderNames = ["text", "fill", "dashed", "line", "stroke", "zero_size"];
+                var orderNames = ["text", "fill", "dashed", "lines", "stroke", "zero_size"];
                 var prevLayer = null;
                 for (var oi = 0; oi < orderNames.length; oi++) {
                     var lyr = null;
@@ -379,9 +379,9 @@
                 "Filled paths moved: " + summary.fill + "\n" +
                 "Dashed lines moved: " + summary.dashed + "\n" +
                 "Zero-stroke paths moved: " + summary.stroke + "\n" +
-                "Remaining graphics moved to 'line': " + summary.line + "\n" +
+                "Remaining graphics moved to 'line': " + summary.lines + "\n" +
                 "Zero-size graphics moved: " + summary.zeroSize + "\n\n" +
-                "Layer order: text -> fill -> dashed -> line -> stroke -> zero_size";
+                "Layer order: text -> fill -> dashed -> lines -> stroke -> zero_size";
             alert(alertMsg);
         }
 
@@ -390,7 +390,7 @@
             ',"text":' + summary.text +
             ',"fill":' + summary.fill +
             ',"dashed":' + summary.dashed +
-            ',"line":' + summary.line +
+            ',"lines":' + summary.lines +
             ',"stroke":' + summary.stroke +
             ',"zeroSize":' + summary.zeroSize + '}';
     }
