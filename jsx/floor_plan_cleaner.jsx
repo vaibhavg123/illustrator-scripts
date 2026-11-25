@@ -241,6 +241,7 @@
         R("main", "OWNER'S/nBEDROOM", ["owner's bedroom", "owners bedroom"]);
         R("main", "OWNER'S/nBATH",    ["owner's bath", "o. ba", "o. bath", "o.ba", "o.bath"]);
        R("main", "PRIMARY/nBATH",    ["primary bath", "p. ba", "p. bath", "p.ba", "p.bath"]);
+       R("main", "RECREATION/nROOM",    ["recreation room"]);
         R("main", "UPSTAIRS/nLIVING", ["upstairs living"]);
         R("main", "FAMILY",          ["family"]);
         R("main", "GAME/nROOM",       ["game room"]);
