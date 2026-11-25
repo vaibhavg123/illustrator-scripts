@@ -3,7 +3,7 @@
     <div class="ao-header">
         <div>
             <h4>Artboard Layout Organizer</h4>
-            <span class="ao-sub">Select artboard → Load groups → Organize</span>
+            <span class="ao-sub">100% Original Size • Brochure Layout Checker</span>
         </div>
         <select id="aoUnitSelect" class="view-dropdown ao-unit-select" title="Display Unit">
             <option value="in" selected>in</option>
@@ -38,7 +38,7 @@
 
     <!-- 3. SPACING & RUN -->
     <div class="custom-card">
-        <div class="ao-section-title">3. Layout Settings</div>
+        <div class="ao-section-title">3. Brochure Spacing (No Scaling)</div>
         <div class="ao-grid-2">
             <div>
                 <label class="field-label" for="aoMargin">Margin (<span class="ao-unit-lbl">in</span>)</label>
@@ -49,16 +49,12 @@
                 <input type="number" id="aoGap" class="custom-input" value="0.25" step="0.05" min="0" />
             </div>
         </div>
-        <label class="checkbox-row">
-            <input type="checkbox" id="aoAutoScale" checked />
-            <span>Auto-scale groups if they exceed artboard size</span>
-        </label>
-        <button type="button" id="aoBtnRun" class="tool-btn">▶ Run (Show Layout Options)</button>
+        <button type="button" id="aoBtnRun" class="tool-btn">▶ Run (Check Fit &amp; Layouts)</button>
     </div>
 
     <!-- 4. LAYOUT OPTIONS -->
     <div id="aoLayoutsCard" class="custom-card" style="display:none;">
-        <div class="ao-section-title">4. Choose Layout &amp; Apply</div>
+        <div class="ao-section-title">4. Choose Layout &amp; Apply (Size Unchanged)</div>
         <div id="aoLayoutOptions" class="ao-layout-list"></div>
     </div>
 </div>
@@ -95,11 +91,16 @@
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding: 7px 9px; background: #232832; border: 1px solid #353f4e; border-radius: 6px;
 }
+.ao-layout-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.ao-preview-box {
+    width: 56px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: #14181e; border: 1px solid #2e3642; border-radius: 5px; overflow: hidden;
+}
 .ao-layout-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ao-layout-title { font-size: 11px; font-weight: 700; color: #f8fafc; }
 .ao-layout-desc { font-size: 10px; color: #9fb0c3; }
-.ao-fit-ok { color: #6ee7b7; }
-.ao-fit-warn { color: #fcd34d; }
+.ao-fit-ok { color: #6ee7b7; font-weight: 600; }
+.ao-fit-over { color: #f87171; font-weight: 600; }
 </style>
 
 <script>
@@ -202,6 +203,7 @@
                     if (parsed && parsed.ok && Array.isArray(parsed.artboards)) {
                         state.artboards = parsed.artboards;
                         renderArtboards();
+                        refreshLayoutsLive();
                     }
                 } catch (e) {}
             },
@@ -219,6 +221,7 @@
                     if (parsed && parsed.ok && Array.isArray(parsed.groups)) {
                         state.groups = parsed.groups;
                         renderGroups();
+                        refreshLayoutsLive();
                     }
                 } catch (e) {}
             },
@@ -232,9 +235,8 @@
             safeLog("Artboard Organizer -> Load and select an artboard first.", "warn");
             return;
         }
-        var marginPt = unitToPt(document.getElementById("aoMargin").value, state.unit);
-        var gapPt = unitToPt(document.getElementById("aoGap").value, state.unit);
-        var autoScale = document.getElementById("aoAutoScale").checked;
+        var marginPt = Math.max(0, unitToPt(document.getElementById("aoMargin").value, state.unit));
+        var gapPt = Math.max(0, unitToPt(document.getElementById("aoGap").value, state.unit));
 
         window.VGTools.runScript(
             "jsx/artboard_organizer.jsx",
@@ -244,8 +246,7 @@
                 artboardIndex: abIdx,
                 layoutType: layoutType,
                 marginPt: marginPt,
-                gapPt: gapPt,
-                autoScale: autoScale
+                gapPt: gapPt
             },
             function () {
                 loadSelectedGroups();
@@ -254,20 +255,105 @@
         );
     }
 
-    function buildLayoutOptions() {
+    function createLayoutPreviewSvg(ab, groups, layoutType, marginPt, gapPt, fits) {
+        var boxW = 52, boxH = 40;
+        var abW = Math.max(1, ab.w), abH = Math.max(1, ab.h);
+        var fitScale = Math.min(boxW / abW, boxH / abH);
+        var svgW = abW * fitScale;
+        var svgH = abH * fitScale;
+        var rects = [];
+
+        if (groups.length === 1 || layoutType === "center") {
+            var g = groups[0];
+            rects.push({ x: (abW - g.w) * 0.5, y: (abH - g.h) * 0.5, w: g.w, h: g.h });
+        } else {
+            var n = groups.length;
+            var cols = n;
+            if (layoutType === "column") cols = 1;
+            else if (layoutType === "grid") cols = Math.ceil(Math.sqrt(n));
+            else if (layoutType === "grid2") cols = 2;
+
+            var rows = Math.ceil(n / cols);
+            var colW = [], rowH = [], c, rIdx, i;
+            for (c = 0; c < cols; c++) colW[c] = 0;
+            for (rIdx = 0; rIdx < rows; rIdx++) rowH[rIdx] = 0;
+
+            for (i = 0; i < n; i++) {
+                c = i % cols;
+                rIdx = Math.floor(i / cols);
+                if (groups[i].w > colW[c]) colW[c] = groups[i].w;
+                if (groups[i].h > rowH[rIdx]) rowH[rIdx] = groups[i].h;
+            }
+
+            var totalW = gapPt * (cols - 1);
+            for (c = 0; c < cols; c++) totalW += colW[c];
+            var totalH = gapPt * (rows - 1);
+            for (rIdx = 0; rIdx < rows; rIdx++) totalH += rowH[rIdx];
+
+            var startX = (abW - totalW) * 0.5;
+            var startY = (abH - totalH) * 0.5;
+            var colCx = [], rowCy = [];
+            var cx = startX, cy = startY;
+
+            for (c = 0; c < cols; c++) { colCx[c] = cx + colW[c] * 0.5; cx += colW[c] + gapPt; }
+            for (rIdx = 0; rIdx < rows; rIdx++) { rowCy[rIdx] = cy + rowH[rIdx] * 0.5; cy += rowH[rIdx] + gapPt; }
+
+            for (i = 0; i < n; i++) {
+                c = i % cols;
+                rIdx = Math.floor(i / cols);
+                rects.push({
+                    x: colCx[c] - groups[i].w * 0.5,
+                    y: rowCy[rIdx] - groups[i].h * 0.5,
+                    w: groups[i].w,
+                    h: groups[i].h
+                });
+            }
+        }
+
+        var fillCol = fits ? "#3b82f6" : "#ef4444";
+        var strokeCol = fits ? "#93c5fd" : "#fca5a5";
+        var strokeW = (abW / svgW * 0.7).toFixed(2);
+
+        var parts = [];
+        parts.push('<svg width="' + svgW.toFixed(1) + '" height="' + svgH.toFixed(1) + '" viewBox="0 0 ' + abW + ' ' + abH + '">');
+        parts.push('<rect x="0" y="0" width="' + abW + '" height="' + abH + '" fill="#262c36" stroke="#64748b" stroke-width="' + (abW / svgW * 1.1).toFixed(2) + '"/>');
+
+        if (marginPt > 0 && marginPt * 2 < abW && marginPt * 2 < abH) {
+            parts.push('<rect x="' + marginPt + '" y="' + marginPt + '" width="' + (abW - marginPt * 2) + '" height="' + (abH - marginPt * 2) + '" fill="none" stroke="#475569" stroke-dasharray="' + (abW / svgW * 2).toFixed(1) + '" stroke-width="' + (abW / svgW * 0.6).toFixed(2) + '"/>');
+        }
+
+        for (var j = 0; j < rects.length; j++) {
+            var rc = rects[j];
+            parts.push('<rect x="' + rc.x.toFixed(2) + '" y="' + rc.y.toFixed(2) + '" width="' + Math.max(1, rc.w).toFixed(2) + '" height="' + Math.max(1, rc.h).toFixed(2) + '" fill="' + fillCol + '" fill-opacity="0.82" stroke="' + strokeCol + '" stroke-width="' + strokeW + '"/>');
+        }
+        parts.push('</svg>');
+        return parts.join("");
+    }
+
+    function refreshLayoutsLive() {
+        var card = document.getElementById("aoLayoutsCard");
+        if (!card || card.style.display === "none") return;
+        buildLayoutOptions(true);
+    }
+
+    function buildLayoutOptions(silent) {
+        var card = document.getElementById("aoLayoutsCard");
         var abIdx = parseInt(document.getElementById("aoArtboardSelect").value, 10);
+
         if (isNaN(abIdx) || !state.artboards[abIdx]) {
-            safeLog("Artboard Organizer -> Please load and select an artboard first.", "warn");
+            if (!silent) safeLog("Artboard Organizer -> Please load and select an artboard first.", "warn");
+            if (card) card.style.display = "none";
             return;
         }
         if (!state.groups.length) {
-            safeLog("Artboard Organizer -> Please select and load at least 1 group first.", "warn");
+            if (!silent) safeLog("Artboard Organizer -> Please select and load at least 1 group first.", "warn");
+            if (card) card.style.display = "none";
             return;
         }
 
         var ab = state.artboards[abIdx];
-        var marginPt = unitToPt(document.getElementById("aoMargin").value, state.unit);
-        var gapPt = unitToPt(document.getElementById("aoGap").value, state.unit);
+        var marginPt = Math.max(0, unitToPt(document.getElementById("aoMargin").value, state.unit));
+        var gapPt = Math.max(0, unitToPt(document.getElementById("aoGap").value, state.unit));
         var usableW = Math.max(1, ab.w - marginPt * 2);
         var usableH = Math.max(1, ab.h - marginPt * 2);
 
@@ -276,18 +362,11 @@
 
         if (n === 1) {
             var g = state.groups[0];
-            var fits = (g.w <= usableW && g.h <= usableH);
             options.push({
                 type: "center",
                 title: "Center in Artboard",
-                desc: "Keep original size (" + fmt(g.w) + " x " + fmt(g.h) + " " + state.unit + ") & center",
-                fits: fits
-            });
-            options.push({
-                type: "center_fit",
-                title: "Center & Fit to Artboard",
-                desc: "Scale proportionally inside margin & center",
-                fits: true
+                desc: "Original size (" + fmt(g.w) + " x " + fmt(g.h) + " " + state.unit + ")",
+                fits: (g.w <= usableW && g.h <= usableH)
             });
         } else {
             var sumW = 0, maxH = 0, maxW = 0, sumH = 0;
@@ -301,37 +380,40 @@
             var colTotalH = sumH + gapPt * (n - 1);
             var gridCols = Math.ceil(Math.sqrt(n));
             var gridRows = Math.ceil(n / gridCols);
+            var gridW = maxW * gridCols + gapPt * (gridCols - 1);
+            var gridH = maxH * gridRows + gapPt * (gridRows - 1);
 
             options.push({
                 type: "row",
                 title: "Horizontal Row (1 x " + n + ")",
-                desc: "Side-by-side centered block (" + fmt(rowTotalW) + " x " + fmt(maxH) + " " + state.unit + ")",
+                desc: "Block: " + fmt(rowTotalW) + " x " + fmt(maxH) + " " + state.unit,
                 fits: rowTotalW <= usableW && maxH <= usableH
             });
             options.push({
                 type: "column",
                 title: "Vertical Stack (" + n + " x 1)",
-                desc: "Top-to-bottom centered block (" + fmt(maxW) + " x " + fmt(colTotalH) + " " + state.unit + ")",
+                desc: "Block: " + fmt(maxW) + " x " + fmt(colTotalH) + " " + state.unit,
                 fits: maxW <= usableW && colTotalH <= usableH
             });
             options.push({
                 type: "grid",
                 title: "Auto Grid (" + gridRows + " rows x " + gridCols + " cols)",
-                desc: "Balanced grid centered on " + ab.name,
-                fits: (maxW * gridCols + gapPt * (gridCols - 1)) <= usableW && (maxH * gridRows + gapPt * (gridRows - 1)) <= usableH
+                desc: "Block: " + fmt(gridW) + " x " + fmt(gridH) + " " + state.unit,
+                fits: gridW <= usableW && gridH <= usableH
             });
             if (n >= 3 && gridCols !== 2) {
                 var r2 = Math.ceil(n / 2);
+                var g2W = maxW * 2 + gapPt;
+                var g2H = maxH * r2 + gapPt * (r2 - 1);
                 options.push({
                     type: "grid2",
                     title: "2-Column Grid (" + r2 + " rows x 2 cols)",
-                    desc: "2 items per row, centered on " + ab.name,
-                    fits: (maxW * 2 + gapPt) <= usableW && (maxH * r2 + gapPt * (r2 - 1)) <= usableH
+                    desc: "Block: " + fmt(g2W) + " x " + fmt(g2H) + " " + state.unit,
+                    fits: g2W <= usableW && g2H <= usableH
                 });
             }
         }
 
-        var card = document.getElementById("aoLayoutsCard");
         var container = document.getElementById("aoLayoutOptions");
         container.innerHTML = "";
         card.style.display = "block";
@@ -341,13 +423,25 @@
             var row = document.createElement("div");
             row.className = "ao-layout-card";
 
+            var leftWrap = document.createElement("div");
+            leftWrap.className = "ao-layout-left";
+
+            var preview = document.createElement("div");
+            preview.className = "ao-preview-box";
+            preview.innerHTML = createLayoutPreviewSvg(ab, state.groups, opt.type, marginPt, gapPt, opt.fits);
+
+            var fitBadge = opt.fits
+                ? "<span class='ao-fit-ok'>Fits Artboard</span>"
+                : "<span class='ao-fit-over'>Exceeds Margin</span>";
+
             var info = document.createElement("div");
             info.className = "ao-layout-info";
             info.innerHTML =
                 "<span class='ao-layout-title'>" + opt.title + "</span>" +
-                "<span class='ao-layout-desc'>" + opt.desc + " • " +
-                (opt.fits ? "<span class='ao-fit-ok'>Fits 100%</span>" : "<span class='ao-fit-warn'>Will scale to fit</span>") +
-                "</span>";
+                "<span class='ao-layout-desc'>" + opt.desc + " • " + fitBadge + "</span>";
+
+            leftWrap.appendChild(preview);
+            leftWrap.appendChild(info);
 
             var applyBtn = document.createElement("button");
             applyBtn.type = "button";
@@ -357,7 +451,7 @@
                 applyBtn.onclick = function () { applyLayout(t, title); };
             })(opt.type, opt.title);
 
-            row.appendChild(info);
+            row.appendChild(leftWrap);
             row.appendChild(applyBtn);
             container.appendChild(row);
         }
@@ -368,10 +462,17 @@
         updateUnitLabels();
         renderArtboards();
         renderGroups();
+        refreshLayoutsLive();
     };
+    document.getElementById("aoArtboardSelect").addEventListener("change", refreshLayoutsLive);
+    document.getElementById("aoMargin").addEventListener("input", refreshLayoutsLive);
+    document.getElementById("aoMargin").addEventListener("change", refreshLayoutsLive);
+    document.getElementById("aoGap").addEventListener("input", refreshLayoutsLive);
+    document.getElementById("aoGap").addEventListener("change", refreshLayoutsLive);
+
     document.getElementById("aoBtnRefreshAb").onclick = loadArtboards;
     document.getElementById("aoBtnLoadGroups").onclick = loadSelectedGroups;
-    document.getElementById("aoBtnRun").onclick = buildLayoutOptions;
+    document.getElementById("aoBtnRun").onclick = function () { buildLayoutOptions(false); };
 
     updateUnitLabels();
     loadArtboards();
