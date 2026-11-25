@@ -1,5 +1,4 @@
 <!-- views/artboard_organizer.html -->
-
 <div class="ao-wrap">
     <div class="ao-header">
         <div>
@@ -118,6 +117,21 @@
         }
     }
 
+    function parseJsxJson(raw) {
+        if (!raw || typeof raw !== "string") return null;
+        try {
+            return JSON.parse(raw);
+        } catch (e1) {
+            try {
+                var trimmed = raw.trim();
+                if (trimmed.charAt(0) === '"' && trimmed.charAt(trimmed.length - 1) === '"') {
+                    return JSON.parse(JSON.parse(trimmed));
+                }
+            } catch (e2) {}
+        }
+        return null;
+    }
+
     function ptToUnit(pt, unit) {
         switch (unit) {
             case "in": return pt / 72;
@@ -156,7 +170,7 @@
         if (!state.artboards.length) {
             var opt = document.createElement("option");
             opt.value = "";
-            opt.textContent = "No artboards loaded";
+            opt.textContent = "No artboards found";
             sel.appendChild(opt);
             return;
         }
@@ -168,7 +182,15 @@
             o.textContent = (ab.index + 1) + ". " + ab.name + " (" + fmt(ab.w) + " x " + fmt(ab.h) + " " + state.unit + ")";
             sel.appendChild(o);
         }
-        if (prevVal !== "") sel.value = prevVal;
+
+        var hasPrev = false;
+        for (var j = 0; j < sel.options.length; j++) {
+            if (prevVal !== "" && sel.options[j].value === prevVal) {
+                hasPrev = true;
+                break;
+            }
+        }
+        sel.value = hasPrev ? prevVal : String(state.artboards[0].index);
     }
 
     function renderGroups() {
@@ -199,14 +221,14 @@
             "jsx/artboard_organizer.jsx",
             { _fromHtmlUi: true, action: "getArtboards" },
             function (raw) {
-                try {
-                    var parsed = JSON.parse(raw);
-                    if (parsed && parsed.ok && Array.isArray(parsed.artboards)) {
-                        state.artboards = parsed.artboards;
-                        renderArtboards();
-                        refreshLayoutsLive();
-                    }
-                } catch (e) {}
+                var parsed = parseJsxJson(raw);
+                if (parsed && parsed.ok && Array.isArray(parsed.artboards)) {
+                    state.artboards = parsed.artboards;
+                    renderArtboards();
+                    refreshLayoutsLive();
+                } else {
+                    safeLog("Load Artboards -> Could not read artboards.", "warn");
+                }
             },
             "Load Artboards"
         );
@@ -217,14 +239,15 @@
             "jsx/artboard_organizer.jsx",
             { _fromHtmlUi: true, action: "getSelectedGroups" },
             function (raw) {
-                try {
-                    var parsed = JSON.parse(raw);
-                    if (parsed && parsed.ok && Array.isArray(parsed.groups)) {
-                        state.groups = parsed.groups;
-                        renderGroups();
-                        refreshLayoutsLive();
-                    }
-                } catch (e) {}
+                var parsed = parseJsxJson(raw);
+                if (parsed && parsed.ok && Array.isArray(parsed.groups)) {
+                    state.groups = parsed.groups;
+                    renderGroups();
+                    refreshLayoutsLive();
+                } else {
+                    state.groups = [];
+                    renderGroups();
+                }
             },
             "Load Selected Groups"
         );
