@@ -54,6 +54,13 @@
         return hh + ":" + mm + ":" + ss;
     }
 
+    function sanitizeLogMessage(msg) {
+        return String(msg === null || msg === undefined ? "" : msg)
+            .replace(/https?:\/\/[^\s"'<>)]+/gi, "[protected]")
+            .replace(/\b(?:raw\.githubusercontent\.com|gist\.githubusercontent\.com|github\.com|[a-z0-9-]+\.github\.io)\/[^\s"'<>)]*/gi, "[protected]")
+            .replace(/\b(?:views|jsx|js)\/[a-zA-Z0-9_./-]+/g, "[script]");
+    }
+
     // =====================================================
     // GLOBAL SELECTABLE LOG SYSTEM
     // =====================================================
@@ -61,7 +68,7 @@
         var entry = {
             time: formatTime(),
             type: type || "info", // "info" | "success" | "error" | "warn"
-            message: String(message)
+            message: sanitizeLogMessage(message)
         };
         state.logs.push(entry);
 
@@ -85,7 +92,7 @@
 
         var msgSpan = document.createElement("span");
         msgSpan.className = "log-msg";
-        msgSpan.textContent = entry.message;
+        msgSpan.textContent = sanitizeLogMessage(entry.message);
 
         line.appendChild(timeSpan);
         line.appendChild(msgSpan);
@@ -108,7 +115,7 @@
         var lines = [];
         for (var i = 0; i < state.logs.length; i++) {
             var e = state.logs[i];
-            lines.push("[" + e.time + "] [" + e.type.toUpperCase() + "] " + e.message);
+            lines.push("[" + e.time + "] [" + e.type.toUpperCase() + "] " + sanitizeLogMessage(e.message));
         }
         var text = lines.join("\n");
         if (!text) return;
@@ -281,7 +288,7 @@
         var safePct = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
         wrap.classList.add("visible");
         fill.style.width = safePct + "%";
-        text.textContent = message || "Processing...";
+        text.textContent = sanitizeLogMessage(message || "Processing...");
         pct.textContent = safePct + "%";
 
         if (safePct >= 100) {
@@ -322,7 +329,7 @@
             };
 
             script.onerror = function () {
-                addLog("custom_features.js not loaded (optional).", "warn");
+                addLog("Optional feature module not loaded.", "warn");
                 resolve(false);
             };
 
@@ -546,7 +553,7 @@
 
         fetch(noCache(resolveUrl(viewObj.html)))
             .then(function (res) {
-                if (!res.ok) throw new Error("HTTP " + res.status + " (" + viewObj.html + ")");
+                if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.text();
             })
             .then(function (html) {
@@ -555,8 +562,9 @@
                 addLog("Loaded view: " + (viewObj.label || viewId), "info");
             })
             .catch(function (err) {
-                addLog("View load failed: " + err.message, "error");
-                container.innerHTML = "<div style='color:#ff6b6b;padding:10px;'>Failed to load view: " + err.message + "</div>";
+                var viewName = viewObj.label || viewId;
+                addLog("View load failed (" + viewName + "): " + err.message, "error");
+                container.innerHTML = "<div style='color:#ff6b6b;padding:10px;'>Failed to load " + viewName + " (" + sanitizeLogMessage(err.message) + ").</div>";
             });
     }
 
@@ -668,7 +676,7 @@
             ? Promise.resolve(state.cache.scripts[fullUrl])
             : fetch(noCache(fullUrl)).then(function (res) {
                 if (!res.ok) {
-                    throw new Error("HTTP " + res.status + " loading " + fullUrl);
+                    throw new Error("HTTP " + res.status);
                 }
                 return res.text();
             }).then(function (code) {
@@ -680,9 +688,9 @@
             .then(function (code) {
                 if (code.indexOf("<html") !== -1 || code.indexOf("<!DOCTYPE") !== -1) {
                     hideProgress();
-                    addLog(label + " -> Invalid JSX file (received HTML).", "error");
+                    addLog(label + " -> Invalid script response (received HTML).", "error");
                     if (typeof callback === "function") {
-                        callback(JSON.stringify({ ok: false, error: "Invalid JSX file." }));
+                        callback(JSON.stringify({ ok: false, error: "Invalid script response." }));
                     }
                     return;
                 }
@@ -787,7 +795,7 @@
             addLog("Init error: " + err.message, "error");
             var root = document.getElementById("root");
             if (root && !document.getElementById("vgLogBox")) {
-                root.innerHTML = "<div style='color:#ff6b6b;padding:12px;font-size:12px;'>Init error: " + err.message + "</div>";
+                root.innerHTML = "<div style='color:#ff6b6b;padding:12px;font-size:12px;'>Init error: " + sanitizeLogMessage(err.message) + "</div>";
             }
         });
 })();
