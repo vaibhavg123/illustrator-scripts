@@ -1,14 +1,18 @@
 <!-- views/floor_plan_cleaner.html -->
 <div class="fplc-wrap">
+    <!-- Top Sticky Header & Primary Actions -->
     <div class="fplc-header">
-        <h4>Floor Plan Label Cleaner v3.0</h4>
+        <div>
+            <h4>Floor Plan Label Cleaner</h4>
+            <span class="fplc-badge">v3.0 • Auto-Saved</span>
+        </div>
         <div class="fplc-top-actions">
-            <button type="button" id="fplcBtnRunCompact" class="tool-btn secondary fplc-mini-btn">Run Compact</button>
-            <button type="button" id="fplcBtnRunMain" class="tool-btn fplc-mini-btn">Run</button>
+            <button type="button" id="fplcBtnRunCompact" class="tool-btn secondary fplc-mini-btn">Compact</button>
+            <button type="button" id="fplcBtnRunMain" class="tool-btn fplc-mini-btn">▶ Run</button>
         </div>
     </div>
 
-    <!-- Tab Bar -->
+    <!-- Scrollable / Wrapping Tab Strip -->
     <div class="fplc-tabs" id="fplcTabBar">
         <button type="button" class="fplc-tab active" data-tab="fplcTabRun">Run</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabRules">Rules</button>
@@ -17,61 +21,64 @@
         <button type="button" class="fplc-tab" data-tab="fplcTabDashed">Dashed</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabUniversal">Universal</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabLayers">Layers</button>
-        <button type="button" class="fplc-tab" data-tab="fplcTabGroupGfx">Group Graphics</button>
+        <button type="button" class="fplc-tab" data-tab="fplcTabGroupGfx">Groups</button>
     </div>
 
     <!-- 1. RUN TAB -->
     <div id="fplcTabRun" class="fplc-tab-pane active">
         <div class="custom-card">
-            <div class="fplc-section-title">Scope</div>
-            <label class="checkbox-row">
-                <input type="radio" name="fplcScopeRadio" value="document" checked />
-                <span>Entire document</span>
-            </label>
-            <label class="checkbox-row">
-                <input type="radio" name="fplcScopeRadio" value="selection" />
-                <span>Selection only</span>
-            </label>
+            <div class="fplc-section-title">Scope &amp; Style Set</div>
+            <div class="fplc-grid-2">
+                <div>
+                    <label class="field-label" for="fplcScopeSelect">Target Scope</label>
+                    <select id="fplcScopeSelect" class="view-dropdown">
+                        <option value="document" selected>Entire Document</option>
+                        <option value="selection">Selection Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="fplcRunSet">[Run] Style Set</label>
+                    <select id="fplcRunSet" class="view-dropdown">
+                        <option value="standard" selected>Standard</option>
+                        <option value="compact">Compact</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="custom-card">
             <div class="fplc-section-title">Text Labels</div>
-            <label class="checkbox-row"><input type="checkbox" id="fplcRestyle" checked /><span>Rename / restyle labels (all 5 categories)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcRestyle" checked /><span>Rename / restyle labels (5 categories)</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcUpDn" checked /><span>Convert UP / DN labels</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcWrap" checked /><span>Multi-line labels / mappings (Lists tab)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcWrap" checked /><span>Multi-line labels / mappings (Lists)</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcJunk" checked /><span>Delete junk text</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcLoose" checked /><span>Loose matching ("KITCHEN ISLAND" -> "KITCHEN")</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcOpt" /><span>Skip option note matches (kept in place)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcLoose" checked /><span>Loose matching (e.g. KITCHEN ISLAND)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcOpt" /><span>Skip option note matches</span></label>
         </div>
 
         <div class="custom-card">
             <div class="fplc-section-title">Lines, Arrows &amp; Graphics</div>
-            <label class="checkbox-row"><input type="checkbox" id="fplcAllLines" /><span>Update ALL lines: weight + colour (Dashed tab)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcDashed" /><span>Update dashed lines (Dashed tab)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcArrows" /><span>Recolour all arrows (Styles tab)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcGroupGfx" /><span>Group matching graphics by W x H (all sets)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllLines" /><span>Update ALL lines (weight + colour)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDashed" /><span>Update dashed lines</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcArrows" /><span>Recolour arrows</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcGroupGfx" /><span>Group matching graphics by W x H</span></label>
         </div>
 
         <div class="custom-card">
             <div class="fplc-section-title">Universal &amp; Report</div>
             <label class="checkbox-row"><input type="checkbox" id="fplcCapLayers" /><span>Capitalise all layer names</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcCapText" /><span>Set ALL texts to CAPITAL</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcReport" checked /><span>Detailed report at the end (saved to UserData)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcReportItems" /><span>Include item-by-item listing (slower)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcDryRun" /><span>Dry run (report only, change nothing)</span></label>
-
-            <label class="field-label" for="fplcRunSet">Style Set used by [Run]</label>
-            <select id="fplcRunSet" class="view-dropdown">
-                <option value="standard" selected>Standard</option>
-                <option value="compact">Compact</option>
-            </select>
+            <label class="checkbox-row"><input type="checkbox" id="fplcReport" checked /><span>Save detailed report to UserData</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcReportItems" /><span>Include item-by-item report listing</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcDryRun" /><span>Dry run (preview without changes)</span></label>
         </div>
 
         <div class="custom-card">
-            <div class="fplc-section-title">Settings Backup (JSON)</div>
+            <div class="fplc-section-title">Backup &amp; Reset</div>
             <div class="action-btn-row">
                 <button type="button" id="fplcBtnExportJson" class="tool-btn secondary">Export JSON</button>
                 <button type="button" id="fplcBtnImportJson" class="tool-btn secondary">Import JSON</button>
+                <button type="button" id="fplcBtnResetAll" class="tool-btn secondary">Reset All</button>
             </div>
             <input type="file" id="fplcImportFileInput" accept=".json,application/json" style="display:none;" />
         </div>
@@ -81,8 +88,8 @@
     <div id="fplcTabRules" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-row-gap">
-                <input type="text" id="fplcRuleFilter" class="custom-input" placeholder="Filter rules..." />
-                <span id="fplcRuleCount" class="fplc-muted">0 rules</span>
+                <input type="text" id="fplcRuleFilter" class="custom-input" placeholder="Search category, label, or key..." />
+                <span id="fplcRuleCount" class="fplc-pill">0/0</span>
             </div>
 
             <div class="fplc-grid-2">
@@ -97,13 +104,13 @@
                     </select>
                 </div>
                 <div>
-                    <label class="field-label" for="fplcRuleFinal">Final Text (/n = line break)</label>
-                    <input type="text" id="fplcRuleFinal" class="custom-input" placeholder="e.g. GREAT/nROOM" />
+                    <label class="field-label" for="fplcRuleFinal">Final Text (/n = break)</label>
+                    <input type="text" id="fplcRuleFinal" class="custom-input" placeholder="GREAT/nROOM" />
                 </div>
             </div>
 
-            <label class="field-label" for="fplcRuleKeys">Input Match Keys (comma separated)</label>
-            <input type="text" id="fplcRuleKeys" class="custom-input" placeholder="e.g. great rm, great room" />
+            <label class="field-label" for="fplcRuleKeys">Match Keys (comma separated)</label>
+            <input type="text" id="fplcRuleKeys" class="custom-input" placeholder="great rm, great room" />
 
             <label class="checkbox-row">
                 <input type="checkbox" id="fplcRuleExact" />
@@ -111,33 +118,42 @@
             </label>
 
             <div class="action-btn-row">
-                <button type="button" id="fplcBtnAddRule" class="tool-btn">+ Add / Update Rule</button>
-                <button type="button" id="fplcBtnResetRules" class="tool-btn secondary">Reset Defaults</button>
+                <button type="button" id="fplcBtnSaveRule" class="tool-btn">+ Add Rule</button>
+                <button type="button" id="fplcBtnClearRuleForm" class="tool-btn secondary">Clear</button>
+                <button type="button" id="fplcBtnResetRules" class="tool-btn secondary">Defaults</button>
             </div>
 
-            <div id="fplcRulesList" class="fplc-list-box"></div>
+            <div id="fplcRulesList" class="fplc-list-box fplc-list-tall"></div>
         </div>
     </div>
 
     <!-- 3. STYLES TAB -->
     <div id="fplcTabStyles" class="fplc-tab-pane">
         <div class="custom-card">
-            <label class="field-label" for="fplcEditStyleSet">Edit Style Set</label>
-            <select id="fplcEditStyleSet" class="view-dropdown">
-                <option value="standard" selected>Standard</option>
-                <option value="compact">Compact</option>
-            </select>
-
-            <div id="fplcStyleRows"></div>
+            <div class="fplc-row-gap">
+                <span class="fplc-section-title">Category &amp; Extra Styles</span>
+                <select id="fplcEditStyleSet" class="view-dropdown fplc-compact-select">
+                    <option value="standard" selected>Standard</option>
+                    <option value="compact">Compact</option>
+                </select>
+            </div>
+            <div id="fplcStyleRows" class="fplc-style-list"></div>
         </div>
 
         <div class="custom-card">
             <div class="fplc-section-title">Arrow Detection</div>
-            <label class="checkbox-row"><input type="checkbox" id="fplcArrowTri" checked /><span>Triangle arrowheads (3 pts, max pt)</span></label>
-            <input type="number" id="fplcArrowTriMax" class="custom-input" value="24" min="1" max="500" />
-            <label class="checkbox-row"><input type="checkbox" id="fplcArrowGlyph" checked /><span>Text arrow glyphs</span></label>
-            <label class="field-label" for="fplcArrowKw">Name keywords (comma separated)</label>
-            <input type="text" id="fplcArrowKw" class="custom-input" value="arrow" />
+            <label class="checkbox-row"><input type="checkbox" id="fplcArrowTri" checked /><span>Detect triangle arrowheads (3 pts)</span></label>
+            <div class="fplc-grid-2">
+                <div>
+                    <label class="field-label" for="fplcArrowTriMax">Max Size (pt)</label>
+                    <input type="number" id="fplcArrowTriMax" class="custom-input" value="24" min="1" max="500" />
+                </div>
+                <div>
+                    <label class="field-label" for="fplcArrowKw">Name Keywords</label>
+                    <input type="text" id="fplcArrowKw" class="custom-input" value="arrow" />
+                </div>
+            </div>
+            <label class="checkbox-row"><input type="checkbox" id="fplcArrowGlyph" checked /><span>Detect text arrow glyphs</span></label>
             <button type="button" id="fplcBtnApplyArrowsNow" class="tool-btn secondary">Apply Arrow Colour Now</button>
         </div>
     </div>
@@ -145,14 +161,14 @@
     <!-- 4. LISTS TAB -->
     <div id="fplcTabLists" class="fplc-tab-pane">
         <div class="custom-card">
-            <label class="field-label" for="fplcOptPatterns">Option Notes (one per line)</label>
+            <label class="field-label" for="fplcOptPatterns">Option Notes (substring match, 1 per line)</label>
             <textarea id="fplcOptPatterns" class="fplc-textarea" rows="3">Floor Plan
 End Unit
 At End Unit
 Basement
 Steps Option</textarea>
 
-            <label class="field-label" for="fplcWrapTexts">Multi-Line Labels / Mappings (one per line)</label>
+            <label class="field-label" for="fplcWrapTexts">Multi-Line / Mappings (GREAT/nROOM or A => B/nC)</label>
             <textarea id="fplcWrapTexts" class="fplc-textarea" rows="5">WALK-IN CLOSET
 UPSTAIRS LIVING
 MASTER BEDROOM
@@ -166,10 +182,10 @@ FAMILY ROOM
 GREAT/nROOM
 PRIMARY BATH => MASTER/nBATH</textarea>
 
-            <label class="field-label" for="fplcJunkExact">Junk Text — Exact Match (one per line)</label>
+            <label class="field-label" for="fplcJunkExact">Junk Exact (1 per line)</label>
             <textarea id="fplcJunkExact" class="fplc-textarea" rows="2">PER ELEVATION</textarea>
 
-            <label class="field-label" for="fplcJunkRegex">Junk Text — Regex Case-Insensitive (one per line)</label>
+            <label class="field-label" for="fplcJunkRegex">Junk Regex (case-insensitive, 1 per line)</label>
             <textarea id="fplcJunkRegex" class="fplc-textarea" rows="4">^SCALE:
 ^\d+'(-\d+"?)?\s*CLG\.?$
 ^\+?\d+"\s*ISLAND$
@@ -181,13 +197,14 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     <!-- 5. DASHED TAB -->
     <div id="fplcTabDashed" class="fplc-tab-pane">
         <div class="custom-card">
-            <div class="fplc-section-title">Dashed Lines</div>
+            <div class="fplc-section-title">Dashed Line Settings</div>
             <label class="checkbox-row"><input type="checkbox" id="fplcDashEnabled" checked /><span>Enable dashed line processing</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcDashWeightOn" checked /><span>Set stroke weight</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcDashSpaceOn" checked /><span>Set dash &amp; space</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcDashColorOn" checked /><span>Apply Dashed colour from Styles</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcDashSelect" checked /><span>Select updated dashed lines</span></label>
-
+            <div class="fplc-grid-2">
+                <label class="checkbox-row"><input type="checkbox" id="fplcDashWeightOn" checked /><span>Set weight</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="fplcDashSpaceOn" checked /><span>Set dash/space</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="fplcDashColorOn" checked /><span>Apply style colour</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="fplcDashSelect" checked /><span>Select after</span></label>
+            </div>
             <div class="fplc-grid-3">
                 <div>
                     <label class="field-label">Weight (pt)</label>
@@ -205,15 +222,22 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         </div>
 
         <div class="custom-card">
-            <div class="fplc-section-title">ALL Lines (Stroked Paths)</div>
-            <label class="checkbox-row"><input type="checkbox" id="fplcAllWeightOn" checked /><span>Set stroke weight</span></label>
-            <input type="number" id="fplcAllWeight" class="custom-input" value="0.5" step="0.1" />
-
-            <label class="checkbox-row"><input type="checkbox" id="fplcAllColorOn" checked /><span>Set stroke colour (Hex)</span></label>
-            <input type="text" id="fplcAllHex" class="custom-input" value="#000000" />
-
+            <div class="fplc-section-title">ALL Stroked Lines</div>
+            <div class="fplc-grid-2">
+                <div>
+                    <label class="checkbox-row"><input type="checkbox" id="fplcAllWeightOn" checked /><span>Weight (pt)</span></label>
+                    <input type="number" id="fplcAllWeight" class="custom-input" value="0.5" step="0.1" />
+                </div>
+                <div>
+                    <label class="checkbox-row"><input type="checkbox" id="fplcAllColorOn" checked /><span>Colour</span></label>
+                    <div class="fplc-color-pair">
+                        <input type="color" id="fplcAllColorPicker" class="fplc-picker" value="#000000" />
+                        <input type="text" id="fplcAllHex" class="custom-input fplc-hex-inp" value="#000000" />
+                    </div>
+                </div>
+            </div>
             <label class="checkbox-row"><input type="checkbox" id="fplcAllSkipDashed" /><span>Skip dashed lines</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcAllSelect" /><span>Select updated lines</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcAllSelect" /><span>Select lines after updating</span></label>
             <button type="button" id="fplcBtnApplyAllLinesNow" class="tool-btn secondary">Apply to All Lines Now</button>
         </div>
     </div>
@@ -221,12 +245,12 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     <!-- 6. UNIVERSAL TAB -->
     <div id="fplcTabUniversal" class="fplc-tab-pane">
         <div class="custom-card">
-            <div class="fplc-section-title">Layers &amp; Texts</div>
+            <div class="fplc-section-title">Universal Transforms</div>
             <label class="checkbox-row"><input type="checkbox" id="fplcUnivCapLayers" /><span>Capitalise all layer names</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcUnivLayerSub" checked /><span>Include sublayers</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcUnivCapText" /><span>Set ALL texts to CAPITAL</span></label>
 
-            <label class="field-label" for="fplcUnivTextMode">Text Capitalisation Mode</label>
+            <label class="field-label" for="fplcUnivTextMode">Capitalisation Method</label>
             <select id="fplcUnivTextMode" class="view-dropdown">
                 <option value="upper" selected>Change characters to UPPERCASE</option>
                 <option value="allcaps">Apply All Caps character style</option>
@@ -241,17 +265,17 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     <div id="fplcTabLayers" class="fplc-tab-pane">
         <div class="custom-card">
             <div class="fplc-row-gap">
-                <label class="checkbox-row"><input type="checkbox" id="fplcLayersShowSub" checked /><span>Show sublayers</span></label>
+                <label class="checkbox-row"><input type="checkbox" id="fplcLayersShowSub" checked /><span>Include sublayers</span></label>
                 <button type="button" id="fplcBtnRefreshLayers" class="tool-btn secondary fplc-mini-btn">↻ Refresh</button>
             </div>
 
-            <div id="fplcLayersList" class="fplc-list-box"></div>
+            <div id="fplcLayersList" class="fplc-list-box fplc-list-tall"></div>
 
-            <label class="field-label" for="fplcNewLayerName">Selected Layer New Name</label>
-            <input type="text" id="fplcNewLayerName" class="custom-input" placeholder="Click a layer above..." />
+            <label class="field-label" for="fplcNewLayerName">Selected Layer Name</label>
+            <input type="text" id="fplcNewLayerName" class="custom-input" placeholder="Select a layer above..." />
 
             <div class="action-btn-row">
-                <button type="button" id="fplcBtnRenameLayer" class="tool-btn">Rename Layer</button>
+                <button type="button" id="fplcBtnRenameLayer" class="tool-btn">Rename</button>
                 <button type="button" id="fplcBtnUpperLayer" class="tool-btn secondary">UPPERCASE</button>
             </div>
         </div>
@@ -260,18 +284,25 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     <!-- 8. GROUP GRAPHICS TAB -->
     <div id="fplcTabGroupGfx" class="fplc-tab-pane">
         <div class="custom-card">
-            <div class="fplc-section-title">Group Set &amp; Colour</div>
-            <label class="field-label" for="fplcGgSetSelect">Active Group Set</label>
-            <select id="fplcGgSetSelect" class="view-dropdown"></select>
-
-            <div class="action-btn-row">
-                <input type="text" id="fplcGgNewSetName" class="custom-input" placeholder="New set name (e.g. Group 3)" />
-                <button type="button" id="fplcBtnGgAddSet" class="tool-btn secondary fplc-mini-btn">+ Set</button>
+            <div class="fplc-section-title">Group Sets &amp; Colour</div>
+            <div class="fplc-row-gap">
+                <select id="fplcGgSetSelect" class="view-dropdown"></select>
+                <div class="fplc-color-pair">
+                    <input type="color" id="fplcGgColorPicker" class="fplc-picker" value="#545454" />
+                    <input type="text" id="fplcGgColor" class="custom-input fplc-hex-inp" value="#545454" />
+                </div>
             </div>
 
-            <label class="field-label" for="fplcGgColor">Set Colour (Hex)</label>
-            <input type="text" id="fplcGgColor" class="custom-input" value="#545454" />
+            <div class="action-btn-row">
+                <input type="text" id="fplcGgSetNameInput" class="custom-input" placeholder="Set name..." />
+                <button type="button" id="fplcBtnGgAddSet" class="tool-btn secondary fplc-mini-btn">+ New</button>
+                <button type="button" id="fplcBtnGgRenameSet" class="tool-btn secondary fplc-mini-btn">Rename</button>
+                <button type="button" id="fplcBtnGgDelSet" class="tool-btn secondary fplc-mini-btn">Del</button>
+            </div>
+        </div>
 
+        <div class="custom-card">
+            <div class="fplc-section-title">Parts (Width x Height)</div>
             <div class="fplc-grid-3">
                 <div>
                     <label class="field-label">Width (W)</label>
@@ -295,11 +326,14 @@ PRIMARY BATH => MASTER/nBATH</textarea>
 
             <div class="action-btn-row">
                 <button type="button" id="fplcBtnGgAddPart" class="tool-btn">+ Add Part</button>
-                <button type="button" id="fplcBtnGgClearParts" class="tool-btn secondary">Clear Set</button>
+                <button type="button" id="fplcBtnGgClearParts" class="tool-btn secondary">Clear Parts</button>
             </div>
 
             <div id="fplcGgPartsList" class="fplc-list-box"></div>
+        </div>
 
+        <div class="custom-card">
+            <div class="fplc-section-title">Proximity &amp; Grouping</div>
             <div class="fplc-grid-2">
                 <div>
                     <label class="field-label">Tolerance (+/-)</label>
@@ -310,16 +344,151 @@ PRIMARY BATH => MASTER/nBATH</textarea>
                     <input type="number" id="fplcGgGap" class="custom-input" value="2.0" step="0.1" />
                 </div>
             </div>
-
             <label class="checkbox-row"><input type="checkbox" id="fplcGgRot" /><span>Allow rotated (W &lt;-&gt; H)</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcGgVis" /><span>Use visible bounds</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcGgReqAll" checked /><span>Require complete set</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcGgApplyCol" checked /><span>Apply set colour</span></label>
-
             <button type="button" id="fplcBtnGgRunNow" class="tool-btn">Group All Sets Now</button>
         </div>
     </div>
 </div>
+
+<style>
+.fplc-wrap { display: flex; flex-direction: column; gap: 8px; }
+.fplc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #1f242b;
+    border: 1px solid #333b46;
+    border-radius: 8px;
+}
+.fplc-header h4 { margin: 0; font-size: 13px; color: #f3f6fa; }
+.fplc-badge { font-size: 10px; color: #7cc0ff; }
+.fplc-top-actions { display: flex; gap: 6px; }
+.fplc-mini-btn { width: auto; padding: 5px 9px; margin: 0; font-size: 11px; white-space: nowrap; }
+.fplc-compact-select { width: auto !important; min-width: 105px; margin: 0 !important; padding: 4px 7px !important; font-size: 11px !important; }
+
+.fplc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: #1b1e24;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #2f3540;
+}
+.fplc-tab {
+    background: #282d36;
+    color: #c7d0dc;
+    border: 1px solid #38404c;
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.fplc-tab:hover { background: #323944; color: #fff; }
+.fplc-tab.active {
+    background: #1f78d1;
+    border-color: #1f78d1;
+    color: #fff;
+    font-weight: 600;
+}
+
+.fplc-tab-pane { display: none; flex-direction: column; gap: 8px; }
+.fplc-tab-pane.active { display: flex; }
+
+.fplc-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #8cc2ff;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.fplc-pill {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #2c333d;
+    color: #cfd8e3;
+    white-space: nowrap;
+}
+.fplc-row-gap { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.fplc-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fplc-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+.fplc-color-pair { display: flex; align-items: center; gap: 5px; }
+.fplc-picker {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid #444d59;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.fplc-hex-inp { width: 76px !important; padding: 4px 6px !important; font-family: Consolas, monospace; font-size: 11px !important; margin: 0 !important; }
+.fplc-size-inp { width: 54px !important; padding: 4px 6px !important; font-size: 11px !important; margin: 0 !important; }
+
+.fplc-style-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.fplc-style-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 6px;
+    background: #23272e;
+    border-radius: 5px;
+}
+.fplc-style-label { font-size: 11px; color: #dce3ec; flex: 1; }
+
+.fplc-textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #39414d;
+    border-radius: 6px;
+    background: #20242a;
+    color: #e6ecf2;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    box-sizing: border-box;
+    resize: vertical;
+    margin-bottom: 6px;
+}
+
+.fplc-list-box {
+    max-height: 115px;
+    overflow-y: auto;
+    background: #1d2127;
+    border: 1px solid #343c47;
+    border-radius: 6px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    margin-top: 4px;
+}
+.fplc-list-tall { max-height: 165px; }
+.fplc-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 7px;
+    background: #282d36;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #e0e6ed;
+}
+.fplc-list-item:hover { background: #333a46; }
+.fplc-list-item.selected { outline: 1px solid #4aa3ff; background: #24374d; }
+</style>
 
 <script>
 (function () {
@@ -330,7 +499,9 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         secondary: "Secondary",
         small: "Small",
         oname: "O_name",
-        fname: "F_name"
+        fname: "F_name",
+        dashed: "Dashed line",
+        arrow: "Arrows"
     };
 
     var DEFAULT_STYLES = {
@@ -376,6 +547,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
         ],
         activeGgIdx: 0,
+        editingRuleIdx: -1,
         selectedLayerName: ""
     };
 
@@ -421,7 +593,22 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         };
     }
 
-    // Rules rendering & actions
+    // Rules rendering & editing
+    function syncRuleFormButton() {
+        var btn = document.getElementById("fplcBtnSaveRule");
+        if (!btn) return;
+        btn.textContent = stateUi.editingRuleIdx >= 0 ? "Update Rule" : "+ Add Rule";
+    }
+
+    function clearRuleForm() {
+        stateUi.editingRuleIdx = -1;
+        document.getElementById("fplcRuleFinal").value = "";
+        document.getElementById("fplcRuleKeys").value = "";
+        document.getElementById("fplcRuleExact").checked = false;
+        syncRuleFormButton();
+        renderRules();
+    }
+
     function renderRules() {
         var box = document.getElementById("fplcRulesList");
         var countEl = document.getElementById("fplcRuleCount");
@@ -435,16 +622,34 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             if (filterVal && hay.indexOf(filterVal) === -1) continue;
             shown++;
             var row = document.createElement("div");
-            row.className = "fplc-list-item";
-            row.innerHTML = "<span><b>[" + (CAT_NAMES[r.cat] || r.cat) + "]</b> " + r.text + " <i>(" + r.keys.join(", ") + ")</i></span>";
+            row.className = "fplc-list-item" + (stateUi.editingRuleIdx === i ? " selected" : "");
+            row.innerHTML = "<span><b>[" + (CAT_NAMES[r.cat] || r.cat) + "]</b> " + r.text + (r.exact ? " <em>(exact)</em>" : "") + " <small>" + r.keys.join(", ") + "</small></span>";
+
+            (function (idx, ruleObj) {
+                row.onclick = function () {
+                    stateUi.editingRuleIdx = idx;
+                    document.getElementById("fplcRuleCat").value = ruleObj.cat;
+                    document.getElementById("fplcRuleFinal").value = ruleObj.text;
+                    document.getElementById("fplcRuleKeys").value = ruleObj.keys.join(", ");
+                    document.getElementById("fplcRuleExact").checked = !!ruleObj.exact;
+                    syncRuleFormButton();
+                    renderRules();
+                };
+            })(i, r);
+
             var delBtn = document.createElement("button");
             delBtn.type = "button";
             delBtn.className = "log-btn";
             delBtn.textContent = "✕";
             (function (idx) {
-                delBtn.onclick = function () {
+                delBtn.onclick = function (e) {
+                    if (e && e.stopPropagation) e.stopPropagation();
                     stateUi.rules.splice(idx, 1);
-                    renderRules();
+                    if (stateUi.editingRuleIdx === idx) clearRuleForm();
+                    else {
+                        if (stateUi.editingRuleIdx > idx) stateUi.editingRuleIdx--;
+                        renderRules();
+                    }
                     saveToLocalStorage();
                 };
             })(i);
@@ -455,7 +660,8 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     }
 
     document.getElementById("fplcRuleFilter").oninput = renderRules;
-    document.getElementById("fplcBtnAddRule").onclick = function () {
+    document.getElementById("fplcBtnClearRuleForm").onclick = clearRuleForm;
+    document.getElementById("fplcBtnSaveRule").onclick = function () {
         var cat = document.getElementById("fplcRuleCat").value;
         var finalText = String(document.getElementById("fplcRuleFinal").value || "").trim().toUpperCase();
         var rawKeys = String(document.getElementById("fplcRuleKeys").value || "");
@@ -465,19 +671,22 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             return;
         }
         var keys = rawKeys.split(",").map(function (k) { return k.trim(); }).filter(Boolean);
-        stateUi.rules.push({ cat: cat, text: finalText, keys: keys, exact: exact });
-        document.getElementById("fplcRuleFinal").value = "";
-        document.getElementById("fplcRuleKeys").value = "";
-        renderRules();
+        var entry = { cat: cat, text: finalText, keys: keys, exact: exact };
+        if (stateUi.editingRuleIdx >= 0 && stateUi.editingRuleIdx < stateUi.rules.length) {
+            stateUi.rules[stateUi.editingRuleIdx] = entry;
+        } else {
+            stateUi.rules.push(entry);
+        }
+        clearRuleForm();
         saveToLocalStorage();
     };
     document.getElementById("fplcBtnResetRules").onclick = function () {
         stateUi.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
-        renderRules();
+        clearRuleForm();
         saveToLocalStorage();
     };
 
-    // Styles rendering
+    // Styles rendering with color picker + hex sync
     function renderStyleRows() {
         var setName = document.getElementById("fplcEditStyleSet").value || "standard";
         var container = document.getElementById("fplcStyleRows");
@@ -516,22 +725,40 @@ PRIMARY BATH => MASTER/nBATH</textarea>
                 row.appendChild(sizeInp);
             }
 
+            var hexVal = toHex(entry.color);
+            var picker = document.createElement("input");
+            picker.type = "color";
+            picker.className = "fplc-picker";
+            picker.value = hexVal;
+
             var hexInp = document.createElement("input");
             hexInp.type = "text";
             hexInp.className = "custom-input fplc-hex-inp";
-            hexInp.value = toHex(entry.color);
-            (function (objRef, hRef) {
-                hRef.onchange = function () {
-                    var rgb = parseHex(hRef.value);
+            hexInp.value = hexVal;
+
+            (function (objRef, pRef, hRef) {
+                pRef.oninput = function () {
+                    var rgb = parseHex(pRef.value);
                     if (rgb) {
                         objRef.color = rgb;
                         hRef.value = toHex(rgb);
                         saveToLocalStorage();
                     }
                 };
-            })(entry, hexInp);
-            row.appendChild(hexInp);
+                hRef.onchange = function () {
+                    var rgb = parseHex(hRef.value);
+                    if (rgb) {
+                        objRef.color = rgb;
+                        var formatted = toHex(rgb);
+                        hRef.value = formatted;
+                        pRef.value = formatted;
+                        saveToLocalStorage();
+                    }
+                };
+            })(entry, picker, hexInp);
 
+            row.appendChild(picker);
+            row.appendChild(hexInp);
             container.appendChild(row);
         }
     }
@@ -539,6 +766,23 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     document.getElementById("fplcEditStyleSet").onchange = function () {
         renderStyleRows();
         saveToLocalStorage();
+    };
+
+    // Sync All Lines color picker & hex
+    var allPicker = document.getElementById("fplcAllColorPicker");
+    var allHex = document.getElementById("fplcAllHex");
+    allPicker.oninput = function () {
+        allHex.value = String(allPicker.value || "#000000").toUpperCase();
+        saveToLocalStorage();
+    };
+    allHex.onchange = function () {
+        var rgb = parseHex(allHex.value);
+        if (rgb) {
+            var formatted = toHex(rgb);
+            allHex.value = formatted;
+            allPicker.value = formatted;
+            saveToLocalStorage();
+        }
     };
 
     // Layers tab
@@ -563,13 +807,14 @@ PRIMARY BATH => MASTER/nBATH</textarea>
                     var arr = JSON.parse(raw);
                     for (var i = 0; i < arr.length; i++) {
                         var item = document.createElement("div");
-                        item.className = "fplc-list-item";
+                        item.className = "fplc-list-item" + (stateUi.selectedLayerName === arr[i].name ? " selected" : "");
                         var indent = new Array(arr[i].depth + 1).join("  ");
                         item.textContent = indent + arr[i].name + " (" + arr[i].items + ")";
                         (function (layerName) {
                             item.onclick = function () {
                                 stateUi.selectedLayerName = layerName;
                                 document.getElementById("fplcNewLayerName").value = layerName;
+                                refreshLayersViaJsx();
                             };
                         })(arr[i].name);
                         box.appendChild(item);
@@ -610,9 +855,13 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     };
 
     // Group Graphics tab
+    var ggPicker = document.getElementById("fplcGgColorPicker");
+    var ggHex = document.getElementById("fplcGgColor");
+
     function renderGgSets() {
         var sel = document.getElementById("fplcGgSetSelect");
         var partsBox = document.getElementById("fplcGgPartsList");
+        var nameInp = document.getElementById("fplcGgSetNameInput");
         if (!sel || !partsBox) return;
         sel.innerHTML = "";
         for (var i = 0; i < stateUi.ggSets.length; i++) {
@@ -621,18 +870,55 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             opt.textContent = stateUi.ggSets[i].name + " (" + toHex(stateUi.ggSets[i].color) + ")";
             sel.appendChild(opt);
         }
+        if (stateUi.activeGgIdx >= stateUi.ggSets.length) stateUi.activeGgIdx = 0;
         sel.value = stateUi.activeGgIdx;
 
         var curSet = stateUi.ggSets[stateUi.activeGgIdx] || stateUi.ggSets[0];
-        document.getElementById("fplcGgColor").value = toHex(curSet.color);
+        var hex = toHex(curSet.color);
+        ggHex.value = hex;
+        ggPicker.value = hex;
+        if (nameInp) nameInp.value = curSet.name;
+
         partsBox.innerHTML = "";
         for (var p = 0; p < curSet.items.length; p++) {
             var row = document.createElement("div");
             row.className = "fplc-list-item";
-            row.textContent = "Part " + (p + 1) + ": W=" + curSet.items[p].w + " , H=" + curSet.items[p].h;
+            var span = document.createElement("span");
+            span.textContent = "Part " + (p + 1) + ": " + curSet.items[p].w + " x " + curSet.items[p].h;
+            var rmBtn = document.createElement("button");
+            rmBtn.type = "button";
+            rmBtn.className = "log-btn";
+            rmBtn.textContent = "✕";
+            (function (pIdx) {
+                rmBtn.onclick = function () {
+                    curSet.items.splice(pIdx, 1);
+                    renderGgSets();
+                    saveToLocalStorage();
+                };
+            })(p);
+            row.appendChild(span);
+            row.appendChild(rmBtn);
             partsBox.appendChild(row);
         }
     }
+
+    ggPicker.oninput = function () {
+        var rgb = parseHex(ggPicker.value);
+        if (rgb && stateUi.ggSets[stateUi.activeGgIdx]) {
+            stateUi.ggSets[stateUi.activeGgIdx].color = rgb;
+            ggHex.value = toHex(rgb);
+            renderGgSets();
+            saveToLocalStorage();
+        }
+    };
+    ggHex.onchange = function () {
+        var rgb = parseHex(ggHex.value);
+        if (rgb && stateUi.ggSets[stateUi.activeGgIdx]) {
+            stateUi.ggSets[stateUi.activeGgIdx].color = rgb;
+            renderGgSets();
+            saveToLocalStorage();
+        }
+    };
 
     document.getElementById("fplcGgSetSelect").onchange = function () {
         stateUi.activeGgIdx = parseInt(this.value, 10) || 0;
@@ -640,11 +926,27 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         saveToLocalStorage();
     };
     document.getElementById("fplcBtnGgAddSet").onclick = function () {
-        var name = String(document.getElementById("fplcGgNewSetName").value || "").trim();
+        var name = String(document.getElementById("fplcGgSetNameInput").value || "").trim();
         if (!name) name = "Group " + (stateUi.ggSets.length + 1);
         stateUi.ggSets.push({ name: name, color: [84, 84, 84], items: [] });
         stateUi.activeGgIdx = stateUi.ggSets.length - 1;
-        document.getElementById("fplcGgNewSetName").value = "";
+        renderGgSets();
+        saveToLocalStorage();
+    };
+    document.getElementById("fplcBtnGgRenameSet").onclick = function () {
+        var name = String(document.getElementById("fplcGgSetNameInput").value || "").trim();
+        if (!name || !stateUi.ggSets[stateUi.activeGgIdx]) return;
+        stateUi.ggSets[stateUi.activeGgIdx].name = name;
+        renderGgSets();
+        saveToLocalStorage();
+    };
+    document.getElementById("fplcBtnGgDelSet").onclick = function () {
+        if (stateUi.ggSets.length <= 1) {
+            safeLog("Group Graphics -> Keep at least one group set.", "warn");
+            return;
+        }
+        stateUi.ggSets.splice(stateUi.activeGgIdx, 1);
+        stateUi.activeGgIdx = 0;
         renderGgSets();
         saveToLocalStorage();
     };
@@ -670,11 +972,10 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     };
 
     function buildFullPayload(forceCompact, onlyFlags) {
-        var scopeRadio = document.querySelector('input[name="fplcScopeRadio"]:checked');
-        var ggRgb = parseHex(document.getElementById("fplcGgColor").value) || [84, 84, 84];
+        var ggRgb = parseHex(ggHex.value) || [84, 84, 84];
         if (stateUi.ggSets[stateUi.activeGgIdx]) stateUi.ggSets[stateUi.activeGgIdx].color = ggRgb;
 
-        var allRgb = parseHex(document.getElementById("fplcAllHex").value) || [0, 0, 0];
+        var allRgb = parseHex(allHex.value) || [0, 0, 0];
         var activeTabBtn = document.querySelector("#fplcTabBar .fplc-tab.active");
 
         return {
@@ -682,7 +983,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             _activeTab: activeTabBtn ? activeTabBtn.getAttribute("data-tab") : "fplcTabRun",
             onlyFlags: onlyFlags || null,
             cfg: {
-                scope: scopeRadio ? scopeRadio.value : "document",
+                scope: document.getElementById("fplcScopeSelect").value,
                 runSet: forceCompact ? "compact" : document.getElementById("fplcRunSet").value,
                 restyle: document.getElementById("fplcRestyle").checked,
                 updnEnabled: document.getElementById("fplcUpDn").checked,
@@ -769,10 +1070,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         }
 
         if (data.cfg) {
-            var scopeVal = data.cfg.scope === "selection" ? "selection" : "document";
-            var scopeRadio = document.querySelector('input[name="fplcScopeRadio"][value="' + scopeVal + '"]');
-            if (scopeRadio) scopeRadio.checked = true;
-
+            if (data.cfg.scope) document.getElementById("fplcScopeSelect").value = data.cfg.scope;
             if (data.cfg.runSet) document.getElementById("fplcRunSet").value = data.cfg.runSet;
             if (typeof data.cfg.restyle === "boolean") document.getElementById("fplcRestyle").checked = data.cfg.restyle;
             if (typeof data.cfg.updnEnabled === "boolean") document.getElementById("fplcUpDn").checked = data.cfg.updnEnabled;
@@ -801,18 +1099,10 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             renderStyleRows();
         }
 
-        if (data.optPatterns instanceof Array) {
-            document.getElementById("fplcOptPatterns").value = data.optPatterns.join("\n");
-        }
-        if (data.wrapTexts instanceof Array) {
-            document.getElementById("fplcWrapTexts").value = data.wrapTexts.join("\n");
-        }
-        if (data.junkExact instanceof Array) {
-            document.getElementById("fplcJunkExact").value = data.junkExact.join("\n");
-        }
-        if (data.junkRegex instanceof Array) {
-            document.getElementById("fplcJunkRegex").value = data.junkRegex.join("\n");
-        }
+        if (data.optPatterns instanceof Array) document.getElementById("fplcOptPatterns").value = data.optPatterns.join("\n");
+        if (data.wrapTexts instanceof Array) document.getElementById("fplcWrapTexts").value = data.wrapTexts.join("\n");
+        if (data.junkExact instanceof Array) document.getElementById("fplcJunkExact").value = data.junkExact.join("\n");
+        if (data.junkRegex instanceof Array) document.getElementById("fplcJunkRegex").value = data.junkRegex.join("\n");
 
         if (data.dashed) {
             if (typeof data.dashed.enabled === "boolean") document.getElementById("fplcDashEnabled").checked = data.dashed.enabled;
@@ -830,7 +1120,9 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             if (typeof data.allLines.weight === "number") document.getElementById("fplcAllWeight").value = data.allLines.weight;
             if (typeof data.allLines.applyColor === "boolean") document.getElementById("fplcAllColorOn").checked = data.allLines.applyColor;
             if (data.allLines.color instanceof Array && data.allLines.color.length === 3) {
-                document.getElementById("fplcAllHex").value = toHex(data.allLines.color);
+                var aHex = toHex(data.allLines.color);
+                allHex.value = aHex;
+                allPicker.value = aHex;
             }
             if (typeof data.allLines.skipDashed === "boolean") document.getElementById("fplcAllSkipDashed").checked = data.allLines.skipDashed;
             if (typeof data.allLines.selectAfter === "boolean") document.getElementById("fplcAllSelect").checked = data.allLines.selectAfter;
@@ -867,15 +1159,13 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         try {
             var raw = localStorage.getItem(LOCAL_STORAGE_KEY);
             if (!raw) return false;
-            var parsed = JSON.parse(raw);
-            applyImportedConfig(parsed);
+            applyImportedConfig(JSON.parse(raw));
             return true;
         } catch (e) {
             return false;
         }
     }
 
-    // Auto-save on any input/checkbox/select change inside #fplcTabBar and panes
     var allInputs = document.querySelectorAll(".fplc-wrap input, .fplc-wrap select, .fplc-wrap textarea");
     for (var n = 0; n < allInputs.length; n++) {
         if (allInputs[n].type === "file") continue;
@@ -885,11 +1175,8 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         }
     }
 
-    // Save automatically before switching dropdown views or unloading
     var viewSelector = document.getElementById("viewSelector");
-    if (viewSelector) {
-        viewSelector.addEventListener("change", saveToLocalStorage);
-    }
+    if (viewSelector) viewSelector.addEventListener("change", saveToLocalStorage);
     window.addEventListener("beforeunload", saveToLocalStorage);
 
     function invokeCleaner(payload, label) {
@@ -917,6 +1204,21 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     };
     document.getElementById("fplcBtnGgRunNow").onclick = function () {
         invokeCleaner(buildFullPayload(false, ["groupGraphicsEnabled"]), "Group All Sets");
+    };
+
+    document.getElementById("fplcBtnResetAll").onclick = function () {
+        try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch (e) {}
+        stateUi.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+        stateUi.styleSets = JSON.parse(JSON.stringify(DEFAULT_STYLES));
+        stateUi.ggSets = [
+            { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
+            { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
+        ];
+        stateUi.activeGgIdx = 0;
+        clearRuleForm();
+        renderStyleRows();
+        renderGgSets();
+        safeLog("Floor Plan Cleaner -> Reset all UI settings to defaults.", "info");
     };
 
     document.getElementById("fplcBtnExportJson").onclick = function () {
