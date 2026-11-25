@@ -910,7 +910,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     $("fplcBtnClearRuleForm").onclick = clearRuleForm;
     $("fplcBtnSaveRule").onclick = function () {
         var cat = $("fplcRuleCat").value;
-        var finalText = String($("fplcRuleFinal").value || "").trim().toUpperCase();
+        var finalText = String($("fplcRuleFinal").value || "").trim();
         var rawKeys = String($("fplcRuleKeys").value || "");
         var exact = $("fplcRuleExact").checked;
         if (!finalText) { safeLog("Floor Plan Cleaner -> Final text is required.", "warn"); return; }
