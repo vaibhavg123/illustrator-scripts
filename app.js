@@ -1,4 +1,6 @@
 (function () {
+    "use strict";
+
     var rawBase = window.VG_BASE_URL || "";
     var BASE_URL = rawBase ? (rawBase.charAt(rawBase.length - 1) === "/" ? rawBase : rawBase + "/") : "";
 
@@ -8,6 +10,31 @@
     var FEATURES_JS_URL = BASE_URL + "js/custom_features.js";
 
     var cs = new CSInterface();
+
+    // Block right-click View Page Source outside editable controls and log panel
+    document.addEventListener("contextmenu", function (e) {
+        var target = e.target;
+        var allow = false;
+
+        while (target && target !== document) {
+            if (
+                target.tagName === "INPUT" ||
+                target.tagName === "TEXTAREA" ||
+                target.isContentEditable ||
+                target.id === "vgLogBox" ||
+                target.id === "vgLogPanel"
+            ) {
+                allow = true;
+                break;
+            }
+            target = target.parentNode;
+        }
+
+        if (!allow) {
+            e.preventDefault();
+            return false;
+        }
+    }, true);
 
     var state = {
         version: null,
@@ -67,7 +94,7 @@
     function addLog(message, type) {
         var entry = {
             time: formatTime(),
-            type: type || "info", // "info" | "success" | "error" | "warn"
+            type: type || "info",
             message: sanitizeLogMessage(message)
         };
         state.logs.push(entry);
@@ -313,27 +340,29 @@
     });
 
     // =====================================================
-    // CUSTOM FEATURES MODULE BRIDGE
+    // CUSTOM FEATURES MODULE BRIDGE (INLINE INJECTION)
     // =====================================================
     function loadCustomFeaturesModule() {
         return new Promise(function (resolve) {
             var old = document.getElementById("vg-custom-features-js");
             if (old) old.remove();
 
-            var script = document.createElement("script");
-            script.id = "vg-custom-features-js";
-            script.src = noCache(FEATURES_JS_URL);
-
-            script.onload = function () {
-                resolve(true);
-            };
-
-            script.onerror = function () {
-                addLog("Optional feature module not loaded.", "warn");
-                resolve(false);
-            };
-
-            document.body.appendChild(script);
+            fetch(noCache(FEATURES_JS_URL), { cache: "no-store" })
+                .then(function (res) {
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    return res.text();
+                })
+                .then(function (code) {
+                    var script = document.createElement("script");
+                    script.id = "vg-custom-features-js";
+                    script.textContent = code;
+                    document.body.appendChild(script);
+                    resolve(true);
+                })
+                .catch(function () {
+                    addLog("Optional feature module not loaded.", "warn");
+                    resolve(false);
+                });
         });
     }
 
@@ -351,7 +380,7 @@
     // LOAD SHELL UI & CSS
     // =====================================================
     function loadRemoteCSS() {
-        return fetch(noCache(CSS_URL))
+        return fetch(noCache(CSS_URL), { cache: "no-store" })
             .then(function (res) {
                 if (!res.ok) throw new Error("CSS HTTP " + res.status);
                 return res.text();
@@ -361,13 +390,13 @@
                 if (old) old.remove();
                 var style = document.createElement("style");
                 style.id = "remote-style";
-                style.innerHTML = css;
+                style.textContent = css;
                 document.head.appendChild(style);
             });
     }
 
     function loadShellUI() {
-        return fetch(noCache(UI_URL))
+        return fetch(noCache(UI_URL), { cache: "no-store" })
             .then(function (res) {
                 if (!res.ok) throw new Error("UI HTTP " + res.status);
                 return res.text();
@@ -426,7 +455,7 @@
     // LOAD CONFIG (version.json)
     // =====================================================
     function loadConfig(forceReload) {
-        return fetch(noCache(VERSION_URL))
+        return fetch(noCache(VERSION_URL), { cache: "no-store" })
             .then(function (res) {
                 if (!res.ok) throw new Error("Config HTTP " + res.status);
                 var lastMod = res.headers.get("Last-Modified");
@@ -522,11 +551,21 @@
                 var oldScript = scriptList[k];
                 var newScript = document.createElement("script");
                 if (oldScript.src) {
-                    newScript.src = noCache(resolveUrl(oldScript.src));
+                    (function (srcAttr, targetEl, replacementEl) {
+                        fetch(noCache(resolveUrl(srcAttr)), { cache: "no-store" })
+                            .then(function (r) { return r.ok ? r.text() : ""; })
+                            .then(function (txt) {
+                                if (txt) {
+                                    replacementEl.textContent = txt;
+                                    if (targetEl.parentNode) targetEl.parentNode.replaceChild(replacementEl, targetEl);
+                                }
+                            })
+                            .catch(function () {});
+                    })(oldScript.getAttribute("src"), oldScript, newScript);
                 } else {
                     newScript.textContent = oldScript.textContent;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
                 }
-                oldScript.parentNode.replaceChild(newScript, oldScript);
             }
 
             bindDeclarativeJsxButtons(container);
@@ -551,7 +590,7 @@
 
         container.innerHTML = "<div class='view-loading'>Loading " + (viewObj.label || viewId) + "...</div>";
 
-        fetch(noCache(resolveUrl(viewObj.html)))
+        fetch(noCache(resolveUrl(viewObj.html)), { cache: "no-store" })
             .then(function (res) {
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 return res.text();
@@ -674,7 +713,7 @@
 
         var fetchPromise = state.cache.scripts[fullUrl]
             ? Promise.resolve(state.cache.scripts[fullUrl])
-            : fetch(noCache(fullUrl)).then(function (res) {
+            : fetch(noCache(fullUrl), { cache: "no-store" }).then(function (res) {
                 if (!res.ok) {
                     throw new Error("HTTP " + res.status);
                 }
@@ -755,7 +794,7 @@
     }
 
     function checkForUpdateSilent() {
-        fetch(noCache(VERSION_URL))
+        fetch(noCache(VERSION_URL), { cache: "no-store" })
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 if (data.version && data.version !== state.version) {
