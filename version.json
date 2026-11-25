@@ -11,8 +11,13 @@
     },
     {
       "id": "floor_plan_cleaner",
-      "label": "📐 Floor Plan Cleaner",
+      "label": "📐 Tri Pointee Standards",
       "html": "views/floor_plan_cleaner.html"
+    },
+    {
+      "id": "pulte_floor_plan_cleaner",
+      "label": "📐 Pulte Standards",
+      "html": "views/pulte_floor_plan_cleaner.html"
     },
     {
       "id": "hide_graphics",
