@@ -13,10 +13,12 @@
     }
 
     function escapeJson(str) {
-        return String(str || "")
+        return String(str === null || str === undefined ? "" : str)
             .replace(/\\/g, "\\\\")
             .replace(/"/g, '\\"')
-            .replace(/\r?\n/g, " ");
+            .replace(/\r/g, "\\r")
+            .replace(/\n/g, "\\n")
+            .replace(/\t/g, "\\t");
     }
 
     var APP_TITLE = "Floor Plan Label Cleaner v3.0";
@@ -26,7 +28,6 @@
     var CATS = ["main", "secondary", "small", "oname", "fname"];
     var CAT_LABEL = { main: "Main room", secondary: "Secondary", small: "Small", oname: "O_name", fname: "F_name" };
     var EXTRAS = ["dashed", "arrow"];
-    var UNITS = ["in", "mm", "cm", "pt", "px"];
     var ARROW_GLYPH_RE = /^[\s\u2190-\u21FF\u2B05-\u2B07\u27A1\u2794\u279C-\u27BE\u25B2\u25B3\u25B4\u25B6\u25B7\u25B8\u25BA\u25BC\u25BD\u25BE\u25C0\u25C1\u25C2\u25C4]+$/;
 
     var hasOwn = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
@@ -309,22 +310,8 @@
                 requireAllParts: true,
                 applyColor: true,
                 sets: [
-                    {
-                        name: "Group 1",
-                        color: [84, 84, 84],
-                        items: [
-                            { w: 10, h: 5 },
-                            { w: 1, h: 5 }
-                        ]
-                    },
-                    {
-                        name: "Group 2",
-                        color: [221, 221, 221],
-                        items: [
-                            { w: 11, h: 4 },
-                            { w: 6, h: 3 }
-                        ]
-                    }
+                    { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
+                    { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
                 ]
             },
             styleSets: {
@@ -457,8 +444,6 @@
                     validSets.push({ name: sName, color: sCol, items: sanitizeItems(gs.items) });
                 }
                 if (validSets.length > 0) st.groupGraphics.sets = validSets;
-            } else if (gg.items instanceof Array) {
-                st.groupGraphics.sets = [{ name: "Group 1", color: [84, 84, 84], items: sanitizeItems(gg.items) }];
             }
         }
         if (saved.styleSets) {
@@ -533,6 +518,20 @@
         } catch (e) {
             try { REPORT_FILE.close(); } catch (e2) {}
             return false;
+        }
+    }
+
+    function readReportFile() {
+        try {
+            if (!REPORT_FILE.exists) return "";
+            REPORT_FILE.encoding = "UTF-8";
+            REPORT_FILE.open("r");
+            var txt = REPORT_FILE.read();
+            REPORT_FILE.close();
+            return txt;
+        } catch (e) {
+            try { REPORT_FILE.close(); } catch (e2) {}
+            return "";
         }
     }
 
@@ -1060,6 +1059,25 @@
         return res;
     }
 
+    function scanUnmatched(doc, st) {
+        var ctx = compile(st);
+        var counts = {}, t;
+        forEachScope(doc, st.cfg.scope, "textFrames", function (frames) {
+            for (var i = 0; i < frames.length; i++) {
+                try {
+                    t = norm(frames[i].contents);
+                    if (t === "" || isOptText(ctx, t) || isJunk(ctx, t) || getUpDn(ctx, t) ||
+                        matchRule(ctx, t) || hasOwn(ctx.wrap, t)) continue;
+                    counts[t] = (counts[t] || 0) + 1;
+                } catch (e) {}
+            }
+        }, true);
+        var list = [];
+        for (t in counts) if (hasOwn(counts, t)) list.push({ t: t, n: counts[t] });
+        list.sort(function (a, b) { return b.n - a.n; });
+        return list;
+    }
+
     function histLines(title, obj, limit) {
         var arr = [], k, i;
         for (k in obj) if (hasOwn(obj, k)) arr.push({ k: k, n: obj[k] });
@@ -1484,44 +1502,38 @@
         }
     }
 
-    function openQuickDialog(st) {
-        var d = new Window("dialog", APP_TITLE + " - Quick Run");
-        d.orientation = "column";
-        d.alignChildren = "fill";
-
-        var cRestyle = d.add("checkbox", undefined, "Rename / restyle labels");
-        cRestyle.value = st.cfg.restyle;
-        var cJunk = d.add("checkbox", undefined, "Delete junk text");
-        cJunk.value = st.cfg.removeJunk;
-        var cDashed = d.add("checkbox", undefined, "Update dashed lines");
-        cDashed.value = st.cfg.dashedEnabled;
-        var cLines = d.add("checkbox", undefined, "Update ALL lines");
-        cLines.value = st.cfg.allLinesEnabled;
-        var cGroup = d.add("checkbox", undefined, "Group matching graphics by W x H");
-        cGroup.value = st.cfg.groupGraphicsEnabled;
-
-        var gBtns = d.add("group");
-        gBtns.alignment = "right";
-        var bCancel = gBtns.add("button", undefined, "Cancel");
-        var bOk = gBtns.add("button", undefined, "Run");
-
-        var accepted = false;
-        bCancel.onClick = function () { d.close(0); };
-        bOk.onClick = function () {
-            st.cfg.restyle = cRestyle.value;
-            st.cfg.removeJunk = cJunk.value;
-            st.cfg.dashedEnabled = cDashed.value;
-            st.cfg.allLinesEnabled = cLines.value;
-            st.cfg.groupGraphicsEnabled = cGroup.value;
-            accepted = true;
-            d.close(1);
-        };
-
-        d.show();
-        return accepted;
+    function applyPanelOverrides(st, pd) {
+        if (pd.cfg) {
+            for (var ck in pd.cfg) {
+                if (hasOwn(st.cfg, ck) && hasOwn(pd.cfg, ck)) {
+                    st.cfg[ck] = pd.cfg[ck];
+                }
+            }
+        }
+        if (pd.rules instanceof Array && pd.rules.length > 0) st.rules = pd.rules;
+        if (pd.styleSets) st.styleSets = pd.styleSets;
+        if (pd.optPatterns instanceof Array) st.optPatterns = pd.optPatterns;
+        if (pd.wrapTexts instanceof Array) st.wrapTexts = pd.wrapTexts;
+        if (pd.junkExact instanceof Array) st.junkExact = pd.junkExact;
+        if (pd.junkRegex instanceof Array) st.junkRegex = pd.junkRegex;
+        if (pd.dashed) st.dashed = pd.dashed;
+        if (pd.allLines) st.allLines = pd.allLines;
+        if (pd.arrows) st.arrows = pd.arrows;
+        if (pd.universal) st.universal = pd.universal;
+        if (pd.groupGraphics) st.groupGraphics = pd.groupGraphics;
     }
 
     function executeFloorPlanCleaner() {
+        var hasUiData = (typeof panelData !== "undefined" && panelData && panelData._fromHtmlUi === true);
+
+        if (hasUiData && panelData.action === "getLastReport") {
+            var txt = readReportFile();
+            if (!txt) {
+                return '{"ok":false,"error":"No saved report found yet. Run the cleaner first."}';
+            }
+            return '{"ok":true,"message":"Loaded last report","report":"' + escapeJson(txt) + '"}';
+        }
+
         if (app.documents.length === 0) {
             report(100, "No document open.");
             return '{"ok":false,"error":"No document is open."}';
@@ -1529,9 +1541,33 @@
 
         var doc = app.activeDocument;
         var st = loadState(SETTINGS_FILE);
-        var hasUiData = (typeof panelData !== "undefined" && panelData && panelData._fromHtmlUi === true);
 
         if (hasUiData) {
+            if (panelData.action === "listLayers") {
+                var incSub = Boolean(panelData.includeSub);
+                var itemsJson = [];
+                function collectLayerMeta(layers, depth) {
+                    for (var li = 0; li < layers.length; li++) {
+                        var L = layers[li];
+                        var itemCnt = 0;
+                        try { itemCnt = L.pageItems.length; } catch (eCnt) {}
+                        itemsJson.push(
+                            '{"name":"' + escapeJson(L.name) +
+                            '","depth":' + depth +
+                            ',"items":' + itemCnt +
+                            ',"visible":' + (L.visible ? 'true' : 'false') +
+                            ',"locked":' + (L.locked ? 'true' : 'false') + '}'
+                        );
+                        if (incSub && L.layers.length) {
+                            collectLayerMeta(L.layers, depth + 1);
+                        }
+                    }
+                }
+                collectLayerMeta(doc.layers, 0);
+                report(100, "Layers loaded.");
+                return '{"ok":true,"message":"Loaded ' + itemsJson.length + ' layers","layers":[' + itemsJson.join(",") + ']}';
+            }
+
             if (panelData.renameLayer && panelData.renameLayer.oldName && panelData.renameLayer.newName) {
                 var foundLayer = null;
                 walkLayersPlain(doc.layers, function (L) {
@@ -1545,31 +1581,51 @@
                 return '{"ok":true,"message":"Renamed layer to ' + escapeJson(foundLayer.name) + '"}';
             }
 
-            if (panelData.cfg) {
-                for (var ck in panelData.cfg) {
-                    if (hasOwn(st.cfg, ck) && hasOwn(panelData.cfg, ck)) {
-                        st.cfg[ck] = panelData.cfg[ck];
-                    }
-                }
+            applyPanelOverrides(st, panelData);
+
+            if (panelData.action === "saveSettings") {
+                var savedOk = saveState(st, SETTINGS_FILE);
+                report(100, savedOk ? "Settings saved." : "Save failed.");
+                return savedOk
+                    ? '{"ok":true,"message":"Settings saved to UserData"}'
+                    : '{"ok":false,"error":"Could not write settings file."}';
             }
-            if (panelData.rules instanceof Array && panelData.rules.length > 0) st.rules = panelData.rules;
-            if (panelData.styleSets) st.styleSets = panelData.styleSets;
-            if (panelData.optPatterns instanceof Array) st.optPatterns = panelData.optPatterns;
-            if (panelData.wrapTexts instanceof Array) st.wrapTexts = panelData.wrapTexts;
-            if (panelData.junkExact instanceof Array) st.junkExact = panelData.junkExact;
-            if (panelData.junkRegex instanceof Array) st.junkRegex = panelData.junkRegex;
-            if (panelData.dashed) st.dashed = panelData.dashed;
-            if (panelData.allLines) st.allLines = panelData.allLines;
-            if (panelData.arrows) st.arrows = panelData.arrows;
-            if (panelData.universal) st.universal = panelData.universal;
-            if (panelData.groupGraphics) st.groupGraphics = panelData.groupGraphics;
+
+            if (panelData.action === "scanUnmatched") {
+                report(40, "Scanning document for unrecognised text...");
+                var found = scanUnmatched(doc, st);
+                var fArr = [];
+                for (var fi = 0; fi < found.length; fi++) {
+                    fArr.push('{"t":"' + escapeJson(found[fi].t) + '","n":' + found[fi].n + '}');
+                }
+                report(100, "Scan complete.");
+                return '{"ok":true,"message":"Found ' + found.length + ' unrecognised texts","found":[' + fArr.join(",") + ']}';
+            }
+
+            if (panelData.action === "groupOnly") {
+                saveState(st, SETTINGS_FILE);
+                report(40, "Grouping matching graphics...");
+                var ggOut = runGroupGraphics(doc, st, false);
+                var gRep = [
+                    "Group Graphics Finished.",
+                    "Group sets configured:  " + ggOut.setsCount,
+                    "Matching parts found:   " + ggOut.matchedTotal,
+                    "Total groups created:   " + ggOut.groupsCreated,
+                    "Total items grouped:    " + ggOut.itemsGrouped,
+                    "Unpaired parts skipped: " + ggOut.incompleteSkipped,
+                    "Errors:                 " + ggOut.errors
+                ];
+                for (var ps = 0; ps < ggOut.perSet.length; ps++) {
+                    var sInfo = ggOut.perSet[ps];
+                    gRep.push("  " + sInfo.name + " (" + sInfo.hex + "): " + sInfo.groupsCreated + " groups (" + sInfo.itemsGrouped + " items)");
+                }
+                saveReportFile(gRep.join(EOL));
+                report(100, "Group Graphics finished.");
+                return '{"ok":true,"message":"Created ' + ggOut.groupsCreated + ' groups (' + ggOut.itemsGrouped + ' items)","groups":' + ggOut.groupsCreated + ',"errors":' + ggOut.errors + '}';
+            }
 
             if (panelData.onlyFlags instanceof Array) {
                 applyOnly(st.cfg, panelData.onlyFlags);
-            }
-        } else {
-            if (!openQuickDialog(st)) {
-                return '{"ok":false,"error":"Cancelled."}';
             }
         }
 
