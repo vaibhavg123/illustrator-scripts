@@ -236,35 +236,37 @@
         for (n = 1; n <= 4; n++) {
             R("main", "BATH " + n, ["ba " + n, "ba" + n, "bath " + n, "bath" + n]);
         }
-        R("main", "OWNER'S SUITE",   ["owner's suite", "owners suite"]);
-        R("main", "OWNER'S BEDROOM", ["owner's bedroom", "owners bedroom"]);
-        R("main", "OWNER'S BATH",    ["owner's bath", "o. ba", "o. bath", "o.ba", "o.bath"]);
-        R("main", "UPSTAIRS LIVING", ["upstairs living"]);
+        R("main", "OWNER'S/nSUITE",   ["owner's suite", "owners suite"]);
+        R("main", "PRIMARY/nSUITE",   ["primary suite", "primary suite"]);
+        R("main", "OWNER'S/nBEDROOM", ["owner's bedroom", "owners bedroom"]);
+        R("main", "OWNER'S/nBATH",    ["owner's bath", "o. ba", "o. bath", "o.ba", "o.bath"]);
+       R("main", "PRIMARY/nBATH",    ["primary bath", "p. ba", "p. bath", "p.ba", "p.bath"]);
+        R("main", "UPSTAIRS/nLIVING", ["upstairs living"]);
         R("main", "FAMILY",          ["family"]);
-        R("main", "GAME ROOM",       ["game room"]);
+        R("main", "GAME/nROOM",       ["game room"]);
         R("main", "STUDY",           ["study"]);
         R("main", "FLEX",            ["flex"]);
         R("main", "LIVING",          ["living"]);
         R("main", "CASUAL",          ["casual"]);
-        R("main", "CASUAL DINING",   ["casual dining"]);
+        R("main", "CASUAL/nDINING",   ["casual dining"]);
         R("main", "OFFICE",          ["office"]);
-        R("main", "COVERED PORCH",   ["covered porch"]);
-        R("main", "COVERED PATIO",   ["covered patio"]);
+        R("main", "COVERED/nPORCH",   ["covered porch"]);
+        R("main", "COVERED/nPATIO",   ["covered patio"]);
         R("main", "PATIO",           ["patio"]);
         R("main", "DECK",            ["deck"]);
         R("main", "DINING",          ["dining"]);
         R("main", "BREAKFAST",       ["breakfast"]);
         R("main", "LOFT",            ["loft"]);
         R("main", "KITCHEN",         ["kitchen"]);
-        R("main", "GREAT ROOM",      ["great rm", "great room"]);
+        R("main", "GREAT/nROOM",      ["great rm", "great room"]);
         R("main", "GARAGE",          ["garage"]);
-
-        R("secondary", "LAUNDRY",        ["la"], true);
-        R("secondary", "LAUNDRY",        ["laundry"]);
-        R("secondary", "MECH",           ["mech"]);
-        R("secondary", "WALK-IN CLOSET", ["wic", "w.i.c.", "walk-in closet", "walk in closet"]);
-        R("secondary", "FOYER",          ["foyer"]);
-        R("secondary", "PORCH",          ["porch"]);
+        R("main", "LAUNDRY",        ["la"], true);
+        R("main", "LAUNDRY",        ["laundry"]);
+        R("main", "MECH",           ["mech"]);
+        R("main", "W.I.C.", ["wic", "w.i.c.", "walk-in closet", "walk in closet"]);
+        R("main", "FOYER",          ["foyer"]);
+        R("main", "PORCH",          ["porch"]);
+        R("main", "TERRACE",         ["TERRACE"]);
 
         R("small", "PWDR",            ["pdr", "pwdr"]);
         R("small", "ATTIC ACCESS",    ["attic access"]);
@@ -294,6 +296,7 @@
         R("small", "AT END CONDITION",        ["at end condition"]);
         R("small", "SINK",            ["sink"]);
         R("small", "WH",              ["wh"], true);
+        R("small", "OVEN//nMICRO",              ["OVEN/ MICRO"], true);
 
         return {
             version: 3,
@@ -327,7 +330,7 @@
                 applyWeight: true,
                 selectAfter: true,
                 strokeWeight: 0.5,
-                dash: 3,
+                dash: 4,
                 space: 2
             },
             allLines: {
@@ -364,20 +367,20 @@
             },
             styleSets: {
                 standard: {
-                    main:      { size: 9, color: [0, 100, 255] },
+                    main:      { size: 10, color: [0, 100, 255] },
                     secondary: { size: 8, color: [255, 0, 0] },
                     small:     { size: 6, color: [0, 170, 0] },
-                    oname:     { size: 6, color: [170, 0, 255] },
-                    fname:     { size: 6, color: [255, 128, 0] },
+                    oname:     { size: 12, color: [170, 0, 255] },
+                    fname:     { size: 12, color: [255, 128, 0] },
                     dashed:    { color: [0, 0, 0] },
                     arrow:     { color: [0, 0, 0] }
                 },
                 compact: {
-                    main:      { size: 8, color: [0, 100, 255] },
-                    secondary: { size: 6, color: [255, 0, 0] },
+                    main:      { size: 10, color: [0, 100, 255] },
+                    secondary: { size: 8, color: [255, 0, 0] },
                     small:     { size: 6, color: [0, 170, 0] },
-                    oname:     { size: 6, color: [170, 0, 255] },
-                    fname:     { size: 6, color: [255, 128, 0] },
+                    oname:     { size: 12, color: [170, 0, 255] },
+                    fname:     { size: 12, color: [255, 128, 0] },
                     dashed:    { color: [0, 0, 0] },
                     arrow:     { color: [0, 0, 0] }
                 }
