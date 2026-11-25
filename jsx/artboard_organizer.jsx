@@ -37,10 +37,6 @@
         item.translate(targetCx - b.cx, targetCy - b.cy);
     }
 
-    function scaleUniform(item, pct) {
-        item.resize(pct, pct, true, true, true, true, pct, Transformation.CENTER);
-    }
-
     function executeOrganizer() {
         if (app.documents.length === 0) {
             report(100, "No document open.");
@@ -57,7 +53,7 @@
             var abArr = [];
             for (var i = 0; i < doc.artboards.length; i++) {
                 var ab = doc.artboards[i];
-                var r = ab.artboardRect; // [left, top, right, bottom]
+                var r = ab.artboardRect;
                 var w = Math.abs(r[2] - r[0]);
                 var h = Math.abs(r[1] - r[3]);
                 abArr.push(
@@ -97,7 +93,7 @@
             return '{"ok":true,"message":"Loaded ' + grpArr.length + ' selected item(s)","groups":[' + grpArr.join(",") + ']}';
         }
 
-        // 3. APPLY LAYOUT ON SELECTED ARTBOARD
+        // 3. APPLY LAYOUT ON SELECTED ARTBOARD (100% ORIGINAL SIZE - NO SCALING)
         if (action === "applyLayout") {
             var selItems = doc.selection;
             if (!selItems || selItems.length === 0) {
@@ -111,42 +107,27 @@
             }
 
             var layoutType = String(pd.layoutType || "center");
-            var margin = Number(pd.marginPt) || 0;
-            var gap = Number(pd.gapPt) || 0;
-            var autoScale = (pd.autoScale !== false);
+            var gap = Math.max(0, Number(pd.gapPt) || 0);
 
             var abRect = doc.artboards[abIndex].artboardRect;
-            var abL = abRect[0], abT = abRect[1], abR = abRect[2], abB = abRect[3];
-            var abW = Math.abs(abR - abL);
-            var abH = Math.abs(abT - abB);
-            var abCx = (abL + abR) * 0.5;
-            var abCy = (abT + abB) * 0.5;
-            var usableW = Math.max(10, abW - margin * 2);
-            var usableH = Math.max(10, abH - margin * 2);
+            var abCx = (abRect[0] + abRect[2]) * 0.5;
+            var abCy = (abRect[1] + abRect[3]) * 0.5;
 
             doc.artboards.setActiveArtboardIndex(abIndex);
-            report(35, "Organizing " + selItems.length + " item(s)...");
+            report(40, "Organizing " + selItems.length + " item(s) at 100% size...");
 
             var items = [];
             for (var k = 0; k < selItems.length; k++) items.push(selItems[k]);
 
-            // SINGLE GROUP: CENTER / CENTER & FIT
-            if (items.length === 1 || layoutType === "center" || layoutType === "center_fit") {
-                var single = items[0];
-                var sb = getBounds(single);
-                if (layoutType === "center_fit" || (autoScale && (sb.w > usableW || sb.h > usableH))) {
-                    var ratio = Math.min(usableW / Math.max(1, sb.w), usableH / Math.max(1, sb.h));
-                    if (layoutType === "center_fit" || ratio < 1) {
-                        scaleUniform(single, ratio * 100);
-                    }
-                }
-                moveItemToCenter(single, abCx, abCy);
+            // SINGLE GROUP: CENTER AT ORIGINAL SIZE
+            if (items.length === 1 || layoutType === "center") {
+                moveItemToCenter(items[0], abCx, abCy);
                 app.redraw();
                 report(100, "Centered on artboard.");
-                return '{"ok":true,"message":"Centered group on ' + escapeJson(doc.artboards[abIndex].name) + '"}';
+                return '{"ok":true,"message":"Centered group (100% size) on ' + escapeJson(doc.artboards[abIndex].name) + '"}';
             }
 
-            // MULTIPLE GROUPS: ROW, COLUMN, GRID, GRID2
+            // MULTIPLE GROUPS: ROW, COLUMN, GRID, GRID2 (100% ORIGINAL SIZE)
             var n = items.length;
             var cols = n;
             if (layoutType === "column") cols = 1;
@@ -154,7 +135,6 @@
             else if (layoutType === "grid2") cols = 2;
 
             var rows = Math.ceil(n / cols);
-            var boundsList = [];
             var colWidths = [];
             var rowHeights = [];
             var c, rIdx, idx;
@@ -164,7 +144,6 @@
 
             for (idx = 0; idx < n; idx++) {
                 var b = getBounds(items[idx]);
-                boundsList.push(b);
                 c = idx % cols;
                 rIdx = Math.floor(idx / cols);
                 if (b.w > colWidths[c]) colWidths[c] = b.w;
@@ -177,21 +156,6 @@
             var totalH = gap * (rows - 1);
             for (rIdx = 0; rIdx < rows; rIdx++) totalH += rowHeights[rIdx];
 
-            // Optional proportional scale-to-fit if block exceeds usable artboard area
-            var scaleFactor = 1;
-            if (autoScale && (totalW > usableW || totalH > usableH)) {
-                scaleFactor = Math.min(usableW / Math.max(1, totalW), usableH / Math.max(1, totalH));
-                for (idx = 0; idx < n; idx++) {
-                    scaleUniform(items[idx], scaleFactor * 100);
-                }
-                for (c = 0; c < cols; c++) colWidths[c] *= scaleFactor;
-                for (rIdx = 0; rIdx < rows; rIdx++) rowHeights[rIdx] *= scaleFactor;
-                gap *= scaleFactor;
-                totalW *= scaleFactor;
-                totalH *= scaleFactor;
-            }
-
-            // Position centered on artboard (Illustrator Y decreases downward)
             var startX = abCx - (totalW * 0.5);
             var startY = abCy + (totalH * 0.5);
 
@@ -217,7 +181,7 @@
 
             app.redraw();
             report(100, "Layout applied!");
-            return '{"ok":true,"message":"Organized ' + n + ' groups (' + layoutType + ') on ' + escapeJson(doc.artboards[abIndex].name) + '","scale":"' + Math.round(scaleFactor * 100) + '%"}';
+            return '{"ok":true,"message":"Organized ' + n + ' groups (' + layoutType + ', 100% size) on ' + escapeJson(doc.artboards[abIndex].name) + '"}';
         }
 
         return '{"ok":false,"error":"Unknown action."}';
