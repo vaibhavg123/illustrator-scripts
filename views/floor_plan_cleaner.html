@@ -4,7 +4,7 @@
     <div class="fplc-header">
         <div class="fplc-title-block">
             <h4>Floor Plan Label Cleaner</h4>
-            <span class="fplc-badge">v3.1 • Full HTML Panel</span>
+            <span class="fplc-badge">v3.2 • Full HTML Panel</span>
         </div>
         <div class="fplc-top-actions">
             <button type="button" id="fplcBtnRunCompact" class="tool-btn secondary fplc-mini-btn">Compact</button>
@@ -54,7 +54,7 @@
             <label class="checkbox-row"><input type="checkbox" id="fplcWrap" checked /><span>Multi-line labels / mappings (Lists)</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcJunk" checked /><span>Delete junk text</span></label>
             <label class="checkbox-row"><input type="checkbox" id="fplcLoose" checked /><span>Loose matching (e.g. KITCHEN ISLAND)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="fplcOpt" /><span>Skip option note matches</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="fplcOpt" /><span>Skip option note matches (kept in place)</span></label>
         </div>
 
         <div class="custom-card">
@@ -81,6 +81,7 @@
                 <button type="button" id="fplcBtnSaveJsxSettings" class="tool-btn secondary">Save Settings</button>
                 <button type="button" id="fplcBtnExportJson" class="tool-btn secondary">Export JSON</button>
                 <button type="button" id="fplcBtnImportJson" class="tool-btn secondary">Import JSON</button>
+                <button type="button" id="fplcBtnLoadJsx" class="tool-btn secondary">Load Saved (Illustrator)</button>
                 <button type="button" id="fplcBtnResetAll" class="tool-btn secondary">Reset</button>
             </div>
             <input type="file" id="fplcImportFileInput" accept=".json,application/json" style="display:none;" />
@@ -125,6 +126,10 @@
                 <button type="button" id="fplcBtnClearRuleForm" class="tool-btn secondary">Clear</button>
                 <button type="button" id="fplcBtnScanDoc" class="tool-btn secondary">Scan Doc...</button>
                 <button type="button" id="fplcBtnResetRules" class="tool-btn secondary">Defaults</button>
+            </div>
+            <div class="action-btn-row">
+                <button type="button" id="fplcBtnCheckAllRules" class="tool-btn secondary">Check All Shown</button>
+                <button type="button" id="fplcBtnDelChecked" class="tool-btn secondary">Delete Checked</button>
             </div>
 
             <div id="fplcScanDrawer" class="fplc-scan-drawer" style="display:none;">
@@ -305,6 +310,8 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             <div class="action-btn-row">
                 <button type="button" id="fplcBtnRenameLayer" class="tool-btn">Rename</button>
                 <button type="button" id="fplcBtnUpperLayer" class="tool-btn secondary">UPPERCASE</button>
+                <button type="button" id="fplcBtnLayerVis" class="tool-btn secondary">Show / Hide</button>
+                <button type="button" id="fplcBtnLayerLock" class="tool-btn secondary">Lock / Unlock</button>
             </div>
         </div>
     </div>
@@ -489,6 +496,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 .fplc-rule-card:hover, .fplc-list-item:hover { background: #2c3340; border-color: #495568; }
 .fplc-rule-card.selected, .fplc-list-item.selected { background: #1f334a; border-color: #4aa3ff; }
 
+.fplc-rule-cb { flex-shrink: 0; margin: 0; }
 .fplc-rule-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .fplc-rule-top { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 .fplc-cat-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: #353f4d; color: #d6e4f5; }
@@ -644,7 +652,9 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         activeGgIdx: 0,
         editingRuleIdx: -1,
         editingPartIdx: -1,
-        selectedLayerName: ""
+        selectedLayerName: "",
+        selectedLayerIdx: "",
+        checkedRules: []
     };
 
     function $(id) { return document.getElementById(id); }
@@ -667,13 +677,57 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         statusTimer = setTimeout(function () { el.style.display = "none"; }, 5000);
     }
 
-    // FIX: every host call goes through here, so a missing VGTools bridge can't throw
+    // Every host call goes through here. If the host returns nothing ("Completed (no return value)"),
+    // the JSX also wrote its reply to FloorPlanLabelCleaner_result.json in the user-data folder; we read that.
+    var reqCounter = 0;
+
+    function resultFilePath() {
+        try {
+            var cs = new CSInterface();
+            var p = cs.getSystemPath(SystemPath.USER_DATA);
+            p = decodeURI(String(p)).replace(/^file:\/\/\//, "");
+            if (!/^[A-Za-z]:/.test(p) && p.charAt(0) !== "/") p = "/" + p;
+            return p.replace(/\\/g, "/") + "/FloorPlanLabelCleaner_result.json";
+        } catch (e) { return null; }
+    }
+
+    function looksLikeReply(raw) {
+        if (raw && typeof raw === "object") return true;
+        return typeof raw === "string" && raw.replace(/^\s+/, "").charAt(0) === "{";
+    }
+
+    function readResultFile(reqId, done, tries) {
+        var path = resultFilePath();
+        var txt = "";
+        try {
+            if (path && window.cep && window.cep.fs) {
+                var r = window.cep.fs.readFile(path, window.cep.encoding ? window.cep.encoding.UTF8 : "UTF-8");
+                if (r && r.err === 0 && r.data) txt = r.data;
+            }
+        } catch (e) {}
+        if (txt) {
+            var parsed = null;
+            try { parsed = JSON.parse(txt); } catch (e2) {}
+            if (parsed && parsed.reqId === reqId) { done(txt); return; }
+        }
+        if (tries < 12) { setTimeout(function () { readResultFile(reqId, done, tries + 1); }, 250); }
+        else { done(""); }
+    }
+
     function runJsx(payload, cb, label) {
         if (!window.VGTools || typeof window.VGTools.runScript !== "function") {
             showStatus("Host bridge (VGTools) not available - cannot talk to Illustrator.", "error");
             return false;
         }
-        window.VGTools.runScript(JSX_PATH, payload, cb || null, label);
+        var id = "r" + (++reqCounter) + "_" + new Date().getTime();
+        payload.reqId = id;
+        window.VGTools.runScript(JSX_PATH, payload, function (raw) {
+            if (looksLikeReply(raw)) { if (cb) cb(raw); return; }
+            readResultFile(id, function (txt) {
+                if (!txt) showStatus((label || "Script") + " -> no reply from Illustrator (host returned nothing and no result file was found).", "error");
+                if (cb) cb(txt);
+            }, 0);
+        }, label);
         return true;
     }
 
@@ -832,6 +886,20 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             var card = document.createElement("div");
             card.className = "fplc-rule-card" + (stateUi.editingRuleIdx === i ? " selected" : "");
 
+            var cbWrap = document.createElement("input");
+            cbWrap.type = "checkbox";
+            cbWrap.className = "fplc-rule-cb";
+            cbWrap.title = "Check for bulk delete";
+            cbWrap.checked = stateUi.checkedRules.indexOf(r) !== -1;
+            (function (ruleObj, cbEl) {
+                cbEl.onclick = function (e) {
+                    if (e && e.stopPropagation) e.stopPropagation();
+                    var at = stateUi.checkedRules.indexOf(ruleObj);
+                    if (cbEl.checked && at === -1) stateUi.checkedRules.push(ruleObj);
+                    if (!cbEl.checked && at !== -1) stateUi.checkedRules.splice(at, 1);
+                };
+            })(r, cbWrap);
+
             var mainCol = document.createElement("div");
             mainCol.className = "fplc-rule-main";
 
@@ -892,6 +960,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
                 };
             })(i);
 
+            card.appendChild(cbWrap);
             card.appendChild(mainCol);
             card.appendChild(delBtn);
             box.appendChild(card);
@@ -923,6 +992,19 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         }
         clearRuleForm();
         saveToLocalStorage();
+    };
+    $("fplcBtnCheckAllRules").onclick = function () {
+        var cbs = document.querySelectorAll("#fplcRulesList .fplc-rule-cb");
+        for (var i = 0; i < cbs.length; i++) { if (!cbs[i].checked) cbs[i].click(); }
+    };
+    $("fplcBtnDelChecked").onclick = function () {
+        var n = stateUi.checkedRules.length;
+        if (!n) { safeLog("Rules -> Tick one or more rules first.", "warn"); return; }
+        stateUi.rules = stateUi.rules.filter(function (r) { return stateUi.checkedRules.indexOf(r) === -1; });
+        stateUi.checkedRules = [];
+        clearRuleForm();
+        saveToLocalStorage();
+        safeLog("Rules -> Deleted " + n + " rule(s).", "success");
     };
     $("fplcBtnResetRules").onclick = function () {
         stateUi.rules = buildDefaultRules();
@@ -1088,7 +1170,7 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     };
 
     // ---------- Layers ----------
-    // FIX: window.prompt() is blocked in CEP panels, so renaming now happens in the name field
+    // prompt() is blocked in CEP panels, so renaming happens in the name field (double-click focuses it).
     function renderLayersList() {
         var box = $("fplcLayersList");
         if (!box) return;
@@ -1100,13 +1182,12 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         for (var i = 0; i < stateUi.layersCache.length; i++) {
             var info = stateUi.layersCache[i];
             var item = document.createElement("div");
-            item.className = "fplc-list-item" + (stateUi.selectedLayerName === info.name ? " selected" : "");
+            item.className = "fplc-list-item" + (stateUi.selectedLayerIdx === info.idx ? " selected" : "");
 
             var nameSpan = document.createElement("span");
             nameSpan.className = "fplc-rule-final";
-            var depth = info.depth || 0;
             var indent = "";
-            for (var d = 0; d < depth; d++) indent += "· ";
+            for (var d = 0; d < (info.depth || 0); d++) indent += "· ";
             nameSpan.textContent = indent + info.name;
             nameSpan.style.flex = "1";
 
@@ -1117,21 +1198,23 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
             item.appendChild(nameSpan);
             item.appendChild(metaSpan);
 
-            (function (layerName) {
+            (function (layerInfo) {
                 item.onclick = function () {
-                    stateUi.selectedLayerName = layerName;
-                    $("fplcNewLayerName").value = layerName;
+                    stateUi.selectedLayerIdx = layerInfo.idx;
+                    stateUi.selectedLayerName = layerInfo.name;
+                    $("fplcNewLayerName").value = layerInfo.name;
                     renderLayersList();
                 };
                 item.ondblclick = function () {
-                    stateUi.selectedLayerName = layerName;
+                    stateUi.selectedLayerIdx = layerInfo.idx;
+                    stateUi.selectedLayerName = layerInfo.name;
                     var inp = $("fplcNewLayerName");
-                    inp.value = layerName;
+                    inp.value = layerInfo.name;
                     renderLayersList();
                     inp.focus();
                     inp.select();
                 };
-            })(info.name);
+            })(info);
             box.appendChild(item);
         }
     }
@@ -1140,26 +1223,38 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         runJsx({ _fromHtmlUi: true, action: "listLayers", includeSub: $("fplcLayersShowSub").checked }, function (raw) {
             var parsed = parseReply(raw);
             if (parsed && parsed.ok && Array.isArray(parsed.layers)) stateUi.layersCache = parsed.layers;
-            else if (parsed && parsed.error) { stateUi.layersCache = []; showStatus(parsed.error, "error"); }
+            else {
+                stateUi.layersCache = [];
+                if (parsed && parsed.error) showStatus("Layers -> " + parsed.error, "error");
+            }
+            var still = false;
+            for (var i = 0; i < stateUi.layersCache.length; i++) if (stateUi.layersCache[i].idx === stateUi.selectedLayerIdx) still = true;
+            if (!still) { stateUi.selectedLayerIdx = ""; stateUi.selectedLayerName = ""; }
             renderLayersList();
         }, "List Layers");
     }
 
-    function renameSelectedLayer(newName, label) {
-        runJsx({ _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: newName } }, function (raw) {
+    function layerCall(payload, label, after) {
+        runJsx(payload, function (raw) {
             var parsed = parseReply(raw);
-            if (parsed && parsed.ok === false) { safeLog("Rename Layer -> " + parsed.error, "error"); return; }
-            stateUi.selectedLayerName = newName;
-            $("fplcNewLayerName").value = newName;
+            if (parsed && parsed.ok === false) { safeLog(label + " -> " + parsed.error, "error"); return; }
+            if (after) after();
             refreshLayersViaJsx();
         }, label);
+    }
+
+    function renameSelectedLayer(newName, label) {
+        layerCall({ _fromHtmlUi: true, renameLayer: { idx: stateUi.selectedLayerIdx, oldName: stateUi.selectedLayerName, newName: newName } }, label, function () {
+            stateUi.selectedLayerName = newName;
+            $("fplcNewLayerName").value = newName;
+        });
     }
 
     $("fplcBtnRefreshLayers").onclick = refreshLayersViaJsx;
     $("fplcLayersShowSub").onchange = function () { refreshLayersViaJsx(); saveToLocalStorage(); };
     $("fplcBtnRenameLayer").onclick = function () {
         var newName = String($("fplcNewLayerName").value || "").trim();
-        if (!stateUi.selectedLayerName || !newName) { safeLog("Rename Layer -> Select a layer and enter a new name.", "warn"); return; }
+        if (stateUi.selectedLayerIdx === "" || !newName) { safeLog("Rename Layer -> Select a layer and enter a new name.", "warn"); return; }
         if (newName === stateUi.selectedLayerName) return;
         renameSelectedLayer(newName, "Rename Layer");
     };
@@ -1167,11 +1262,29 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
         if (e.key === "Enter") $("fplcBtnRenameLayer").click();
     });
     $("fplcBtnUpperLayer").onclick = function () {
-        if (!stateUi.selectedLayerName) { safeLog("Uppercase Layer -> Select a layer first.", "warn"); return; }
+        if (stateUi.selectedLayerIdx === "") { safeLog("Uppercase Layer -> Select a layer first.", "warn"); return; }
         var up = stateUi.selectedLayerName.toUpperCase();
         if (up === stateUi.selectedLayerName) return;
         renameSelectedLayer(up, "Uppercase Layer");
     };
+    $("fplcBtnLayerVis").onclick = function () {
+        if (stateUi.selectedLayerIdx === "") { safeLog("Layers -> Select a layer first.", "warn"); return; }
+        layerCall({ _fromHtmlUi: true, layerOp: { idx: stateUi.selectedLayerIdx, op: "toggleVisible" } }, "Show / Hide Layer");
+    };
+    $("fplcBtnLayerLock").onclick = function () {
+        if (stateUi.selectedLayerIdx === "") { safeLog("Layers -> Select a layer first.", "warn"); return; }
+        layerCall({ _fromHtmlUi: true, layerOp: { idx: stateUi.selectedLayerIdx, op: "toggleLocked" } }, "Lock / Unlock Layer");
+    };
+
+    // Selection Only: warn straight away if nothing is selected in Illustrator
+    $("fplcScopeSelect").addEventListener("change", function () {
+        if (this.value !== "selection") return;
+        runJsx({ _fromHtmlUi: true, action: "selectionInfo" }, function (raw) {
+            var parsed = parseReply(raw);
+            if (parsed && parsed.ok && parsed.selected === 0) safeLog("Scope -> Nothing is selected in Illustrator yet. Select objects before running.", "warn");
+            else if (parsed && parsed.ok) showStatus(parsed.selected + " object(s) selected in Illustrator.", "info");
+        }, "Selection Check");
+    });
 
     // ---------- Group Graphics ----------
     var ggPicker = $("fplcGgColorPicker");
@@ -1616,6 +1729,19 @@ PRIMARY BATH =&gt; MASTER/nBATH</textarea>
     };
 
     // ---------- Reset / export / import ----------
+    $("fplcBtnLoadJsx").onclick = function () {
+        runJsx({ _fromHtmlUi: true, action: "getSettings" }, function (raw) {
+            var parsed = parseReply(raw);
+            if (parsed && parsed.ok && parsed.settings) {
+                applyImportedConfig(parsed.settings);
+                saveNow();
+                safeLog("Load Saved -> Loaded settings stored by Illustrator (" + stateUi.rules.length + " rules).", "success");
+            } else {
+                safeLog("Load Saved -> " + ((parsed && parsed.error) || "No reply from Illustrator."), "error");
+            }
+        }, "Load Saved Settings");
+    };
+
     $("fplcBtnResetAll").onclick = function () {
         try { localStorage.removeItem(LOCAL_STORAGE_KEY); } catch (e) {}
         stateUi.rules = buildDefaultRules();
