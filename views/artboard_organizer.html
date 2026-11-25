@@ -1,0 +1,379 @@
+<!-- views/artboard_organizer.html -->
+<div class="ao-wrap">
+    <div class="ao-header">
+        <div>
+            <h4>Artboard Layout Organizer</h4>
+            <span class="ao-sub">Select artboard → Load groups → Organize</span>
+        </div>
+        <select id="aoUnitSelect" class="view-dropdown ao-unit-select" title="Display Unit">
+            <option value="in" selected>in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="pt">pt</option>
+            <option value="px">px</option>
+        </select>
+    </div>
+
+    <!-- 1. ARTBOARD SELECTOR -->
+    <div class="custom-card">
+        <div class="ao-row-between">
+            <span class="ao-section-title">1. Target Artboard</span>
+            <button type="button" id="aoBtnRefreshAb" class="tool-btn secondary ao-mini-btn">↻ Load Artboards</button>
+        </div>
+        <select id="aoArtboardSelect" class="view-dropdown">
+            <option value="">Click "Load Artboards"...</option>
+        </select>
+    </div>
+
+    <!-- 2. SELECTED GROUPS LIST -->
+    <div class="custom-card">
+        <div class="ao-row-between">
+            <span class="ao-section-title">2. Selected Groups <span id="aoGroupCount" class="ao-pill">0</span></span>
+            <button type="button" id="aoBtnLoadGroups" class="tool-btn secondary ao-mini-btn">Select / Load Groups</button>
+        </div>
+        <div id="aoGroupsList" class="ao-list-box">
+            <div class="ao-empty">Select 1 or more groups in Illustrator, then click "Select / Load Groups".</div>
+        </div>
+    </div>
+
+    <!-- 3. SPACING & RUN -->
+    <div class="custom-card">
+        <div class="ao-section-title">3. Layout Settings</div>
+        <div class="ao-grid-2">
+            <div>
+                <label class="field-label" for="aoMargin">Margin (<span class="ao-unit-lbl">in</span>)</label>
+                <input type="number" id="aoMargin" class="custom-input" value="0.25" step="0.05" min="0" />
+            </div>
+            <div>
+                <label class="field-label" for="aoGap">Gap (<span class="ao-unit-lbl">in</span>)</label>
+                <input type="number" id="aoGap" class="custom-input" value="0.25" step="0.05" min="0" />
+            </div>
+        </div>
+        <label class="checkbox-row">
+            <input type="checkbox" id="aoAutoScale" checked />
+            <span>Auto-scale groups if they exceed artboard size</span>
+        </label>
+        <button type="button" id="aoBtnRun" class="tool-btn">▶ Run (Show Layout Options)</button>
+    </div>
+
+    <!-- 4. LAYOUT OPTIONS -->
+    <div id="aoLayoutsCard" class="custom-card" style="display:none;">
+        <div class="ao-section-title">4. Choose Layout &amp; Apply</div>
+        <div id="aoLayoutOptions" class="ao-layout-list"></div>
+    </div>
+</div>
+
+<style>
+.ao-wrap { display: flex; flex-direction: column; gap: 8px; }
+.ao-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; background: #1f242b; border: 1px solid #333b46; border-radius: 8px;
+}
+.ao-header h4 { margin: 0; font-size: 13px; color: #f3f6fa; }
+.ao-sub { font-size: 10px; color: #8cc2ff; }
+.ao-unit-select { width: auto !important; min-width: 58px; margin: 0 !important; padding: 4px 6px !important; font-size: 11px !important; }
+.ao-row-between { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.ao-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #8cc2ff; letter-spacing: 0.5px; }
+.ao-mini-btn { width: auto; padding: 4px 8px; margin: 0; font-size: 11px; white-space: nowrap; }
+.ao-pill { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: #2c333d; color: #cfd8e3; margin-left: 4px; }
+.ao-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+
+.ao-list-box {
+    max-height: 135px; min-height: 56px; overflow-y: auto; overflow-x: hidden;
+    background: #171b20; border: 1px solid #343d49; border-radius: 6px; padding: 6px;
+    display: flex; flex-direction: column; gap: 4px; font-size: 11px;
+}
+.ao-item-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 5px 7px; background: #242933; border: 1px solid #323a47; border-radius: 5px; color: #e2e8f0;
+}
+.ao-item-size { font-family: Consolas, monospace; font-size: 10px; color: #9ecaff; white-space: nowrap; }
+.ao-empty { padding: 10px; text-align: center; font-size: 11px; color: #8b99ab; }
+
+.ao-layout-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.ao-layout-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 7px 9px; background: #232832; border: 1px solid #353f4e; border-radius: 6px;
+}
+.ao-layout-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ao-layout-title { font-size: 11px; font-weight: 700; color: #f8fafc; }
+.ao-layout-desc { font-size: 10px; color: #9fb0c3; }
+.ao-fit-ok { color: #6ee7b7; }
+.ao-fit-warn { color: #fcd34d; }
+</style>
+
+<script>
+(function () {
+    var state = {
+        unit: "in",
+        artboards: [],
+        groups: []
+    };
+
+    function safeLog(msg, type) {
+        if (window.VGTools && typeof window.VGTools.log === "function") {
+            window.VGTools.log(msg, type || "info");
+        }
+    }
+
+    function ptToUnit(pt, unit) {
+        switch (unit) {
+            case "in": return pt / 72;
+            case "mm": return pt * (25.4 / 72);
+            case "cm": return pt * (2.54 / 72);
+            default:   return pt;
+        }
+    }
+
+    function unitToPt(val, unit) {
+        var v = parseFloat(val);
+        if (isNaN(v)) return 0;
+        switch (unit) {
+            case "in": return v * 72;
+            case "mm": return v * (72 / 25.4);
+            case "cm": return v * (72 / 2.54);
+            default:   return v;
+        }
+    }
+
+    function fmt(pt) {
+        return ptToUnit(pt, state.unit).toFixed(2);
+    }
+
+    function updateUnitLabels() {
+        var lbls = document.querySelectorAll(".ao-unit-lbl");
+        for (var i = 0; i < lbls.length; i++) lbls[i].textContent = state.unit;
+    }
+
+    function renderArtboards() {
+        var sel = document.getElementById("aoArtboardSelect");
+        if (!sel) return;
+        var prevVal = sel.value;
+        sel.innerHTML = "";
+
+        if (!state.artboards.length) {
+            var opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = "No artboards loaded";
+            sel.appendChild(opt);
+            return;
+        }
+
+        for (var i = 0; i < state.artboards.length; i++) {
+            var ab = state.artboards[i];
+            var o = document.createElement("option");
+            o.value = String(ab.index);
+            o.textContent = (ab.index + 1) + ". " + ab.name + " (" + fmt(ab.w) + " x " + fmt(ab.h) + " " + state.unit + ")";
+            sel.appendChild(o);
+        }
+        if (prevVal !== "") sel.value = prevVal;
+    }
+
+    function renderGroups() {
+        var box = document.getElementById("aoGroupsList");
+        var cnt = document.getElementById("aoGroupCount");
+        if (cnt) cnt.textContent = String(state.groups.length);
+        if (!box) return;
+
+        box.innerHTML = "";
+        if (!state.groups.length) {
+            box.innerHTML = "<div class='ao-empty'>No groups loaded. Select groups in Illustrator and click \"Select / Load Groups\".</div>";
+            return;
+        }
+
+        for (var i = 0; i < state.groups.length; i++) {
+            var g = state.groups[i];
+            var row = document.createElement("div");
+            row.className = "ao-item-row";
+            row.innerHTML =
+                "<span>#" + (i + 1) + " " + g.name + "</span>" +
+                "<span class='ao-item-size'>" + fmt(g.w) + " x " + fmt(g.h) + " " + state.unit + "</span>";
+            box.appendChild(row);
+        }
+    }
+
+    function loadArtboards() {
+        window.VGTools.runScript(
+            "jsx/artboard_organizer.jsx",
+            { _fromHtmlUi: true, action: "getArtboards" },
+            function (raw) {
+                try {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && parsed.ok && Array.isArray(parsed.artboards)) {
+                        state.artboards = parsed.artboards;
+                        renderArtboards();
+                    }
+                } catch (e) {}
+            },
+            "Load Artboards"
+        );
+    }
+
+    function loadSelectedGroups() {
+        window.VGTools.runScript(
+            "jsx/artboard_organizer.jsx",
+            { _fromHtmlUi: true, action: "getSelectedGroups" },
+            function (raw) {
+                try {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && parsed.ok && Array.isArray(parsed.groups)) {
+                        state.groups = parsed.groups;
+                        renderGroups();
+                    }
+                } catch (e) {}
+            },
+            "Load Selected Groups"
+        );
+    }
+
+    function applyLayout(layoutType, layoutTitle) {
+        var abIdx = parseInt(document.getElementById("aoArtboardSelect").value, 10);
+        if (isNaN(abIdx)) {
+            safeLog("Artboard Organizer -> Load and select an artboard first.", "warn");
+            return;
+        }
+        var marginPt = unitToPt(document.getElementById("aoMargin").value, state.unit);
+        var gapPt = unitToPt(document.getElementById("aoGap").value, state.unit);
+        var autoScale = document.getElementById("aoAutoScale").checked;
+
+        window.VGTools.runScript(
+            "jsx/artboard_organizer.jsx",
+            {
+                _fromHtmlUi: true,
+                action: "applyLayout",
+                artboardIndex: abIdx,
+                layoutType: layoutType,
+                marginPt: marginPt,
+                gapPt: gapPt,
+                autoScale: autoScale
+            },
+            function () {
+                loadSelectedGroups();
+            },
+            "Apply: " + layoutTitle
+        );
+    }
+
+    function buildLayoutOptions() {
+        var abIdx = parseInt(document.getElementById("aoArtboardSelect").value, 10);
+        if (isNaN(abIdx) || !state.artboards[abIdx]) {
+            safeLog("Artboard Organizer -> Please load and select an artboard first.", "warn");
+            return;
+        }
+        if (!state.groups.length) {
+            safeLog("Artboard Organizer -> Please select and load at least 1 group first.", "warn");
+            return;
+        }
+
+        var ab = state.artboards[abIdx];
+        var marginPt = unitToPt(document.getElementById("aoMargin").value, state.unit);
+        var gapPt = unitToPt(document.getElementById("aoGap").value, state.unit);
+        var usableW = Math.max(1, ab.w - marginPt * 2);
+        var usableH = Math.max(1, ab.h - marginPt * 2);
+
+        var options = [];
+        var n = state.groups.length;
+
+        if (n === 1) {
+            var g = state.groups[0];
+            var fits = (g.w <= usableW && g.h <= usableH);
+            options.push({
+                type: "center",
+                title: "Center in Artboard",
+                desc: "Keep original size (" + fmt(g.w) + " x " + fmt(g.h) + " " + state.unit + ") & center",
+                fits: fits
+            });
+            options.push({
+                type: "center_fit",
+                title: "Center & Fit to Artboard",
+                desc: "Scale proportionally inside margin & center",
+                fits: true
+            });
+        } else {
+            var sumW = 0, maxH = 0, maxW = 0, sumH = 0;
+            for (var i = 0; i < n; i++) {
+                sumW += state.groups[i].w;
+                sumH += state.groups[i].h;
+                if (state.groups[i].h > maxH) maxH = state.groups[i].h;
+                if (state.groups[i].w > maxW) maxW = state.groups[i].w;
+            }
+            var rowTotalW = sumW + gapPt * (n - 1);
+            var colTotalH = sumH + gapPt * (n - 1);
+            var gridCols = Math.ceil(Math.sqrt(n));
+            var gridRows = Math.ceil(n / gridCols);
+
+            options.push({
+                type: "row",
+                title: "Horizontal Row (1 x " + n + ")",
+                desc: "Side-by-side centered block (" + fmt(rowTotalW) + " x " + fmt(maxH) + " " + state.unit + ")",
+                fits: rowTotalW <= usableW && maxH <= usableH
+            });
+            options.push({
+                type: "column",
+                title: "Vertical Stack (" + n + " x 1)",
+                desc: "Top-to-bottom centered block (" + fmt(maxW) + " x " + fmt(colTotalH) + " " + state.unit + ")",
+                fits: maxW <= usableW && colTotalH <= usableH
+            });
+            options.push({
+                type: "grid",
+                title: "Auto Grid (" + gridRows + " rows x " + gridCols + " cols)",
+                desc: "Balanced grid centered on " + ab.name,
+                fits: (maxW * gridCols + gapPt * (gridCols - 1)) <= usableW && (maxH * gridRows + gapPt * (gridRows - 1)) <= usableH
+            });
+            if (n >= 3 && gridCols !== 2) {
+                var r2 = Math.ceil(n / 2);
+                options.push({
+                    type: "grid2",
+                    title: "2-Column Grid (" + r2 + " rows x 2 cols)",
+                    desc: "2 items per row, centered on " + ab.name,
+                    fits: (maxW * 2 + gapPt) <= usableW && (maxH * r2 + gapPt * (r2 - 1)) <= usableH
+                });
+            }
+        }
+
+        var card = document.getElementById("aoLayoutsCard");
+        var container = document.getElementById("aoLayoutOptions");
+        container.innerHTML = "";
+        card.style.display = "block";
+
+        for (var k = 0; k < options.length; k++) {
+            var opt = options[k];
+            var row = document.createElement("div");
+            row.className = "ao-layout-card";
+
+            var info = document.createElement("div");
+            info.className = "ao-layout-info";
+            info.innerHTML =
+                "<span class='ao-layout-title'>" + opt.title + "</span>" +
+                "<span class='ao-layout-desc'>" + opt.desc + " • " +
+                (opt.fits ? "<span class='ao-fit-ok'>Fits 100%</span>" : "<span class='ao-fit-warn'>Will scale to fit</span>") +
+                "</span>";
+
+            var applyBtn = document.createElement("button");
+            applyBtn.type = "button";
+            applyBtn.className = "tool-btn ao-mini-btn";
+            applyBtn.textContent = "Apply";
+            (function (t, title) {
+                applyBtn.onclick = function () { applyLayout(t, title); };
+            })(opt.type, opt.title);
+
+            row.appendChild(info);
+            row.appendChild(applyBtn);
+            container.appendChild(row);
+        }
+    }
+
+    document.getElementById("aoUnitSelect").onchange = function () {
+        state.unit = this.value;
+        updateUnitLabels();
+        renderArtboards();
+        renderGroups();
+    };
+    document.getElementById("aoBtnRefreshAb").onclick = loadArtboards;
+    document.getElementById("aoBtnLoadGroups").onclick = loadSelectedGroups;
+    document.getElementById("aoBtnRun").onclick = buildLayoutOptions;
+
+    updateUnitLabels();
+    loadArtboards();
+})();
+</script>
