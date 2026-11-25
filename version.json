@@ -20,6 +20,11 @@
       "html": "views/pulte_floor_plan_cleaner.html"
     },
     {
+      "id": "artboard_organizer",
+      "label": "📐 Artboard Layout Organizer",
+      "html": "views/artboard_organizer.html"
+    },
+    {
       "id": "hide_graphics",
       "label": "🙈 Hide Graphics",
       "html": "views/hide_graphics.html"
