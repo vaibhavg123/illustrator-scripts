@@ -94,8 +94,8 @@
       "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/SortLayerItems.jsx"
     },
     {
-      "label": "Export PNG",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/export.jsx"
+      "label": "Highlight Overlapping Lines",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/overlapping_lines.jsx"
     },
     {
       "label": "Create Circles",
