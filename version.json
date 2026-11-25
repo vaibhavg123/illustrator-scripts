@@ -103,8 +103,8 @@
       "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/overlapping_lines.jsx"
     },
     {
-      "label": "Create Circles",
-      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/circles.jsx"
+      "label": "Tri Pointee Clean",
+      "script": "https://raw.githubusercontent.com/vaibhavg123/illustrator-scripts/main/jsx/tri_fp_cleaner.jsx"
     }
   ]
 }
