@@ -1,6 +1,6 @@
 <!-- views/floor_plan_cleaner.html -->
 <div class="fplc-wrap">
-    <!-- Top Sticky Header & Primary Actions -->
+    <!-- Top Header & Primary Actions -->
     <div class="fplc-header">
         <div>
             <h4>Floor Plan Label Cleaner</h4>
@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <!-- Scrollable / Wrapping Tab Strip -->
+    <!-- Tab Bar -->
     <div class="fplc-tabs" id="fplcTabBar">
         <button type="button" class="fplc-tab active" data-tab="fplcTabRun">Run</button>
         <button type="button" class="fplc-tab" data-tab="fplcTabRules">Rules</button>
@@ -123,7 +123,7 @@
                 <button type="button" id="fplcBtnResetRules" class="tool-btn secondary">Defaults</button>
             </div>
 
-            <div id="fplcRulesList" class="fplc-list-box fplc-list-tall"></div>
+            <div id="fplcRulesList" class="fplc-rules-scroll"></div>
         </div>
     </div>
 
@@ -168,7 +168,7 @@ At End Unit
 Basement
 Steps Option</textarea>
 
-            <label class="field-label" for="fplcWrapTexts">Multi-Line / Mappings (GREAT/nROOM or A => B/nC)</label>
+            <label class="field-label" for="fplcWrapTexts">Multi-Line / Mappings (GREAT/nROOM or A =&gt; B/nC)</label>
             <textarea id="fplcWrapTexts" class="fplc-textarea" rows="5">WALK-IN CLOSET
 UPSTAIRS LIVING
 MASTER BEDROOM
@@ -180,7 +180,7 @@ COVERED PORCH
 FRENCH DOOR
 FAMILY ROOM
 GREAT/nROOM
-PRIMARY BATH => MASTER/nBATH</textarea>
+PRIMARY BATH =&gt; MASTER/nBATH</textarea>
 
             <label class="field-label" for="fplcJunkExact">Junk Exact (1 per line)</label>
             <textarea id="fplcJunkExact" class="fplc-textarea" rows="2">PER ELEVATION</textarea>
@@ -461,33 +461,86 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     margin-bottom: 6px;
 }
 
+.fplc-rules-scroll,
 .fplc-list-box {
-    max-height: 115px;
+    max-height: 140px;
+    min-height: 75px;
     overflow-y: auto;
-    background: #1d2127;
-    border: 1px solid #343c47;
-    border-radius: 6px;
-    padding: 5px;
+    overflow-x: hidden;
+    flex-shrink: 0;
+    background: #171b20;
+    border: 1px solid #343d49;
+    border-radius: 7px;
+    padding: 6px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     font-size: 11px;
     margin-top: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #485363 #171b20;
 }
-.fplc-list-tall { max-height: 165px; }
+.fplc-rules-scroll { max-height: 210px; }
+.fplc-list-tall { max-height: 170px; }
+
+.fplc-rules-scroll::-webkit-scrollbar,
+.fplc-list-box::-webkit-scrollbar { width: 7px; }
+.fplc-rules-scroll::-webkit-scrollbar-track,
+.fplc-list-box::-webkit-scrollbar-track { background: #171b20; border-radius: 6px; }
+.fplc-rules-scroll::-webkit-scrollbar-thumb,
+.fplc-list-box::-webkit-scrollbar-thumb { background: #485363; border-radius: 6px; }
+.fplc-rules-scroll::-webkit-scrollbar-thumb:hover,
+.fplc-list-box::-webkit-scrollbar-thumb:hover { background: #5d6b7f; }
+
+.fplc-rule-card,
 .fplc-list-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
-    padding: 4px 7px;
-    background: #282d36;
-    border-radius: 4px;
+    gap: 8px;
+    padding: 6px 8px;
+    background: #242933;
+    border: 1px solid #323a47;
+    border-radius: 5px;
     cursor: pointer;
     color: #e0e6ed;
+    transition: background 0.14s ease, border-color 0.14s ease;
 }
-.fplc-list-item:hover { background: #333a46; }
-.fplc-list-item.selected { outline: 1px solid #4aa3ff; background: #24374d; }
+.fplc-rule-card:hover,
+.fplc-list-item:hover { background: #2c3340; border-color: #495568; }
+.fplc-rule-card.selected,
+.fplc-list-item.selected { background: #1f334a; border-color: #4aa3ff; }
+
+.fplc-rule-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fplc-rule-top { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.fplc-cat-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #353f4d;
+    color: #d6e4f5;
+    letter-spacing: 0.3px;
+}
+.fplc-cat-main { background: #1d4ed8; color: #eff6ff; }
+.fplc-cat-secondary { background: #7c2d12; color: #ffedd5; }
+.fplc-cat-small { background: #14532d; color: #dcfce7; }
+.fplc-cat-oname { background: #4c1d95; color: #ede9fe; }
+.fplc-cat-fname { background: #78350f; color: #fef3c7; }
+.fplc-exact-tag {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #3b2f13;
+    color: #fcd34d;
+    border: 1px solid #785a1c;
+}
+.fplc-rule-final { font-size: 11px; font-weight: 700; color: #f8fafc; word-break: break-word; }
+.fplc-rule-keys { font-size: 10px; color: #9fb0c3; line-height: 1.35; word-break: break-word; }
+.fplc-rule-del { flex-shrink: 0; padding: 2px 6px; font-size: 10px; line-height: 1.2; }
+.fplc-rule-empty { padding: 14px 10px; text-align: center; font-size: 11px; color: #8b99ab; }
+.fplc-layer-meta { font-size: 10px; color: #9fb0c3; white-space: nowrap; }
 </style>
 
 <script>
@@ -546,6 +599,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             { name: "Group 1", color: [84, 84, 84], items: [{ w: 10, h: 5 }, { w: 1, h: 5 }] },
             { name: "Group 2", color: [221, 221, 221], items: [{ w: 11, h: 4 }, { w: 6, h: 3 }] }
         ],
+        layersCache: [],
         activeGgIdx: 0,
         editingRuleIdx: -1,
         selectedLayerName: ""
@@ -589,6 +643,9 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             this.classList.add("active");
             var targetPane = document.getElementById(targetId);
             if (targetPane) targetPane.classList.add("active");
+            if (targetId === "fplcTabLayers") {
+                refreshLayersViaJsx();
+            }
             saveToLocalStorage();
         };
     }
@@ -614,23 +671,59 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         var countEl = document.getElementById("fplcRuleCount");
         var filterVal = String((document.getElementById("fplcRuleFilter") || {}).value || "").trim().toLowerCase();
         if (!box) return;
+
         box.innerHTML = "";
         var shown = 0;
+
         for (var i = 0; i < stateUi.rules.length; i++) {
             var r = stateUi.rules[i];
-            var hay = (r.cat + " " + r.text + " " + r.keys.join(" ")).toLowerCase();
+            var catKey = r.cat || "main";
+            var keysList = Array.isArray(r.keys) ? r.keys : [];
+            var hay = ((CAT_NAMES[catKey] || catKey) + " " + r.text + " " + keysList.join(" ")).toLowerCase();
             if (filterVal && hay.indexOf(filterVal) === -1) continue;
+
             shown++;
-            var row = document.createElement("div");
-            row.className = "fplc-list-item" + (stateUi.editingRuleIdx === i ? " selected" : "");
-            row.innerHTML = "<span><b>[" + (CAT_NAMES[r.cat] || r.cat) + "]</b> " + r.text + (r.exact ? " <em>(exact)</em>" : "") + " <small>" + r.keys.join(", ") + "</small></span>";
+            var card = document.createElement("div");
+            card.className = "fplc-rule-card" + (stateUi.editingRuleIdx === i ? " selected" : "");
+
+            var mainCol = document.createElement("div");
+            mainCol.className = "fplc-rule-main";
+
+            var topRow = document.createElement("div");
+            topRow.className = "fplc-rule-top";
+
+            var catBadge = document.createElement("span");
+            catBadge.className = "fplc-cat-tag fplc-cat-" + catKey;
+            catBadge.textContent = CAT_NAMES[catKey] || catKey;
+            topRow.appendChild(catBadge);
+
+            if (r.exact) {
+                var exactBadge = document.createElement("span");
+                exactBadge.className = "fplc-exact-tag";
+                exactBadge.textContent = "EXACT";
+                topRow.appendChild(exactBadge);
+            }
+
+            var finalSpan = document.createElement("span");
+            finalSpan.className = "fplc-rule-final";
+            finalSpan.textContent = r.text || "";
+            topRow.appendChild(finalSpan);
+
+            var keysDiv = document.createElement("div");
+            keysDiv.className = "fplc-rule-keys";
+            keysDiv.textContent = keysList.length > 0
+                ? ("Keys: " + keysList.join(", "))
+                : "Keys: (matches final text)";
+
+            mainCol.appendChild(topRow);
+            mainCol.appendChild(keysDiv);
 
             (function (idx, ruleObj) {
-                row.onclick = function () {
+                card.onclick = function () {
                     stateUi.editingRuleIdx = idx;
-                    document.getElementById("fplcRuleCat").value = ruleObj.cat;
-                    document.getElementById("fplcRuleFinal").value = ruleObj.text;
-                    document.getElementById("fplcRuleKeys").value = ruleObj.keys.join(", ");
+                    document.getElementById("fplcRuleCat").value = ruleObj.cat || "main";
+                    document.getElementById("fplcRuleFinal").value = ruleObj.text || "";
+                    document.getElementById("fplcRuleKeys").value = Array.isArray(ruleObj.keys) ? ruleObj.keys.join(", ") : "";
                     document.getElementById("fplcRuleExact").checked = !!ruleObj.exact;
                     syncRuleFormButton();
                     renderRules();
@@ -639,24 +732,39 @@ PRIMARY BATH => MASTER/nBATH</textarea>
 
             var delBtn = document.createElement("button");
             delBtn.type = "button";
-            delBtn.className = "log-btn";
+            delBtn.className = "log-btn fplc-rule-del";
+            delBtn.title = "Delete rule";
             delBtn.textContent = "✕";
+
             (function (idx) {
                 delBtn.onclick = function (e) {
                     if (e && e.stopPropagation) e.stopPropagation();
                     stateUi.rules.splice(idx, 1);
-                    if (stateUi.editingRuleIdx === idx) clearRuleForm();
-                    else {
+                    if (stateUi.editingRuleIdx === idx) {
+                        clearRuleForm();
+                    } else {
                         if (stateUi.editingRuleIdx > idx) stateUi.editingRuleIdx--;
                         renderRules();
                     }
                     saveToLocalStorage();
                 };
             })(i);
-            row.appendChild(delBtn);
-            box.appendChild(row);
+
+            card.appendChild(mainCol);
+            card.appendChild(delBtn);
+            box.appendChild(card);
         }
-        if (countEl) countEl.textContent = shown + "/" + stateUi.rules.length;
+
+        if (shown === 0) {
+            var emptyDiv = document.createElement("div");
+            emptyDiv.className = "fplc-rule-empty";
+            emptyDiv.textContent = filterVal ? ('No rules match "' + filterVal + '".') : "No rules added yet.";
+            box.appendChild(emptyDiv);
+        }
+
+        if (countEl) {
+            countEl.textContent = shown + "/" + stateUi.rules.length;
+        }
     }
 
     document.getElementById("fplcRuleFilter").oninput = renderRules;
@@ -768,7 +876,6 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         saveToLocalStorage();
     };
 
-    // Sync All Lines color picker & hex
     var allPicker = document.getElementById("fplcAllColorPicker");
     var allHex = document.getElementById("fplcAllHex");
     allPicker.oninput = function () {
@@ -785,50 +892,82 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         }
     };
 
-    // Layers tab
+    // Layers tab rendering (uses jsx/floor_plan_cleaner.jsx with action: "listLayers")
+    function renderLayersList() {
+        var box = document.getElementById("fplcLayersList");
+        if (!box) return;
+        box.innerHTML = "";
+
+        if (!stateUi.layersCache || stateUi.layersCache.length === 0) {
+            var empty = document.createElement("div");
+            empty.className = "fplc-rule-empty";
+            empty.textContent = "No layers found. Open a document and click Refresh.";
+            box.appendChild(empty);
+            return;
+        }
+
+        for (var i = 0; i < stateUi.layersCache.length; i++) {
+            var info = stateUi.layersCache[i];
+            var item = document.createElement("div");
+            item.className = "fplc-list-item" + (stateUi.selectedLayerName === info.name ? " selected" : "");
+
+            var nameSpan = document.createElement("span");
+            nameSpan.className = "fplc-rule-final";
+            var indent = new Array((info.depth || 0) + 1).join("  · ");
+            nameSpan.textContent = (info.depth > 0 ? indent + " " : "") + info.name;
+
+            var metaSpan = document.createElement("span");
+            metaSpan.className = "fplc-layer-meta";
+            metaSpan.textContent = (info.items !== undefined ? info.items + " items" : "");
+
+            item.appendChild(nameSpan);
+            item.appendChild(metaSpan);
+
+            (function (layerName) {
+                item.onclick = function () {
+                    stateUi.selectedLayerName = layerName;
+                    document.getElementById("fplcNewLayerName").value = layerName;
+                    renderLayersList();
+                };
+            })(info.name);
+
+            box.appendChild(item);
+        }
+    }
+
     function refreshLayersViaJsx() {
         var incSub = document.getElementById("fplcLayersShowSub").checked;
-        var scriptCode =
-            "if (!app.documents.length) { '[]'; } else { " +
-            "var out = []; function walk(layers, d) { " +
-            "for (var i = 0; i < layers.length; i++) { var L = layers[i]; " +
-            "out.push('{\"name\":\"' + String(L.name).replace(/\"/g, '\\\\\"') + '\",\"depth\":' + d + ',\"items\":' + L.pageItems.length + '}'); " +
-            "if (" + (incSub ? "true" : "false") + " && L.layers.length) walk(L.layers, d + 1); } } " +
-            "walk(app.activeDocument.layers, 0); '[' + out.join(',') + ']'; }";
-
         window.VGTools.runScript(
-            "data:text/javascript;charset=utf-8," + encodeURIComponent(scriptCode),
-            null,
+            "jsx/floor_plan_cleaner.jsx",
+            { _fromHtmlUi: true, action: "listLayers", includeSub: incSub },
             function (raw) {
-                var box = document.getElementById("fplcLayersList");
-                if (!box) return;
-                box.innerHTML = "";
                 try {
-                    var arr = JSON.parse(raw);
-                    for (var i = 0; i < arr.length; i++) {
-                        var item = document.createElement("div");
-                        item.className = "fplc-list-item" + (stateUi.selectedLayerName === arr[i].name ? " selected" : "");
-                        var indent = new Array(arr[i].depth + 1).join("  ");
-                        item.textContent = indent + arr[i].name + " (" + arr[i].items + ")";
-                        (function (layerName) {
-                            item.onclick = function () {
-                                stateUi.selectedLayerName = layerName;
-                                document.getElementById("fplcNewLayerName").value = layerName;
-                                refreshLayersViaJsx();
-                            };
-                        })(arr[i].name);
-                        box.appendChild(item);
+                    var parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.layers)) {
+                        stateUi.layersCache = parsed.layers;
+                    } else if (Array.isArray(parsed)) {
+                        stateUi.layersCache = parsed;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    safeLog("List Layers -> Could not parse layer list response.", "warn");
+                }
+                renderLayersList();
             },
             "List Layers"
         );
     }
 
     document.getElementById("fplcBtnRefreshLayers").onclick = refreshLayersViaJsx;
+    document.getElementById("fplcLayersShowSub").onchange = function () {
+        refreshLayersViaJsx();
+        saveToLocalStorage();
+    };
     document.getElementById("fplcBtnRenameLayer").onclick = function () {
         var newName = String(document.getElementById("fplcNewLayerName").value || "").trim();
-        if (!stateUi.selectedLayerName || !newName) return;
+        if (!stateUi.selectedLayerName || !newName) {
+            safeLog("Rename Layer -> Select a layer and enter a new name.", "warn");
+            return;
+        }
         window.VGTools.runScript(
             "jsx/floor_plan_cleaner.jsx",
             { _fromHtmlUi: true, renameLayer: { oldName: stateUi.selectedLayerName, newName: newName } },
@@ -840,7 +979,10 @@ PRIMARY BATH => MASTER/nBATH</textarea>
         );
     };
     document.getElementById("fplcBtnUpperLayer").onclick = function () {
-        if (!stateUi.selectedLayerName) return;
+        if (!stateUi.selectedLayerName) {
+            safeLog("Uppercase Layer -> Select a layer first.", "warn");
+            return;
+        }
         var up = stateUi.selectedLayerName.toUpperCase();
         document.getElementById("fplcNewLayerName").value = up;
         window.VGTools.runScript(
@@ -1089,7 +1231,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             if (typeof data.cfg.dryRun === "boolean") document.getElementById("fplcDryRun").checked = data.cfg.dryRun;
         }
 
-        if (data.rules instanceof Array) {
+        if (Array.isArray(data.rules)) {
             stateUi.rules = data.rules;
             renderRules();
         }
@@ -1099,10 +1241,10 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             renderStyleRows();
         }
 
-        if (data.optPatterns instanceof Array) document.getElementById("fplcOptPatterns").value = data.optPatterns.join("\n");
-        if (data.wrapTexts instanceof Array) document.getElementById("fplcWrapTexts").value = data.wrapTexts.join("\n");
-        if (data.junkExact instanceof Array) document.getElementById("fplcJunkExact").value = data.junkExact.join("\n");
-        if (data.junkRegex instanceof Array) document.getElementById("fplcJunkRegex").value = data.junkRegex.join("\n");
+        if (Array.isArray(data.optPatterns)) document.getElementById("fplcOptPatterns").value = data.optPatterns.join("\n");
+        if (Array.isArray(data.wrapTexts)) document.getElementById("fplcWrapTexts").value = data.wrapTexts.join("\n");
+        if (Array.isArray(data.junkExact)) document.getElementById("fplcJunkExact").value = data.junkExact.join("\n");
+        if (Array.isArray(data.junkRegex)) document.getElementById("fplcJunkRegex").value = data.junkRegex.join("\n");
 
         if (data.dashed) {
             if (typeof data.dashed.enabled === "boolean") document.getElementById("fplcDashEnabled").checked = data.dashed.enabled;
@@ -1119,7 +1261,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             if (typeof data.allLines.applyWeight === "boolean") document.getElementById("fplcAllWeightOn").checked = data.allLines.applyWeight;
             if (typeof data.allLines.weight === "number") document.getElementById("fplcAllWeight").value = data.allLines.weight;
             if (typeof data.allLines.applyColor === "boolean") document.getElementById("fplcAllColorOn").checked = data.allLines.applyColor;
-            if (data.allLines.color instanceof Array && data.allLines.color.length === 3) {
+            if (Array.isArray(data.allLines.color) && data.allLines.color.length === 3) {
                 var aHex = toHex(data.allLines.color);
                 allHex.value = aHex;
                 allPicker.value = aHex;
@@ -1132,7 +1274,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             if (typeof data.arrows.detectTriangles === "boolean") document.getElementById("fplcArrowTri").checked = data.arrows.detectTriangles;
             if (typeof data.arrows.triMax === "number") document.getElementById("fplcArrowTriMax").value = data.arrows.triMax;
             if (typeof data.arrows.detectGlyphs === "boolean") document.getElementById("fplcArrowGlyph").checked = data.arrows.detectGlyphs;
-            if (data.arrows.keywords instanceof Array) document.getElementById("fplcArrowKw").value = data.arrows.keywords.join(", ");
+            if (Array.isArray(data.arrows.keywords)) document.getElementById("fplcArrowKw").value = data.arrows.keywords.join(", ");
         }
 
         if (data.universal) {
@@ -1141,7 +1283,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
             if (typeof data.universal.selectTexts === "boolean") document.getElementById("fplcUnivSelectTexts").checked = data.universal.selectTexts;
         }
 
-        if (data.groupGraphics && data.groupGraphics.sets instanceof Array && data.groupGraphics.sets.length > 0) {
+        if (data.groupGraphics && Array.isArray(data.groupGraphics.sets) && data.groupGraphics.sets.length > 0) {
             stateUi.ggSets = data.groupGraphics.sets;
             stateUi.activeGgIdx = 0;
             if (data.groupGraphics.unit) document.getElementById("fplcGgUnit").value = data.groupGraphics.unit;
@@ -1268,6 +1410,7 @@ PRIMARY BATH => MASTER/nBATH</textarea>
     renderRules();
     renderStyleRows();
     renderGgSets();
+    renderLayersList();
     restoreFromLocalStorage();
 })();
 </script>
