@@ -2,10 +2,11 @@
 
 (function () {
     var PT_TO_IN = 1 / 72;
+    var CHUNK = 120;
 
     function report(pct, msg) {
         if (typeof vgProgress === "function") {
-            vgProgress(pct, msg);
+            try { vgProgress(pct, msg); } catch (e) {}
         }
     }
 
@@ -16,17 +17,32 @@
             .replace(/\r?\n/g, " ");
     }
 
-    function isWhiteFillColor(color) {
-        if (!color || !color.typename) return false;
+    function clearSelectionSafely(doc) {
         try {
-            if (color.typename === "RGBColor") {
+            if (doc && doc.selection && doc.selection.length > 0) {
+                doc.selection = null;
+            }
+        } catch (e) {}
+    }
+
+    function yieldBreath(stepCounter) {
+        if (stepCounter % CHUNK === 0) {
+            try { $.sleep(1); } catch (e) {}
+        }
+    }
+
+    function isWhiteFillColor(color) {
+        if (!color) return false;
+        try {
+            var t = color.typename;
+            if (t === "RGBColor") {
                 return (
-                    color.red >= 254.5 &&
-                    color.green >= 254.5 &&
-                    color.blue >= 254.5
+                    color.red >= 254.0 &&
+                    color.green >= 254.0 &&
+                    color.blue >= 254.0
                 );
             }
-            if (color.typename === "CMYKColor") {
+            if (t === "CMYKColor") {
                 return (
                     color.cyan <= 0.5 &&
                     color.magenta <= 0.5 &&
@@ -34,11 +50,13 @@
                     color.black <= 0.5
                 );
             }
-            if (color.typename === "GrayColor") {
+            if (t === "GrayColor") {
+                // In Illustrator GrayColor, 0 = white and 100 = black
                 return color.gray <= 0.5;
             }
-            if (color.typename === "SpotColor" && color.spot && color.spot.color) {
-                return isWhiteFillColor(color.spot.color);
+            if (t === "SpotColor" && color.spot && color.spot.color) {
+                var tint = (typeof color.tint === "number") ? color.tint : 100;
+                return tint <= 0.5 || isWhiteFillColor(color.spot.color);
             }
         } catch (e) {}
         return false;
@@ -48,10 +66,25 @@
         try {
             if (!pathItem || pathItem.typename !== "PathItem") return false;
             if (!pathItem.filled || pathItem.fillColor == null) return false;
+            if (pathItem.fillColor.typename === "NoColor") return false;
             return isWhiteFillColor(pathItem.fillColor);
         } catch (e) {
             return false;
         }
+    }
+
+    function isWhiteFilledCompound(compoundItem) {
+        try {
+            if (!compoundItem || compoundItem.typename !== "CompoundPathItem") return false;
+            var pItems = compoundItem.pathItems;
+            if (!pItems || pItems.length === 0) return false;
+            for (var p = 0; p < pItems.length; p++) {
+                if (isWhiteFilledPath(pItems[p])) {
+                    return true;
+                }
+            }
+        } catch (e) {}
+        return false;
     }
 
     function getItemDimensionsInInches(item) {
@@ -133,6 +166,16 @@
             ',"heightIn":' + parseFloat(hIn.toFixed(4)) + '}';
     }
 
+    function getOrCreateLayer(doc, name) {
+        try {
+            return doc.layers.getByName(name);
+        } catch (e) {
+            var lyr = doc.layers.add();
+            lyr.name = name;
+            return lyr;
+        }
+    }
+
     function runMainClean(isHtmlMode, opts) {
         if (app.documents.length === 0) {
             report(100, "No document open.");
@@ -141,11 +184,10 @@
         }
 
         var doc = app.activeDocument;
-        var CHUNK = 200; // safe chunk size for UI breathing
+        var oldInteraction = app.userInteractionLevel;
+        app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
+        clearSelectionSafely(doc);
 
-        // =========================
-        // TRACK COUNTS
-        // =========================
         var summary = {
             text: 0,
             whiteFill: 0,
@@ -156,412 +198,329 @@
             zeroSize: 0
         };
 
-        var textLayer = opts.runText ? (function () {
-            try { return doc.layers.getByName("text"); } catch (e) { var l = doc.layers.add(); l.name = "text"; return l; }
-        })() : null;
+        var pulse = 0;
 
-        var whiteFillLayer = opts.runWhiteFill ? (function () {
-            try { return doc.layers.getByName("white_fill"); } catch (e) { var l = doc.layers.add(); l.name = "white_fill"; return l; }
-        })() : null;
+        try {
+            var textLayer = opts.runText ? getOrCreateLayer(doc, "text") : null;
+            var whiteFillLayer = opts.runWhiteFill ? getOrCreateLayer(doc, "white_fill") : null;
+            var fillLayer = opts.runFill ? getOrCreateLayer(doc, "fill") : null;
+            var zeroLayer = opts.runZeroSize ? getOrCreateLayer(doc, "zero_size") : null;
+            var strokeLayer = opts.runStroke ? getOrCreateLayer(doc, "stroke") : null;
+            var dashedLayer = opts.runDashed ? getOrCreateLayer(doc, "dashed") : null;
+            var linesLayer = opts.runLine ? getOrCreateLayer(doc, "lines") : null;
 
-        var fillLayer = opts.runFill ? (function () {
-            try { return doc.layers.getByName("fill"); } catch (e) { var l = doc.layers.add(); l.name = "fill"; return l; }
-        })() : null;
-
-        var zeroLayer = opts.runZeroSize ? (function () {
-            try { return doc.layers.getByName("zero_size"); } catch (e) { var l = doc.layers.add(); l.name = "zero_size"; return l; }
-        })() : null;
-
-        var strokeLayer = opts.runStroke ? (function () {
-            try { return doc.layers.getByName("stroke"); } catch (e) { var l = doc.layers.add(); l.name = "stroke"; return l; }
-        })() : null;
-
-        var dashedLayer = opts.runDashed ? (function () {
-            try { return doc.layers.getByName("dashed"); } catch (e) { var l = doc.layers.add(); l.name = "dashed"; return l; }
-        })() : null;
-
-        var linesLayer = opts.runLine ? (function () {
-            try { return doc.layers.getByName("lines"); } catch (e) { var l = doc.layers.add(); l.name = "lines"; return l; }
-        })() : null;
-
-        // =========================
-        // SCRIPT 1: TEXT (layer-by-layer)
-        // =========================
-        if (opts.runText && textLayer) {
-            report(12, "Moving text frames...");
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
-                if (layer === textLayer || !layer.visible || layer.locked) continue;
-                var tfs = layer.textFrames;
-                for (var i = tfs.length - 1; i >= 0; i--) {
-                    try {
-                        tfs[i].move(textLayer, ElementPlacement.PLACEATBEGINNING);
-                        summary.text++;
-                    } catch (e) {}
-                    if (i % CHUNK === 0) $.sleep(5);
-                }
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // SCRIPT 2A: #FFFFFF FILL -> "white_fill"
-        // =========================
-        if (opts.runWhiteFill && whiteFillLayer) {
-            report(24, "Moving #FFFFFF filled graphics...");
-
-            function processWhiteFill(items) {
-                for (var i = items.length - 1; i >= 0; i--) {
-                    var it = items[i];
-                    if (it.locked || it.hidden || it.layer.locked || !it.layer.visible) continue;
-                    var moved = false;
-
-                    try {
-                        if (it.typename === "PathItem") {
-                            if (isWhiteFilledPath(it)) {
-                                it.move(whiteFillLayer, ElementPlacement.PLACEATBEGINNING);
-                                moved = true;
-                            }
-                        } else if (it.typename === "GroupItem") {
-                            moved = processWhiteFill(it.pageItems) || moved;
-                        } else if (it.typename === "CompoundPathItem") {
-                            moved = processWhiteFill(it.pathItems) || moved;
-                        }
-                    } catch (e) {}
-
-                    if (moved) summary.whiteFill++;
-                    if (i % CHUNK === 0) $.sleep(5);
-                }
-                return false;
-            }
-
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
+            var sourceLayers = [];
+            for (var s = 0; s < doc.layers.length; s++) {
+                var sl = doc.layers[s];
                 if (
-                    layer === whiteFillLayer ||
-                    layer.name === "text" ||
-                    layer.name === "fill" ||
-                    layer.name === "white_fill" ||
-                    !layer.visible ||
-                    layer.locked
-                ) continue;
-                processWhiteFill(layer.pageItems);
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // SCRIPT 2B: REMAINING FILL -> "fill"
-        // =========================
-        if (opts.runFill && fillLayer) {
-            report(38, "Moving filled paths...");
-
-            function processFill(items) {
-                for (var i = items.length - 1; i >= 0; i--) {
-                    var it = items[i];
-                    if (it.locked || it.hidden || it.layer.locked || !it.layer.visible) continue;
-                    var moved = false;
-
-                    try {
-                        if (it.typename === "PathItem") {
-                            if (it.filled && it.fillColor != null) {
-                                it.move(fillLayer, ElementPlacement.PLACEATBEGINNING);
-                                moved = true;
-                            }
-                        } else if (it.typename === "GroupItem") {
-                            moved = processFill(it.pageItems) || moved;
-                        } else if (it.typename === "CompoundPathItem") {
-                            moved = processFill(it.pathItems) || moved;
-                        }
-                    } catch (e) {}
-
-                    if (moved) summary.fill++;
-                    if (i % CHUNK === 0) $.sleep(5);
-                }
-                return false;
-            }
-
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
-                if (
-                    layer === fillLayer ||
-                    layer.name === "white_fill" ||
-                    !layer.visible ||
-                    layer.locked
-                ) continue;
-                processFill(layer.pageItems);
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // SCRIPT 3A: ZERO SIZE OBJECTS
-        // =========================
-        if (opts.runZeroSize && zeroLayer) {
-            report(52, "Moving zero-size objects...");
-            var targetW = 0;
-            var targetH = 0;
-            var tol = 0.01;
-
-            function processZeroItem(item) {
-                if (
-                    item.locked ||
-                    item.hidden ||
-                    item.layer.locked ||
-                    !item.layer.visible
-                ) {
-                    return 0;
-                }
-
-                var moved = 0;
-
-                try {
-                    if (
-                        Math.abs(item.width - targetW) < tol &&
-                        Math.abs(item.height - targetH) < tol
-                    ) {
-                        item.move(zeroLayer, ElementPlacement.PLACEATBEGINNING);
-                        moved++;
-                    }
-                } catch (e) {}
-
-                return moved;
-            }
-
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
-                if (
-                    layer.name === "text" ||
-                    layer.name === "white_fill" ||
-                    layer.name === "fill" ||
-                    layer.name === "stroke" ||
-                    layer.name === "lines" ||
-                    layer.name === "dashed" ||
-                    layer.name === "zero_size" ||
-                    layer.locked ||
-                    !layer.visible
+                    sl === textLayer || sl === whiteFillLayer || sl === fillLayer ||
+                    sl === zeroLayer || sl === strokeLayer || sl === dashedLayer || sl === linesLayer
                 ) {
                     continue;
                 }
-
-                var items = layer.pageItems;
-                for (var i = items.length - 1; i >= 0; i--) {
-                    summary.zeroSize += processZeroItem(items[i]);
-                }
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // SCRIPT 3B: STROKE
-        // =========================
-        if (opts.runStroke && strokeLayer) {
-            report(66, "Moving zero-stroke paths...");
-
-            function moveSafe(item, destLayer) {
-                try {
-                    item.duplicate(destLayer, ElementPlacement.PLACEATEND);
-                    item.remove();
-                } catch (e) {
-                    try { item.move(destLayer, ElementPlacement.PLACEATEND); } catch (err) {}
-                }
+                if (!sl.visible || sl.locked) continue;
+                sourceLayers.push(sl);
             }
 
-            function isZeroStroke(path) {
-                return (!path.stroked || path.strokeWidth === 0);
-            }
+            var totalSrc = Math.max(sourceLayers.length, 1);
 
-            function processStrokeItem(item) {
-                if (item.locked || item.hidden || item.layer.locked || !item.layer.visible) return 0;
-                if (item.layer.name === "fill" || item.layer.name === "white_fill") return 0;
+            // 1. TEXT (layer-by-layer)
+            if (opts.runText && textLayer) {
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 5 + Math.round(((l + 1) / totalSrc) * 12);
+                    report(pct, "Text [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
 
-                var movedCount = 0;
-
-                switch (item.typename) {
-                    case "PathItem":
-                        if (isZeroStroke(item)) { moveSafe(item, strokeLayer); movedCount++; }
-                        break;
-                    case "CompoundPathItem":
-                        var paths = item.pathItems;
-                        for (var i = 0; i < paths.length; i++) {
-                            if (isZeroStroke(paths[i])) { moveSafe(item, strokeLayer); movedCount++; break; }
-                        }
-                        break;
-                    case "GroupItem":
-                        for (var i = item.pageItems.length - 1; i >= 0; i--) {
-                            movedCount += processStrokeItem(item.pageItems[i]);
-                        }
-                        break;
-                }
-                return movedCount;
-            }
-
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
-                if (
-                    layer.name === "fill" ||
-                    layer.name === "white_fill" ||
-                    layer.name === "stroke" ||
-                    layer.name === "zero_size" ||
-                    layer.locked ||
-                    !layer.visible
-                ) continue;
-                var items = layer.pageItems;
-                for (var i = items.length - 1; i >= 0; i--) {
-                    summary.stroke += processStrokeItem(items[i]);
-                }
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // SCRIPT 4A: DASHED LINES
-        // =========================
-        if (opts.runDashed && dashedLayer) {
-            report(80, "Moving dashed lines...");
-
-            function isDashed(path) {
-                try {
-                    return (
-                        path.stroked &&
-                        path.strokeDashes &&
-                        path.strokeDashes.length > 0 &&
-                        path.strokeDashes[0] > 0
-                    );
-                } catch (e) {
-                    return false;
-                }
-            }
-
-            function processDashedItem(item) {
-                if (
-                    item.locked ||
-                    item.hidden ||
-                    item.layer.locked ||
-                    !item.layer.visible
-                ) {
-                    return 0;
-                }
-
-                var moved = 0;
-
-                switch (item.typename) {
-                    case "PathItem":
-                        if (isDashed(item)) {
-                            try {
-                                item.move(dashedLayer, ElementPlacement.PLACEATBEGINNING);
-                                moved++;
-                            } catch (e) {}
-                        }
-                        break;
-
-                    case "CompoundPathItem":
+                    var tfs = layer.textFrames;
+                    for (var i = tfs.length - 1; i >= 0; i--) {
+                        pulse++;
                         try {
-                            var paths = item.pathItems;
-                            for (var i = 0; i < paths.length; i++) {
-                                if (isDashed(paths[i])) {
-                                    item.move(dashedLayer, ElementPlacement.PLACEATBEGINNING);
-                                    moved++;
-                                    break;
+                            tfs[i].move(textLayer, ElementPlacement.PLACEATBEGINNING);
+                            summary.text++;
+                        } catch (e) {}
+                        yieldBreath(pulse);
+                    }
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 2A. #FFFFFF FILL -> "white_fill" (layer-by-layer)
+            if (opts.runWhiteFill && whiteFillLayer) {
+                function processWhiteFill(items) {
+                    var movedAny = false;
+                    for (var i = items.length - 1; i >= 0; i--) {
+                        pulse++;
+                        var it = items[i];
+                        if (it.locked || it.hidden) { yieldBreath(pulse); continue; }
+                        try {
+                            if (it.typename === "PathItem") {
+                                if (isWhiteFilledPath(it)) {
+                                    it.move(whiteFillLayer, ElementPlacement.PLACEATBEGINNING);
+                                    summary.whiteFill++;
+                                    movedAny = true;
+                                }
+                            } else if (it.typename === "CompoundPathItem") {
+                                if (isWhiteFilledCompound(it)) {
+                                    it.move(whiteFillLayer, ElementPlacement.PLACEATBEGINNING);
+                                    summary.whiteFill++;
+                                    movedAny = true;
+                                }
+                            } else if (it.typename === "GroupItem") {
+                                if (processWhiteFill(it.pageItems)) {
+                                    movedAny = true;
                                 }
                             }
                         } catch (e) {}
-                        break;
-
-                    case "GroupItem":
-                        for (var i = item.pageItems.length - 1; i >= 0; i--) {
-                            moved += processDashedItem(item.pageItems[i]);
-                        }
-                        break;
-                }
-
-                return moved;
-            }
-
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
-
-                if (
-                    layer.name === "text" ||
-                    layer.name === "white_fill" ||
-                    layer.name === "fill" ||
-                    layer.name === "stroke" ||
-                    layer.name === "dashed" ||
-                    layer.name === "zero_size" ||
-                    layer.locked ||
-                    !layer.visible
-                ) {
-                    continue;
-                }
-
-                var items = layer.pageItems;
-
-                for (var i = items.length - 1; i >= 0; i--) {
-                    summary.dashed += processDashedItem(items[i]);
-                }
-
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // SCRIPT 4B: REMAINING GRAPHICS -> "lines"
-        // =========================
-        if (opts.runLine && linesLayer) {
-            report(90, "Moving remaining graphics to 'lines'...");
-
-            for (var l = 0; l < doc.layers.length; l++) {
-                var layer = doc.layers[l];
-                if (
-                    layer.name === "text" ||
-                    layer.name === "white_fill" ||
-                    layer.name === "fill" ||
-                    layer.name === "stroke" ||
-                    layer.name === "lines" ||
-                    layer.name === "dashed" ||
-                    layer.name === "zero_size" ||
-                    layer.locked ||
-                    !layer.visible
-                ) continue;
-
-                var items = layer.pageItems;
-                for (var i = items.length - 1; i >= 0; i--) {
-                    var it = items[i];
-                    if (it.locked || it.hidden) continue;
-                    try {
-                        it.move(linesLayer, ElementPlacement.PLACEATBEGINNING);
-                        summary.lines++;
-                    } catch (e) {}
-                    if (i % CHUNK === 0) $.sleep(5);
-                }
-                $.sleep(5);
-            }
-        }
-
-        // =========================
-        // FINAL LAYER ORDER
-        // =========================
-        if (opts.runReorder) {
-            report(96, "Reordering layers...");
-            try {
-                var orderNames = ["text", "white_fill", "fill", "dashed", "lines", "stroke", "zero_size"];
-                var prevLayer = null;
-                for (var oi = 0; oi < orderNames.length; oi++) {
-                    var lyr = null;
-                    try { lyr = doc.layers.getByName(orderNames[oi]); } catch (eL) {}
-                    if (!lyr) continue;
-                    if (!prevLayer) {
-                        lyr.move(doc, ElementPlacement.PLACEATBEGINNING);
-                    } else {
-                        lyr.move(prevLayer, ElementPlacement.PLACEAFTER);
+                        yieldBreath(pulse);
                     }
-                    prevLayer = lyr;
+                    return movedAny;
                 }
-            } catch (e) {}
-        }
 
-        app.redraw();
-        report(100, "Script Completed!");
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 18 + Math.round(((l + 1) / totalSrc) * 14);
+                    report(pct, "#FFFFFF Fill [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
+                    processWhiteFill(layer.pageItems);
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 2B. REMAINING FILL -> "fill" (layer-by-layer)
+            if (opts.runFill && fillLayer) {
+                function processFill(items) {
+                    var movedAny = false;
+                    for (var i = items.length - 1; i >= 0; i--) {
+                        pulse++;
+                        var it = items[i];
+                        if (it.locked || it.hidden) { yieldBreath(pulse); continue; }
+                        try {
+                            if (it.typename === "PathItem") {
+                                if (it.filled && it.fillColor != null && it.fillColor.typename !== "NoColor") {
+                                    it.move(fillLayer, ElementPlacement.PLACEATBEGINNING);
+                                    summary.fill++;
+                                    movedAny = true;
+                                }
+                            } else if (it.typename === "CompoundPathItem") {
+                                if (processFill(it.pathItems)) {
+                                    movedAny = true;
+                                }
+                            } else if (it.typename === "GroupItem") {
+                                if (processFill(it.pageItems)) {
+                                    movedAny = true;
+                                }
+                            }
+                        } catch (e) {}
+                        yieldBreath(pulse);
+                    }
+                    return movedAny;
+                }
+
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 33 + Math.round(((l + 1) / totalSrc) * 14);
+                    report(pct, "Fill [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
+                    processFill(layer.pageItems);
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 3A. ZERO SIZE OBJECTS (layer-by-layer)
+            if (opts.runZeroSize && zeroLayer) {
+                var targetW = 0;
+                var targetH = 0;
+                var tol = 0.01;
+
+                function processZeroItem(item) {
+                    pulse++;
+                    if (item.locked || item.hidden) { yieldBreath(pulse); return 0; }
+                    var moved = 0;
+                    try {
+                        if (Math.abs(item.width - targetW) < tol && Math.abs(item.height - targetH) < tol) {
+                            item.move(zeroLayer, ElementPlacement.PLACEATBEGINNING);
+                            moved++;
+                        }
+                    } catch (e) {}
+                    yieldBreath(pulse);
+                    return moved;
+                }
+
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 48 + Math.round(((l + 1) / totalSrc) * 12);
+                    report(pct, "Zero-Size [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
+                    var items = layer.pageItems;
+                    for (var i = items.length - 1; i >= 0; i--) {
+                        summary.zeroSize += processZeroItem(items[i]);
+                    }
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 3B. ZERO-STROKE PATHS (layer-by-layer)
+            if (opts.runStroke && strokeLayer) {
+                function isZeroStroke(path) {
+                    try { return (!path.stroked || path.strokeWidth === 0); } catch (e) { return false; }
+                }
+
+                function processStrokeItem(item) {
+                    pulse++;
+                    if (item.locked || item.hidden) { yieldBreath(pulse); return 0; }
+                    var movedCount = 0;
+                    try {
+                        switch (item.typename) {
+                            case "PathItem":
+                                if (isZeroStroke(item)) {
+                                    item.move(strokeLayer, ElementPlacement.PLACEATEND);
+                                    movedCount++;
+                                }
+                                break;
+                            case "CompoundPathItem":
+                                var paths = item.pathItems;
+                                for (var i = 0; i < paths.length; i++) {
+                                    if (isZeroStroke(paths[i])) {
+                                        item.move(strokeLayer, ElementPlacement.PLACEATEND);
+                                        movedCount++;
+                                        break;
+                                    }
+                                }
+                                break;
+                            case "GroupItem":
+                                for (var g = item.pageItems.length - 1; g >= 0; g--) {
+                                    movedCount += processStrokeItem(item.pageItems[g]);
+                                }
+                                break;
+                        }
+                    } catch (e) {}
+                    yieldBreath(pulse);
+                    return movedCount;
+                }
+
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 61 + Math.round(((l + 1) / totalSrc) * 12);
+                    report(pct, "Zero-Stroke [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
+                    var items = layer.pageItems;
+                    for (var i = items.length - 1; i >= 0; i--) {
+                        summary.stroke += processStrokeItem(items[i]);
+                    }
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 4A. DASHED LINES (layer-by-layer)
+            if (opts.runDashed && dashedLayer) {
+                function isDashed(path) {
+                    try {
+                        return Boolean(
+                            path.stroked &&
+                            path.strokeDashes &&
+                            path.strokeDashes.length > 0 &&
+                            path.strokeDashes[0] > 0
+                        );
+                    } catch (e) {
+                        return false;
+                    }
+                }
+
+                function processDashedItem(item) {
+                    pulse++;
+                    if (item.locked || item.hidden) { yieldBreath(pulse); return 0; }
+                    var moved = 0;
+                    try {
+                        switch (item.typename) {
+                            case "PathItem":
+                                if (isDashed(item)) {
+                                    item.move(dashedLayer, ElementPlacement.PLACEATBEGINNING);
+                                    moved++;
+                                }
+                                break;
+                            case "CompoundPathItem":
+                                var paths = item.pathItems;
+                                for (var i = 0; i < paths.length; i++) {
+                                    if (isDashed(paths[i])) {
+                                        item.move(dashedLayer, ElementPlacement.PLACEATBEGINNING);
+                                        moved++;
+                                        break;
+                                    }
+                                }
+                                break;
+                            case "GroupItem":
+                                for (var g = item.pageItems.length - 1; g >= 0; g--) {
+                                    moved += processDashedItem(item.pageItems[g]);
+                                }
+                                break;
+                        }
+                    } catch (e) {}
+                    yieldBreath(pulse);
+                    return moved;
+                }
+
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 74 + Math.round(((l + 1) / totalSrc) * 10);
+                    report(pct, "Dashed [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
+                    var items = layer.pageItems;
+                    for (var i = items.length - 1; i >= 0; i--) {
+                        summary.dashed += processDashedItem(items[i]);
+                    }
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 4B. REMAINING GRAPHICS -> "lines" (layer-by-layer)
+            if (opts.runLine && linesLayer) {
+                for (var l = 0; l < sourceLayers.length; l++) {
+                    var layer = sourceLayers[l];
+                    if (!layer.visible || layer.locked) continue;
+                    var pct = 85 + Math.round(((l + 1) / totalSrc) * 9);
+                    report(pct, "Remaining -> lines [" + (l + 1) + "/" + sourceLayers.length + "]: " + layer.name);
+
+                    var items = layer.pageItems;
+                    for (var i = items.length - 1; i >= 0; i--) {
+                        pulse++;
+                        var it = items[i];
+                        if (it.locked || it.hidden) { yieldBreath(pulse); continue; }
+                        try {
+                            it.move(linesLayer, ElementPlacement.PLACEATBEGINNING);
+                            summary.lines++;
+                        } catch (e) {}
+                        yieldBreath(pulse);
+                    }
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            // 5. FINAL LAYER ORDER
+            if (opts.runReorder) {
+                report(96, "Reordering layers...");
+                try {
+                    var orderNames = ["text", "white_fill", "fill", "dashed", "lines", "stroke", "zero_size"];
+                    var prevLayer = null;
+                    for (var oi = 0; oi < orderNames.length; oi++) {
+                        var lyr = null;
+                        try { lyr = doc.layers.getByName(orderNames[oi]); } catch (eL) {}
+                        if (!lyr) continue;
+                        if (!prevLayer) {
+                            lyr.move(doc, ElementPlacement.PLACEATBEGINNING);
+                        } else {
+                            lyr.move(prevLayer, ElementPlacement.PLACEAFTER);
+                        }
+                        prevLayer = lyr;
+                    }
+                } catch (e) {}
+            }
+
+            clearSelectionSafely(doc);
+            report(100, "Script Completed!");
+        } finally {
+            app.userInteractionLevel = oldInteraction;
+        }
 
         if (!isHtmlMode) {
             var alertMsg = "Script Completed!\n\n";
