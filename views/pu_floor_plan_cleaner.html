@@ -147,6 +147,49 @@
         }
     }
 
+    function invokeJsx(payload, onDone) {
+        function finish(res) {
+            if (typeof onDone === "function") onDone(res);
+        }
+
+        if (window.VGTools && typeof window.VGTools.runScript === "function") {
+            var calledDone = false;
+            try {
+                var ret = window.VGTools.runScript(
+                    JSX_PATH,
+                    payload,
+                    function (res) {
+                        if (!calledDone) {
+                            calledDone = true;
+                            finish(res);
+                        }
+                    },
+                    payload.action === "getSelectedSize" ? "Fetch Selected Size" : "Layer Organizer"
+                );
+                if (ret && typeof ret.then === "function") {
+                    ret.then(function (r) {
+                        if (!calledDone) {
+                            calledDone = true;
+                            finish(r);
+                        }
+                    }).catch(function () {
+                        if (!calledDone) {
+                            calledDone = true;
+                            finish(null);
+                        }
+                    });
+                }
+            } catch (e) {
+                if (!calledDone) {
+                    calledDone = true;
+                    finish(null);
+                }
+            }
+        } else {
+            finish(null);
+        }
+    }
+
     function cleanNumberInput(raw) {
         if (!raw) return "";
         var stripped = String(raw).replace(/[^0-9.]/g, "");
@@ -242,8 +285,7 @@
     if (fetchBtn) {
         fetchBtn.onclick = function () {
             fetchBtn.disabled = true;
-            window.VGTools.runScript(
-                JSX_PATH,
+            invokeJsx(
                 { _fromHtmlUi: true, action: "getSelectedSize" },
                 function (rawRes) {
                     fetchBtn.disabled = false;
@@ -256,8 +298,7 @@
                     } else {
                         logMsg((parsed && parsed.error) || "Select a line in Illustrator and click Fetch.", "warn");
                     }
-                },
-                "Fetch Selected Size"
+                }
             );
         };
     }
@@ -323,15 +364,14 @@
             runBtn.disabled = true;
             runBtn.innerText = "Organizing...";
 
-            window.VGTools.runScript(
-                JSX_PATH,
-                payload,
-                function () {
-                    runBtn.disabled = false;
-                    runBtn.innerText = "▶ Start File Cleaning";
-                },
-                "Layer Organizer"
-            );
+            invokeJsx(payload, function (rawRes) {
+                runBtn.disabled = false;
+                runBtn.innerText = "▶ Start File Cleaning";
+                var parsed = extractJsonPayload(rawRes);
+                if (parsed && parsed.ok) {
+                    logMsg("File cleaning completed.", "info");
+                }
+            });
         };
     }
 
