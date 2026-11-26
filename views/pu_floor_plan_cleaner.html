@@ -205,7 +205,8 @@
                     if (parsed && parsed.ok && typeof parsed.inches === "number") {
                         input1El.value = cleanNumberInput(String(parsed.inches));
                         calculateScale();
-                        logMsg("Fetched selected line size: " + parsed.inches + " in", "info");
+                        var axisLabel = parsed.orientation === "vertical" ? "height" : "width";
+                        logMsg("Fetched " + axisLabel + ": " + parsed.inches + " in", "info");
                     } else {
                         logMsg((parsed && parsed.error) || "Select a line in Illustrator and click Fetch.", "warn");
                     }
