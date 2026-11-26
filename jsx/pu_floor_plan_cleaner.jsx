@@ -31,6 +31,167 @@
         }
     }
 
+    function getOrCreateLayer(doc, name) {
+        try {
+            return doc.layers.getByName(name);
+        } catch (e) {
+            var lyr = doc.layers.add();
+            lyr.name = name;
+            return lyr;
+        }
+    }
+
+    function normalizeText(str) {
+        return String(str || "")
+            .replace(/[\u2018\u2019\u02B9\u2032]/g, "'")
+            .replace(/[\u201C\u201D\u02BA\u2033]/g, '"')
+            .replace(/\s+/g, " ")
+            .replace(/^\s+|\s+$/g, "");
+    }
+
+    function isFeetInchToken(str) {
+        var t = normalizeText(str);
+        // Matches patterns like 18'-10", 17'-5", 18' 10", 18'-10.5"
+        return /^\d+\s*'\s*-?\s*\d+(?:\.\d+)?\s*"?$/.test(t);
+    }
+
+    function isSeparatorXToken(str) {
+        var t = normalizeText(str);
+        return /^[xX×]$/.test(t);
+    }
+
+    function getCenterPt(item) {
+        try {
+            var b = item.geometricBounds; // [left, top, right, bottom]
+            return {
+                x: (b[0] + b[2]) * 0.5,
+                y: (b[1] + b[3]) * 0.5,
+                w: Math.abs(b[2] - b[0]),
+                h: Math.abs(b[1] - b[3]),
+                left: b[0],
+                top: b[1],
+                right: b[2],
+                bottom: b[3]
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function moveDimensionGroups(doc) {
+        if (!doc) {
+            return '{"ok":false,"error":"No document open."}';
+        }
+
+        var oldInteraction = app.userInteractionLevel;
+        app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
+        clearSelectionSafely(doc);
+
+        var dimLayer = getOrCreateLayer(doc, "dimensions");
+        var movedSets = 0;
+        var movedFrames = 0;
+
+        try {
+            var candidateFrames = [];
+            for (var l = 0; l < doc.layers.length; l++) {
+                var layer = doc.layers[l];
+                if (!layer || !layer.visible || layer.locked || layer === dimLayer) continue;
+                var tfs = layer.textFrames;
+                for (var i = 0; i < tfs.length; i++) {
+                    var tf = tfs[i];
+                    try {
+                        if (tf.locked || tf.hidden) continue;
+                        var txt = normalizeText(tf.contents);
+                        if (!txt) continue;
+                        var kind = null;
+                        if (isFeetInchToken(txt)) kind = "dim";
+                        else if (isSeparatorXToken(txt)) kind = "sep";
+                        if (kind) {
+                            var box = getCenterPt(tf);
+                            if (box) {
+                                candidateFrames.push({
+                                    frame: tf,
+                                    kind: kind,
+                                    text: txt,
+                                    box: box,
+                                    used: false
+                                });
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            report(35, "Matching 3-box dimension callouts...");
+
+            // Pair each 'sep' ("X") with nearest 'dim' on left/above and nearest 'dim' on right/below
+            for (var s = 0; s < candidateFrames.length; s++) {
+                var sep = candidateFrames[s];
+                if (sep.used || sep.kind !== "sep") continue;
+
+                var bestA = null;
+                var bestDistA = Infinity;
+                var bestB = null;
+                var bestDistB = Infinity;
+
+                for (var c = 0; c < candidateFrames.length; c++) {
+                    if (c === s) continue;
+                    var cand = candidateFrames[c];
+                    if (cand.used || cand.kind !== "dim") continue;
+
+                    var dx = cand.box.x - sep.box.x;
+                    var dy = cand.box.y - sep.box.y;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // Generous spatial threshold for horizontal or vertical dimension callouts (in points)
+                    var maxSpan = Math.max(sep.box.w, sep.box.h, cand.box.w, cand.box.h) * 5 + 90;
+                    if (dist > maxSpan) continue;
+
+                    // Side A: left (dx < 0) or above (dy > 0 when stacked vertically)
+                    var isSideA = (dx < -2) || (Math.abs(dx) <= 25 && dy > 2);
+                    // Side B: right (dx > 0) or below (dy < 0 when stacked vertically)
+                    var isSideB = (dx > 2) || (Math.abs(dx) <= 25 && dy < -2);
+
+                    if (isSideA && dist < bestDistA) {
+                        bestDistA = dist;
+                        bestA = cand;
+                    } else if (isSideB && dist < bestDistB) {
+                        bestDistB = dist;
+                        bestB = cand;
+                    }
+                }
+
+                if (bestA && bestB) {
+                    var groupSet = [bestA, sep, bestB];
+                    var allMoved = 0;
+                    for (var g = 0; g < groupSet.length; g++) {
+                        try {
+                            groupSet[g].frame.move(dimLayer, ElementPlacement.PLACEATBEGINNING);
+                            groupSet[g].used = true;
+                            allMoved++;
+                        } catch (eMove) {}
+                    }
+                    if (allMoved > 0) {
+                        movedSets++;
+                        movedFrames += allMoved;
+                    }
+                }
+
+                yieldBreath(s);
+            }
+
+            clearSelectionSafely(doc);
+            report(100, "Moved " + movedSets + " dimension set(s) to 'dimensions'.");
+        } finally {
+            app.userInteractionLevel = oldInteraction;
+        }
+
+        return '{"ok":true' +
+            ',"sets":' + movedSets +
+            ',"frames":' + movedFrames +
+            ',"layer":"dimensions"}';
+    }
+
     function isWhiteFillColor(color) {
         if (!color) return false;
         try {
@@ -51,7 +212,6 @@
                 );
             }
             if (t === "GrayColor") {
-                // In Illustrator GrayColor, 0 = white and 100 = black
                 return color.gray <= 0.5;
             }
             if (t === "SpotColor" && color.spot && color.spot.color) {
@@ -164,16 +324,6 @@
             ',"orientation":"' + orientation + '"' +
             ',"widthIn":' + parseFloat(wIn.toFixed(4)) +
             ',"heightIn":' + parseFloat(hIn.toFixed(4)) + '}';
-    }
-
-    function getOrCreateLayer(doc, name) {
-        try {
-            return doc.layers.getByName(name);
-        } catch (e) {
-            var lyr = doc.layers.add();
-            lyr.name = name;
-            return lyr;
-        }
     }
 
     function runMainClean(isHtmlMode, opts) {
@@ -551,6 +701,14 @@
 
         if (isHtmlMode && panelData.action === "getSelectedSize") {
             return getSelectedLineInches();
+        }
+
+        if (isHtmlMode && panelData.action === "moveDimensions") {
+            if (app.documents.length === 0) {
+                report(100, "No document open.");
+                return '{"ok":false,"error":"No document open."}';
+            }
+            return moveDimensionGroups(app.activeDocument);
         }
 
         var opts = {
