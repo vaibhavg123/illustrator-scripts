@@ -16,6 +16,44 @@
             .replace(/\r?\n/g, " ");
     }
 
+    function isWhiteFillColor(color) {
+        if (!color || !color.typename) return false;
+        try {
+            if (color.typename === "RGBColor") {
+                return (
+                    color.red >= 254.5 &&
+                    color.green >= 254.5 &&
+                    color.blue >= 254.5
+                );
+            }
+            if (color.typename === "CMYKColor") {
+                return (
+                    color.cyan <= 0.5 &&
+                    color.magenta <= 0.5 &&
+                    color.yellow <= 0.5 &&
+                    color.black <= 0.5
+                );
+            }
+            if (color.typename === "GrayColor") {
+                return color.gray <= 0.5;
+            }
+            if (color.typename === "SpotColor" && color.spot && color.spot.color) {
+                return isWhiteFillColor(color.spot.color);
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    function isWhiteFilledPath(pathItem) {
+        try {
+            if (!pathItem || pathItem.typename !== "PathItem") return false;
+            if (!pathItem.filled || pathItem.fillColor == null) return false;
+            return isWhiteFillColor(pathItem.fillColor);
+        } catch (e) {
+            return false;
+        }
+    }
+
     function getItemDimensionsInInches(item) {
         var wPt = 0;
         var hPt = 0;
@@ -110,16 +148,20 @@
         // =========================
         var summary = {
             text: 0,
+            whiteFill: 0,
             fill: 0,
             stroke: 0,
             dashed: 0,
-            line: 0,
+            lines: 0,
             zeroSize: 0
         };
 
-        // Ensure target layers exist once before iterating doc.layers
         var textLayer = opts.runText ? (function () {
             try { return doc.layers.getByName("text"); } catch (e) { var l = doc.layers.add(); l.name = "text"; return l; }
+        })() : null;
+
+        var whiteFillLayer = opts.runWhiteFill ? (function () {
+            try { return doc.layers.getByName("white_fill"); } catch (e) { var l = doc.layers.add(); l.name = "white_fill"; return l; }
         })() : null;
 
         var fillLayer = opts.runFill ? (function () {
@@ -138,15 +180,15 @@
             try { return doc.layers.getByName("dashed"); } catch (e) { var l = doc.layers.add(); l.name = "dashed"; return l; }
         })() : null;
 
-        var lineLayer = opts.runLine ? (function () {
-            try { return doc.layers.getByName("line"); } catch (e) { var l = doc.layers.add(); l.name = "line"; return l; }
+        var linesLayer = opts.runLine ? (function () {
+            try { return doc.layers.getByName("lines"); } catch (e) { var l = doc.layers.add(); l.name = "lines"; return l; }
         })() : null;
 
         // =========================
         // SCRIPT 1: TEXT (layer-by-layer)
         // =========================
         if (opts.runText && textLayer) {
-            report(15, "Moving text frames...");
+            report(12, "Moving text frames...");
             for (var l = 0; l < doc.layers.length; l++) {
                 var layer = doc.layers[l];
                 if (layer === textLayer || !layer.visible || layer.locked) continue;
@@ -163,10 +205,56 @@
         }
 
         // =========================
-        // SCRIPT 2: FILL (layer-by-layer)
+        // SCRIPT 2A: #FFFFFF FILL -> "white_fill"
+        // =========================
+        if (opts.runWhiteFill && whiteFillLayer) {
+            report(24, "Moving #FFFFFF filled graphics...");
+
+            function processWhiteFill(items) {
+                for (var i = items.length - 1; i >= 0; i--) {
+                    var it = items[i];
+                    if (it.locked || it.hidden || it.layer.locked || !it.layer.visible) continue;
+                    var moved = false;
+
+                    try {
+                        if (it.typename === "PathItem") {
+                            if (isWhiteFilledPath(it)) {
+                                it.move(whiteFillLayer, ElementPlacement.PLACEATBEGINNING);
+                                moved = true;
+                            }
+                        } else if (it.typename === "GroupItem") {
+                            moved = processWhiteFill(it.pageItems) || moved;
+                        } else if (it.typename === "CompoundPathItem") {
+                            moved = processWhiteFill(it.pathItems) || moved;
+                        }
+                    } catch (e) {}
+
+                    if (moved) summary.whiteFill++;
+                    if (i % CHUNK === 0) $.sleep(5);
+                }
+                return false;
+            }
+
+            for (var l = 0; l < doc.layers.length; l++) {
+                var layer = doc.layers[l];
+                if (
+                    layer === whiteFillLayer ||
+                    layer.name === "text" ||
+                    layer.name === "fill" ||
+                    layer.name === "white_fill" ||
+                    !layer.visible ||
+                    layer.locked
+                ) continue;
+                processWhiteFill(layer.pageItems);
+                $.sleep(5);
+            }
+        }
+
+        // =========================
+        // SCRIPT 2B: REMAINING FILL -> "fill"
         // =========================
         if (opts.runFill && fillLayer) {
-            report(30, "Moving filled paths...");
+            report(38, "Moving filled paths...");
 
             function processFill(items) {
                 for (var i = items.length - 1; i >= 0; i--) {
@@ -195,17 +283,22 @@
 
             for (var l = 0; l < doc.layers.length; l++) {
                 var layer = doc.layers[l];
-                if (layer === fillLayer || !layer.visible || layer.locked) continue;
+                if (
+                    layer === fillLayer ||
+                    layer.name === "white_fill" ||
+                    !layer.visible ||
+                    layer.locked
+                ) continue;
                 processFill(layer.pageItems);
                 $.sleep(5);
             }
         }
 
         // =========================
-        // SCRIPT 3A: ZERO SIZE OBJECTS (layer-by-layer)
+        // SCRIPT 3A: ZERO SIZE OBJECTS
         // =========================
         if (opts.runZeroSize && zeroLayer) {
-            report(45, "Moving zero-size objects...");
+            report(52, "Moving zero-size objects...");
             var targetW = 0;
             var targetH = 0;
             var tol = 0.01;
@@ -239,9 +332,10 @@
                 var layer = doc.layers[l];
                 if (
                     layer.name === "text" ||
+                    layer.name === "white_fill" ||
                     layer.name === "fill" ||
                     layer.name === "stroke" ||
-                    layer.name === "line" ||
+                    layer.name === "lines" ||
                     layer.name === "dashed" ||
                     layer.name === "zero_size" ||
                     layer.locked ||
@@ -259,10 +353,10 @@
         }
 
         // =========================
-        // SCRIPT 3B: STROKE (layer-by-layer)
+        // SCRIPT 3B: STROKE
         // =========================
         if (opts.runStroke && strokeLayer) {
-            report(62, "Moving zero-stroke paths...");
+            report(66, "Moving zero-stroke paths...");
 
             function moveSafe(item, destLayer) {
                 try {
@@ -279,7 +373,7 @@
 
             function processStrokeItem(item) {
                 if (item.locked || item.hidden || item.layer.locked || !item.layer.visible) return 0;
-                if (item.layer.name === "fill") return 0;
+                if (item.layer.name === "fill" || item.layer.name === "white_fill") return 0;
 
                 var movedCount = 0;
 
@@ -306,6 +400,7 @@
                 var layer = doc.layers[l];
                 if (
                     layer.name === "fill" ||
+                    layer.name === "white_fill" ||
                     layer.name === "stroke" ||
                     layer.name === "zero_size" ||
                     layer.locked ||
@@ -320,10 +415,10 @@
         }
 
         // =========================
-        // SCRIPT 4A: DASHED LINES (layer-by-layer)
+        // SCRIPT 4A: DASHED LINES
         // =========================
         if (opts.runDashed && dashedLayer) {
-            report(78, "Moving dashed lines...");
+            report(80, "Moving dashed lines...");
 
             function isDashed(path) {
                 try {
@@ -388,6 +483,7 @@
 
                 if (
                     layer.name === "text" ||
+                    layer.name === "white_fill" ||
                     layer.name === "fill" ||
                     layer.name === "stroke" ||
                     layer.name === "dashed" ||
@@ -409,18 +505,19 @@
         }
 
         // =========================
-        // SCRIPT 4B: REMAINING GRAPHICS -> "line" (layer-by-layer)
+        // SCRIPT 4B: REMAINING GRAPHICS -> "lines"
         // =========================
-        if (opts.runLine && lineLayer) {
-            report(90, "Moving remaining graphics to 'line'...");
+        if (opts.runLine && linesLayer) {
+            report(90, "Moving remaining graphics to 'lines'...");
 
             for (var l = 0; l < doc.layers.length; l++) {
                 var layer = doc.layers[l];
                 if (
                     layer.name === "text" ||
+                    layer.name === "white_fill" ||
                     layer.name === "fill" ||
                     layer.name === "stroke" ||
-                    layer.name === "line" ||
+                    layer.name === "lines" ||
                     layer.name === "dashed" ||
                     layer.name === "zero_size" ||
                     layer.locked ||
@@ -432,8 +529,8 @@
                     var it = items[i];
                     if (it.locked || it.hidden) continue;
                     try {
-                        it.move(lineLayer, ElementPlacement.PLACEATBEGINNING);
-                        summary.line++;
+                        it.move(linesLayer, ElementPlacement.PLACEATBEGINNING);
+                        summary.lines++;
                     } catch (e) {}
                     if (i % CHUNK === 0) $.sleep(5);
                 }
@@ -447,20 +544,19 @@
         if (opts.runReorder) {
             report(96, "Reordering layers...");
             try {
-                var ordText = doc.layers.getByName("text");
-                var ordFill = doc.layers.getByName("fill");
-                var ordDashed = doc.layers.getByName("dashed");
-                var ordLine = doc.layers.getByName("line");
-                var ordStroke = doc.layers.getByName("stroke");
-                var ordZero = doc.layers.getByName("zero_size");
-
-                // Top -> Bottom
-                ordText.move(doc, ElementPlacement.PLACEATBEGINNING);
-                ordFill.move(ordText, ElementPlacement.PLACEAFTER);
-                ordDashed.move(ordFill, ElementPlacement.PLACEAFTER);
-                ordLine.move(ordDashed, ElementPlacement.PLACEAFTER);
-                ordStroke.move(ordLine, ElementPlacement.PLACEAFTER);
-                ordZero.move(ordStroke, ElementPlacement.PLACEAFTER);
+                var orderNames = ["text", "white_fill", "fill", "dashed", "lines", "stroke", "zero_size"];
+                var prevLayer = null;
+                for (var oi = 0; oi < orderNames.length; oi++) {
+                    var lyr = null;
+                    try { lyr = doc.layers.getByName(orderNames[oi]); } catch (eL) {}
+                    if (!lyr) continue;
+                    if (!prevLayer) {
+                        lyr.move(doc, ElementPlacement.PLACEATBEGINNING);
+                    } else {
+                        lyr.move(prevLayer, ElementPlacement.PLACEAFTER);
+                    }
+                    prevLayer = lyr;
+                }
             } catch (e) {}
         }
 
@@ -470,21 +566,23 @@
         if (!isHtmlMode) {
             var alertMsg = "Script Completed!\n\n";
             alertMsg += "Text frames moved: " + summary.text + "\n";
+            alertMsg += "#FFFFFF fill graphics moved: " + summary.whiteFill + "\n";
             alertMsg += "Filled paths moved: " + summary.fill + "\n";
             alertMsg += "Dashed lines moved: " + summary.dashed + "\n";
             alertMsg += "Zero-stroke paths moved: " + summary.stroke + "\n";
-            alertMsg += "Remaining graphics moved to 'line': " + summary.line + "\n";
+            alertMsg += "Remaining graphics moved to 'lines': " + summary.lines + "\n";
             alertMsg += "Zero-size graphics moved: " + summary.zeroSize + "\n";
-            alertMsg += "\nLayer order: text -> fill -> dashed -> line -> stroke -> zero_size";
+            alertMsg += "\nLayer order: text -> white_fill -> fill -> dashed -> lines -> stroke -> zero_size";
             alert(alertMsg);
         }
 
         return '{"ok":true' +
             ',"message":"Script Completed"' +
             ',"text":' + summary.text +
+            ',"whiteFill":' + summary.whiteFill +
             ',"fill":' + summary.fill +
             ',"dashed":' + summary.dashed +
-            ',"line":' + summary.line +
+            ',"lines":' + summary.lines +
             ',"stroke":' + summary.stroke +
             ',"zeroSize":' + summary.zeroSize + '}';
     }
@@ -498,6 +596,7 @@
 
         var opts = {
             runText: isHtmlMode ? Boolean(panelData.runText) : true,
+            runWhiteFill: isHtmlMode ? (panelData.runWhiteFill !== undefined ? Boolean(panelData.runWhiteFill) : true) : true,
             runFill: isHtmlMode ? Boolean(panelData.runFill) : true,
             runZeroSize: isHtmlMode ? Boolean(panelData.runZeroSize) : true,
             runStroke: isHtmlMode ? Boolean(panelData.runStroke) : true,
