@@ -91,10 +91,29 @@
         var wIn = dims.widthIn;
         var hIn = dims.heightIn;
 
-        // Line span is along width (horizontal) or height (vertical); take the larger axis
-        var measuredIn = (hIn > wIn) ? hIn : wIn;
-        if (measuredIn <= 0) {
-            measuredIn = Math.max(wIn, hIn);
+        var measuredIn = wIn;
+        var orientation = "horizontal";
+
+        // For a PathItem line, compare first-to-last anchor delta if available
+        if (item.typename === "PathItem" && item.pathPoints && item.pathPoints.length >= 2) {
+            var pFirst = item.pathPoints[0].anchor;
+            var pLast = item.pathPoints[item.pathPoints.length - 1].anchor;
+            var dxIn = Math.abs(pLast[0] - pFirst[0]) * PT_TO_IN;
+            var dyIn = Math.abs(pLast[1] - pFirst[1]) * PT_TO_IN;
+
+            if (dyIn > dxIn) {
+                measuredIn = dyIn;
+                orientation = "vertical";
+            } else {
+                measuredIn = dxIn;
+                orientation = "horizontal";
+            }
+        } else if (hIn > wIn) {
+            measuredIn = hIn;
+            orientation = "vertical";
+        } else {
+            measuredIn = wIn;
+            orientation = "horizontal";
         }
 
         var rounded = parseFloat(measuredIn.toFixed(4));
@@ -102,9 +121,10 @@
             rounded = 0;
         }
 
-        report(100, "Fetched size: " + rounded + " in");
+        report(100, "Fetched " + orientation + " size: " + rounded + " in");
         return '{"ok":true' +
             ',"inches":' + rounded +
+            ',"orientation":"' + orientation + '"' +
             ',"widthIn":' + parseFloat(wIn.toFixed(4)) +
             ',"heightIn":' + parseFloat(hIn.toFixed(4)) + '}';
     }
