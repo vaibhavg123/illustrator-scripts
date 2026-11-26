@@ -2,7 +2,6 @@
 
 (function () {
     var PT_TO_IN = 1 / 72;
-    var SCALE_FACTOR = 9.733;
     var TARGET_LAYERS = {
         "text": true,
         "fill": true,
@@ -36,10 +35,9 @@
         }
     }
 
-    function isLayerSkippable(layer, extraSkipMap) {
+    function isLayerSkippable(layer) {
         if (!layer || !layer.visible || layer.locked) return true;
         if (TARGET_LAYERS[layer.name]) return true;
-        if (extraSkipMap && extraSkipMap[layer.name]) return true;
         return false;
     }
 
@@ -51,30 +49,64 @@
         }
     }
 
+    function getItemDimensionsInInches(item) {
+        var wPt = 0;
+        var hPt = 0;
+
+        try {
+            if (item.geometricBounds && item.geometricBounds.length === 4) {
+                var b = item.geometricBounds;
+                wPt = Math.abs(b[2] - b[0]);
+                hPt = Math.abs(b[1] - b[3]);
+            }
+        } catch (e) {}
+
+        if (wPt === 0 && hPt === 0) {
+            try { wPt = Math.abs(item.width || 0); } catch (e1) {}
+            try { hPt = Math.abs(item.height || 0); } catch (e2) {}
+        }
+
+        return {
+            widthIn: wPt * PT_TO_IN,
+            heightIn: hPt * PT_TO_IN
+        };
+    }
+
     function getSelectedLineInches() {
         if (app.documents.length === 0) {
+            report(100, "No document open.");
             return '{"ok":false,"error":"No document open."}';
         }
+
         var doc = app.activeDocument;
         var sel = doc.selection;
+
         if (!sel || sel.length === 0) {
+            report(100, "No selection.");
             return '{"ok":false,"error":"Select a line or object first."}';
         }
 
         var item = sel[0];
-        var wIn = Math.abs(item.width) * PT_TO_IN;
-        var hIn = Math.abs(item.height) * PT_TO_IN;
+        var dims = getItemDimensionsInInches(item);
+        var wIn = dims.widthIn;
+        var hIn = dims.heightIn;
 
-        // For a line, width or height holds the span; pick the larger non-zero axis
-        var measuredIn = (hIn > wIn && hIn > 0.00001) ? hIn : wIn;
-        if (measuredIn <= 0.00001) {
+        // Line span is along width (horizontal) or height (vertical); take the larger axis
+        var measuredIn = (hIn > wIn) ? hIn : wIn;
+        if (measuredIn <= 0) {
             measuredIn = Math.max(wIn, hIn);
         }
 
+        var rounded = parseFloat(measuredIn.toFixed(4));
+        if (isNaN(rounded)) {
+            rounded = 0;
+        }
+
+        report(100, "Fetched size: " + rounded + " in");
         return '{"ok":true' +
-            ',"inches":' + Number(measuredIn.toFixed(4)) +
-            ',"widthIn":' + Number(wIn.toFixed(4)) +
-            ',"heightIn":' + Number(hIn.toFixed(4)) + '}';
+            ',"inches":' + rounded +
+            ',"widthIn":' + parseFloat(wIn.toFixed(4)) +
+            ',"heightIn":' + parseFloat(hIn.toFixed(4)) + '}';
     }
 
     function executeOrganizer() {
