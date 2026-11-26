@@ -22,38 +22,43 @@
             </label>
 
             <label class="checkbox-row">
+                <input type="checkbox" id="loChkWhiteFill" checked />
+                <span>2. Move #FFFFFF Fill Graphics → <b>white_fill</b></span>
+            </label>
+
+            <label class="checkbox-row">
                 <input type="checkbox" id="loChkFill" checked />
-                <span>2. Move Filled Paths → <b>fill</b></span>
+                <span>3. Move Filled Paths → <b>fill</b></span>
             </label>
 
             <label class="checkbox-row">
                 <input type="checkbox" id="loChkZeroSize" checked />
-                <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
+                <span>4. Move Zero-Size Objects → <b>zero_size</b></span>
             </label>
 
             <label class="checkbox-row">
                 <input type="checkbox" id="loChkStroke" checked />
-                <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
+                <span>5. Move Zero-Stroke Paths → <b>stroke</b></span>
             </label>
 
             <label class="checkbox-row">
                 <input type="checkbox" id="loChkDashed" checked />
-                <span>5. Move Dashed Lines → <b>dashed</b></span>
+                <span>6. Move Dashed Lines → <b>dashed</b></span>
             </label>
 
             <label class="checkbox-row">
                 <input type="checkbox" id="loChkLine" checked />
-                <span>6. Move Remaining Graphics → <b>line</b></span>
+                <span>7. Move Remaining Graphics → <b>lines</b></span>
             </label>
 
             <label class="checkbox-row">
                 <input type="checkbox" id="loChkReorder" checked />
-                <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
+                <span>8. Reorder Layers (text → white_fill → fill → dashed → lines → stroke → zero_size)</span>
             </label>
         </div>
         <button type="button" id="loBtnRun" class="tool-btn">▶ Start File Cleaning</button>
         <p style="font-size:11px; color:#9fb0c3; margin:6px 0 0 0;">
-            Checks visible, unlocked layers directly and orders them top-to-bottom.
+            Moves #FFFFFF fills to <b>white_fill</b> and orders layers top-to-bottom.
         </p>
     </div>
 
@@ -109,7 +114,7 @@
     var SCALE_FACTOR = 9.733;
     var latestPctNumber = "";
 
-    var ids = ["loChkText", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
+    var ids = ["loChkText", "loChkWhiteFill", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
 
     var tabCleanBtn = document.getElementById("loTabClean");
     var tabScaleBtn = document.getElementById("loTabScale");
@@ -346,6 +351,7 @@
             var payload = {
                 _fromHtmlUi: true,
                 runText: document.getElementById("loChkText").checked,
+                runWhiteFill: document.getElementById("loChkWhiteFill").checked,
                 runFill: document.getElementById("loChkFill").checked,
                 runZeroSize: document.getElementById("loChkZeroSize").checked,
                 runStroke: document.getElementById("loChkStroke").checked,
@@ -354,8 +360,9 @@
                 runReorder: document.getElementById("loChkReorder").checked
             };
 
-            if (!payload.runText && !payload.runFill && !payload.runZeroSize &&
-                !payload.runStroke && !payload.runDashed && !payload.runLine && !payload.runReorder) {
+            if (!payload.runText && !payload.runWhiteFill && !payload.runFill &&
+                !payload.runZeroSize && !payload.runStroke && !payload.runDashed &&
+                !payload.runLine && !payload.runReorder) {
                 logMsg("Layer Organizer -> Please check at least one step.", "warn");
                 return;
             }
