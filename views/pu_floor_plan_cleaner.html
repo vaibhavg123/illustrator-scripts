@@ -60,6 +60,22 @@
         <p style="font-size:11px; color:#9fb0c3; margin:6px 0 0 0;">
             Cleans layer-by-layer with selection cleared and progress live.
         </p>
+
+        <div class="action-btn-row" style="margin-top:10px;">
+            <button type="button" class="tool-btn secondary" data-jsx="jsx/create.jsx">+ Create Layers</button>
+        </div>
+
+        <div class="action-btn-row" style="margin-top:6px;">
+            <button type="button" id="loBtnDimensions" class="tool-btn secondary" style="width:100%;">
+                Move Dimensions
+            </button>
+        </div>
+
+        <div class="action-btn-row" style="margin-top:6px;">
+            <button type="button" id="loBtnJoinText" class="tool-btn secondary" style="width:100%;">
+                Join Text Frames
+            </button>
+        </div>
     </div>
 
     <!-- TAB 2: SCALE PERCENTAGE CALCULATOR -->
@@ -102,16 +118,6 @@
     </div>
 </div>
 
-<div class="action-btn-row" style="margin-top:10px;">
-    <button type="button" class="tool-btn secondary" data-jsx="jsx/create.jsx">+ Create Layers</button>
-</div>
-
-<div class="action-btn-row" style="margin-top:6px;">
-    <button type="button" id="loBtnDimensions" class="tool-btn secondary" style="width:100%;">
-        Move Dimensions
-    </button>
-</div>
-
 <script>
 (function () {
     var JSX_PATH = "jsx/pu_floor_plan_cleaner.jsx";
@@ -134,6 +140,7 @@
     var stepsEl = document.getElementById("loCalcSteps");
     var outputEl = document.getElementById("loScaleOutput");
     var dimBtn = document.getElementById("loBtnDimensions");
+    var joinTextBtn = document.getElementById("loBtnJoinText");
 
     function setActiveTab(tabName) {
         var isScale = (tabName === "scale");
@@ -169,6 +176,7 @@
             var label = "Layer Organizer";
             if (payload.action === "getSelectedSize") label = "Fetch Selected Size";
             else if (payload.action === "moveDimensions") label = "Move Dimensions";
+            else if (payload.action === "joinTextFrames") label = "Join Text Frames";
 
             try {
                 var ret = window.VGTools.runScript(
@@ -371,6 +379,31 @@
                             );
                         } else {
                             logMsg((parsed && parsed.error) || "Could not move dimensions.", "warn");
+                        }
+                    }
+                );
+            }, 0);
+        };
+    }
+
+    if (joinTextBtn) {
+        joinTextBtn.onclick = function () {
+            joinTextBtn.disabled = true;
+            joinTextBtn.innerText = "Joining Text...";
+            setTimeout(function () {
+                invokeJsx(
+                    { _fromHtmlUi: true, action: "joinTextFrames" },
+                    function (rawRes) {
+                        joinTextBtn.disabled = false;
+                        joinTextBtn.innerText = "Join Text Frames";
+                        var parsed = extractJsonPayload(rawRes);
+                        if (parsed && parsed.ok) {
+                            logMsg(
+                                "Joined " + parsed.merged + " text group(s) (" + parsed.removed + " extra frame(s) merged) at original position.",
+                                "info"
+                            );
+                        } else {
+                            logMsg((parsed && parsed.error) || "Could not join text frames.", "warn");
                         }
                     }
                 );
