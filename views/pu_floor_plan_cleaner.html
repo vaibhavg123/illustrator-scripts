@@ -2,58 +2,129 @@
 <div class="custom-card">
     <h4>Auto Clean PDF File</h4>
     <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
-        First release all - Clipping mask, compond path, path-Clean UP and Ungroup
+        First release all - Clipping mask, compound path, path-Clean UP and Ungroup
     </p>
     <div style="display:none;">
         <label class="checkbox-row">
             <input type="checkbox" id="loChkText" checked />
             <span>1. Move Text Frames → <b>text</b></span>
         </label>
-    
+
         <label class="checkbox-row">
             <input type="checkbox" id="loChkFill" checked />
             <span>2. Move Filled Paths → <b>fill</b></span>
         </label>
-    
+
         <label class="checkbox-row">
             <input type="checkbox" id="loChkZeroSize" checked />
             <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
         </label>
-    
+
         <label class="checkbox-row">
             <input type="checkbox" id="loChkStroke" checked />
             <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
         </label>
-    
+
         <label class="checkbox-row">
             <input type="checkbox" id="loChkDashed" checked />
             <span>5. Move Dashed Lines → <b>dashed</b></span>
         </label>
-    
+
         <label class="checkbox-row">
             <input type="checkbox" id="loChkLine" checked />
             <span>6. Move Remaining Graphics → <b>line</b></span>
         </label>
-    
+
         <label class="checkbox-row">
             <input type="checkbox" id="loChkReorder" checked />
             <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
         </label>
     </div>
     <button type="button" id="loBtnRun" class="tool-btn">▶ Start File Cleaning</button>
-    <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
-        Moves visible, unlocked artwork into organized layers and orders them top-to-bottom.
+    <p style="font-size:11px; color:#9fb0c3; margin:6px 0 0 0;">
+        Checks visible, unlocked layers directly and orders them top-to-bottom.
     </p>
 </div>
 
-<div class="action-btn-row">
-        <button type="button" class="tool-btn secondary" data-jsx="jsx/create.jsx">+ Create Layers</button>
+<div class="custom-card" style="margin-top:10px;">
+    <h4>Scale Percentage Calculator</h4>
+
+    <div style="margin-bottom:8px;">
+        <label for="loInput1" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
+            Input 1 — Selected Line Size (inches)
+        </label>
+        <div style="display:flex; gap:6px;">
+            <input type="text" id="loInput1" placeholder="e.g. 0.9683"
+                   style="flex:1; padding:5px 7px; font-size:12px;" />
+            <button type="button" id="loBtnFetch" class="tool-btn secondary" style="white-space:nowrap;">
+                Fetch
+            </button>
+        </div>
+    </div>
+
+    <div style="margin-bottom:8px;">
+        <label for="loInput2" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
+            Input 2 — Target Dimension (e.g. 10.3, 12.1, 11.2)
+        </label>
+        <input type="text" id="loInput2" placeholder="e.g. 10.3"
+               style="width:100%; box-sizing:border-box; padding:5px 7px; font-size:12px;" />
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:7px 8px; margin-bottom:8px;">
+        <div style="font-size:11px; color:#9fb0c3;" id="loCalcSteps">
+            (Input 2 × 9.733) ÷ Input 1
+        </div>
+        <div style="font-size:14px; font-weight:bold; margin-top:2px;" id="loScaleOutput">
+            —%
+        </div>
+    </div>
+
+    <div style="display:flex; gap:6px;">
+        <button type="button" id="loBtnCopy" class="tool-btn secondary" style="flex:1;">
+            Copy %
+        </button>
+        <button type="button" id="loBtnPaste" class="tool-btn secondary" style="flex:1;">
+            Paste
+        </button>
+    </div>
+</div>
+
+<div class="action-btn-row" style="margin-top:10px;">
+    <button type="button" class="tool-btn secondary" data-jsx="jsx/create.jsx">+ Create Layers</button>
 </div>
 
 <script>
 (function () {
+    var JSX_PATH = "jsx/pu_floor_plan_cleaner.jsx";
     var STORAGE_KEY = "vg_layer_organizer_opts";
+    var SCALE_FACTOR = 9.733;
+    var lastFocusedInput = null;
+    var latestPctText = "";
+
     var ids = ["loChkText", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
+
+    var input1El = document.getElementById("loInput1");
+    var input2El = document.getElementById("loInput2");
+    var fetchBtn = document.getElementById("loBtnFetch");
+    var copyBtn = document.getElementById("loBtnCopy");
+    var pasteBtn = document.getElementById("loBtnPaste");
+    var stepsEl = document.getElementById("loCalcSteps");
+    var outputEl = document.getElementById("loScaleOutput");
+
+    function logMsg(msg, level) {
+        if (window.VGTools && typeof window.VGTools.log === "function") {
+            window.VGTools.log(msg, level || "info");
+        }
+    }
+
+    function parseJsxResult(res) {
+        if (!res) return null;
+        if (typeof res === "object") return res;
+        if (typeof res === "string") {
+            try { return JSON.parse(res); } catch (e) { return null; }
+        }
+        return null;
+    }
 
     function saveOpts() {
         var data = {};
@@ -74,6 +145,111 @@
                 if (el && typeof data[ids[i]] === "boolean") el.checked = data[ids[i]];
             }
         } catch (e) {}
+    }
+
+    function calculateScale() {
+        var v1 = parseFloat(input1El.value);
+        var v2 = parseFloat(input2El.value);
+
+        if (isNaN(v1) || isNaN(v2) || v1 === 0) {
+            stepsEl.textContent = "(Input 2 × 9.733) ÷ Input 1";
+            outputEl.textContent = "—%";
+            latestPctText = "";
+            return;
+        }
+
+        var numerator = v2 * SCALE_FACTOR;
+        var pct = numerator / v1;
+        var pctFormatted = pct.toFixed(4) + "%";
+
+        stepsEl.textContent =
+            v2 + " × " + SCALE_FACTOR + " = " + Number(numerator.toFixed(4)) +
+            " ÷ " + v1 + " = " + pctFormatted;
+        outputEl.textContent = pctFormatted;
+        latestPctText = pctFormatted;
+    }
+
+    [input1El, input2El].forEach(function (el) {
+        if (!el) return;
+        el.addEventListener("focus", function () { lastFocusedInput = el; });
+        el.addEventListener("input", calculateScale);
+        el.addEventListener("change", calculateScale);
+    });
+
+    if (fetchBtn) {
+        fetchBtn.onclick = function () {
+            fetchBtn.disabled = true;
+            window.VGTools.runScript(
+                JSX_PATH,
+                { _fromHtmlUi: true, action: "getSelectedSize" },
+                function (rawRes) {
+                    fetchBtn.disabled = false;
+                    var parsed = parseJsxResult(rawRes);
+                    if (parsed && parsed.ok && typeof parsed.inches === "number") {
+                        input1El.value = String(parsed.inches);
+                        calculateScale();
+                        logMsg("Fetched selected size: " + parsed.inches + " in", "info");
+                    } else {
+                        logMsg((parsed && parsed.error) || "Could not fetch selected line size.", "warn");
+                    }
+                },
+                "Fetch Selected Size"
+            );
+        };
+    }
+
+    if (copyBtn) {
+        copyBtn.onclick = function () {
+            var valToCopy = latestPctText || outputEl.textContent;
+            if (!valToCopy || valToCopy === "—%") {
+                logMsg("Nothing to copy yet.", "warn");
+                return;
+            }
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+                navigator.clipboard.writeText(valToCopy).then(function () {
+                    logMsg("Copied: " + valToCopy, "info");
+                }).catch(function () {
+                    fallbackCopy(valToCopy);
+                });
+            } else {
+                fallbackCopy(valToCopy);
+            }
+        };
+    }
+
+    function fallbackCopy(text) {
+        var temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        try {
+            document.execCommand("copy");
+            logMsg("Copied: " + text, "info");
+        } catch (e) {
+            logMsg("Copy failed.", "warn");
+        }
+        document.body.removeChild(temp);
+    }
+
+    if (pasteBtn) {
+        pasteBtn.onclick = function () {
+            var target = lastFocusedInput || input2El;
+            if (!target) return;
+            target.focus();
+            if (navigator.clipboard && typeof navigator.clipboard.readText === "function") {
+                navigator.clipboard.readText().then(function (clipText) {
+                    if (clipText) {
+                        target.value = clipText.trim();
+                        calculateScale();
+                        logMsg("Pasted into " + (target.id === "loInput1" ? "Input 1" : "Input 2"), "info");
+                    }
+                }).catch(function () {
+                    try { document.execCommand("paste"); } catch (e) {}
+                });
+            } else {
+                try { document.execCommand("paste"); } catch (e) {}
+            }
+        };
     }
 
     for (var i = 0; i < ids.length; i++) {
@@ -97,9 +273,7 @@
 
             if (!payload.runText && !payload.runFill && !payload.runZeroSize &&
                 !payload.runStroke && !payload.runDashed && !payload.runLine && !payload.runReorder) {
-                if (window.VGTools && window.VGTools.log) {
-                    window.VGTools.log("Layer Organizer -> Please check at least one step.", "warn");
-                }
+                logMsg("Layer Organizer -> Please check at least one step.", "warn");
                 return;
             }
 
@@ -108,11 +282,11 @@
             runBtn.innerText = "Organizing...";
 
             window.VGTools.runScript(
-                "jsx/pu_floor_plan_cleaner.jsx",
+                JSX_PATH,
                 payload,
                 function () {
                     runBtn.disabled = false;
-                    runBtn.innerText = "▶ Run Layer Organizer";
+                    runBtn.innerText = "▶ Start File Cleaning";
                 },
                 "Layer Organizer"
             );
@@ -120,5 +294,6 @@
     }
 
     loadOpts();
+    calculateScale();
 })();
 </script>
