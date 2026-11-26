@@ -56,18 +56,23 @@
         var origTop = targetTf.top;
         var joinedCount = 0;
 
+        var combined = String(targetTf.contents || "")
+            .replace(/[\r\n]+/g, " ")
+            .replace(/\s+/g, " ")
+            .replace(/^\s+|\s+$/g, "");
+
         for (var i = 0; i < sourceTfs.length; i++) {
             var src = sourceTfs[i];
             if (!src || src === targetTf) continue;
             try {
                 if (src.locked || src.hidden) continue;
-                var srcContents = src.contents;
+                var srcContents = String(src.contents || "")
+                    .replace(/[\r\n]+/g, " ")
+                    .replace(/\s+/g, " ")
+                    .replace(/^\s+|\s+$/g, "");
+
                 if (srcContents !== "") {
-                    if (targetTf.contents.length > 0 && !/[\r\n]$/.test(targetTf.contents)) {
-                        targetTf.contents = targetTf.contents + "\r" + srcContents;
-                    } else {
-                        targetTf.contents = targetTf.contents + srcContents;
-                    }
+                    combined = combined ? (combined + " " + srcContents) : srcContents;
                 }
                 src.remove();
                 joinedCount++;
@@ -75,6 +80,7 @@
         }
 
         try {
+            targetTf.contents = combined;
             targetTf.left = origLeft;
             targetTf.top = origTop;
         } catch (ePos) {}
@@ -109,7 +115,7 @@
             if (selectedTextFrames.length >= 2) {
                 report(40, "Joining selected text frames...");
                 selectedTextFrames.sort(function (a, b) {
-                    if (Math.abs(a.top - b.top) > 4) return b.top - a.top;
+                    if (Math.abs(a.top - b.top) > 12) return b.top - a.top;
                     return a.left - b.left;
                 });
 
