@@ -1,87 +1,100 @@
 <!-- views/layer_organizer.html -->
 <div class="custom-card">
-    <h4>Auto Clean PDF File</h4>
-    <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
-        First release all - Clipping mask, compound path, path-Clean UP and Ungroup
-    </p>
-    <div style="display:none;">
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkText" checked />
-            <span>1. Move Text Frames → <b>text</b></span>
-        </label>
-
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkFill" checked />
-            <span>2. Move Filled Paths → <b>fill</b></span>
-        </label>
-
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkZeroSize" checked />
-            <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
-        </label>
-
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkStroke" checked />
-            <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
-        </label>
-
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkDashed" checked />
-            <span>5. Move Dashed Lines → <b>dashed</b></span>
-        </label>
-
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkLine" checked />
-            <span>6. Move Remaining Graphics → <b>line</b></span>
-        </label>
-
-        <label class="checkbox-row">
-            <input type="checkbox" id="loChkReorder" checked />
-            <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
-        </label>
+    <div id="loTabBar" style="display:flex; gap:6px; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px;">
+        <button type="button" id="loTabClean" class="tool-btn" data-tab="clean" style="flex:1; padding:6px 8px; font-size:11px;">
+            Auto Clean PDF File
+        </button>
+        <button type="button" id="loTabScale" class="tool-btn secondary" data-tab="scale" style="flex:1; padding:6px 8px; font-size:11px;">
+            Scale percentage calculator
+        </button>
     </div>
-    <button type="button" id="loBtnRun" class="tool-btn">▶ Start File Cleaning</button>
-    <p style="font-size:11px; color:#9fb0c3; margin:6px 0 0 0;">
-        Checks visible, unlocked layers directly and orders them top-to-bottom.
-    </p>
-</div>
 
-<div class="custom-card" style="margin-top:10px;">
-    <h4>Scale Percentage Calculator</h4>
+    <!-- TAB 1: AUTO CLEAN PDF FILE -->
+    <div id="loPanelClean" data-tab-panel="clean">
+        <h4>Auto Clean PDF File</h4>
+        <p style="font-size:11px; color:#9fb0c3; margin:0 0 8px 0;">
+            First release all - Clipping mask, compound path, path-Clean UP and Ungroup
+        </p>
+        <div style="display:none;">
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkText" checked />
+                <span>1. Move Text Frames → <b>text</b></span>
+            </label>
 
-    <div style="margin-bottom:8px;">
-        <label for="loInput1" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
-            Input 1 — Selected Line Width/Height (in)
-        </label>
-        <div style="display:flex; gap:6px;">
-            <input type="text" inputmode="decimal" id="loInput1" placeholder="e.g. 0.9683"
-                   style="flex:1; padding:5px 7px; font-size:12px;" />
-            <button type="button" id="loBtnFetch" class="tool-btn secondary" style="white-space:nowrap;">
-                Fetch
-            </button>
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkFill" checked />
+                <span>2. Move Filled Paths → <b>fill</b></span>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkZeroSize" checked />
+                <span>3. Move Zero-Size Objects → <b>zero_size</b></span>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkStroke" checked />
+                <span>4. Move Zero-Stroke Paths → <b>stroke</b></span>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkDashed" checked />
+                <span>5. Move Dashed Lines → <b>dashed</b></span>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkLine" checked />
+                <span>6. Move Remaining Graphics → <b>line</b></span>
+            </label>
+
+            <label class="checkbox-row">
+                <input type="checkbox" id="loChkReorder" checked />
+                <span>7. Reorder Layers (text → fill → dashed → line → stroke → zero_size)</span>
+            </label>
         </div>
+        <button type="button" id="loBtnRun" class="tool-btn">▶ Start File Cleaning</button>
+        <p style="font-size:11px; color:#9fb0c3; margin:6px 0 0 0;">
+            Checks visible, unlocked layers directly and orders them top-to-bottom.
+        </p>
     </div>
 
-    <div style="margin-bottom:8px;">
-        <label for="loInput2" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
-            Input 2 — Target Dimension (e.g. 10.3, 12.1, 11.2)
-        </label>
-        <input type="text" inputmode="decimal" id="loInput2" placeholder="e.g. 10.3"
-               style="width:100%; box-sizing:border-box; padding:5px 7px; font-size:12px;" />
-    </div>
+    <!-- TAB 2: SCALE PERCENTAGE CALCULATOR -->
+    <div id="loPanelScale" data-tab-panel="scale" style="display:none;">
+        <h4>Scale percentage calculator</h4>
 
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:7px 8px; margin-bottom:8px;">
-        <div style="font-size:11px; color:#9fb0c3;" id="loCalcSteps">
-            (Input 2 × 9.733) ÷ Input 1
+        <div style="margin-bottom:8px;">
+            <label for="loInput1" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
+                Input 1 — Selected Line Width/Height (in)
+            </label>
+            <div style="display:flex; gap:6px;">
+                <input type="text" inputmode="decimal" id="loInput1" placeholder="e.g. 0.9683"
+                       style="flex:1; padding:5px 7px; font-size:12px;" />
+                <button type="button" id="loBtnFetch" class="tool-btn secondary" style="white-space:nowrap;">
+                    Fetch
+                </button>
+            </div>
         </div>
-        <div style="font-size:14px; font-weight:bold; margin-top:2px;" id="loScaleOutput">
-            —%
-        </div>
-    </div>
 
-    <button type="button" id="loBtnCopy" class="tool-btn secondary" style="width:100%;">
-        Copy %
-    </button>
+        <div style="margin-bottom:8px;">
+            <label for="loInput2" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
+                Input 2 — Target Dimension (e.g. 10.3, 12.1, 11.2)
+            </label>
+            <input type="text" inputmode="decimal" id="loInput2" placeholder="e.g. 10.3"
+                   style="width:100%; box-sizing:border-box; padding:5px 7px; font-size:12px;" />
+        </div>
+
+        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:7px 8px; margin-bottom:8px;">
+            <div style="font-size:11px; color:#9fb0c3;" id="loCalcSteps">
+                (Input 2 × 9.733) ÷ Input 1
+            </div>
+            <div style="font-size:14px; font-weight:bold; margin-top:2px;" id="loScaleOutput">
+                —%
+            </div>
+        </div>
+
+        <button type="button" id="loBtnCopy" class="tool-btn secondary" style="width:100%;">
+            Copy %
+        </button>
+    </div>
 </div>
 
 <div class="action-btn-row" style="margin-top:10px;">
@@ -92,10 +105,16 @@
 (function () {
     var JSX_PATH = "jsx/pu_floor_plan_cleaner.jsx";
     var STORAGE_KEY = "vg_layer_organizer_opts";
+    var TAB_STORAGE_KEY = "vg_layer_organizer_active_tab";
     var SCALE_FACTOR = 9.733;
     var latestPctNumber = "";
 
     var ids = ["loChkText", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
+
+    var tabCleanBtn = document.getElementById("loTabClean");
+    var tabScaleBtn = document.getElementById("loTabScale");
+    var panelClean = document.getElementById("loPanelClean");
+    var panelScale = document.getElementById("loPanelScale");
 
     var input1El = document.getElementById("loInput1");
     var input2El = document.getElementById("loInput2");
@@ -103,6 +122,24 @@
     var copyBtn = document.getElementById("loBtnCopy");
     var stepsEl = document.getElementById("loCalcSteps");
     var outputEl = document.getElementById("loScaleOutput");
+
+    function setActiveTab(tabName) {
+        var isScale = (tabName === "scale");
+        panelClean.style.display = isScale ? "none" : "block";
+        panelScale.style.display = isScale ? "block" : "none";
+
+        tabCleanBtn.className = isScale ? "tool-btn secondary" : "tool-btn";
+        tabScaleBtn.className = isScale ? "tool-btn" : "tool-btn secondary";
+
+        try { localStorage.setItem(TAB_STORAGE_KEY, isScale ? "scale" : "clean"); } catch (e) {}
+    }
+
+    if (tabCleanBtn) {
+        tabCleanBtn.onclick = function () { setActiveTab("clean"); };
+    }
+    if (tabScaleBtn) {
+        tabScaleBtn.onclick = function () { setActiveTab("scale"); };
+    }
 
     function logMsg(msg, level) {
         if (window.VGTools && typeof window.VGTools.log === "function") {
@@ -112,9 +149,7 @@
 
     function cleanNumberInput(raw) {
         if (!raw) return "";
-        // Strip everything except digits and dots
         var stripped = String(raw).replace(/[^0-9.]/g, "");
-        // Keep only the first decimal point
         var firstDot = stripped.indexOf(".");
         if (firstDot !== -1) {
             stripped = stripped.slice(0, firstDot + 1) + stripped.slice(firstDot + 1).replace(/\./g, "");
@@ -154,6 +189,17 @@
                 if (el && typeof data[ids[i]] === "boolean") el.checked = data[ids[i]];
             }
         } catch (e) {}
+    }
+
+    function loadSavedTab() {
+        try {
+            var savedTab = localStorage.getItem(TAB_STORAGE_KEY);
+            if (savedTab === "scale" || savedTab === "clean") {
+                setActiveTab(savedTab);
+                return;
+            }
+        } catch (e) {}
+        setActiveTab("clean");
     }
 
     function calculateScale() {
@@ -290,6 +336,7 @@
     }
 
     loadOpts();
+    loadSavedTab();
     calculateScale();
 })();
 </script>
