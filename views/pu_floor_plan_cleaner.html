@@ -51,10 +51,10 @@
 
     <div style="margin-bottom:8px;">
         <label for="loInput1" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
-            Input 1 — Selected Line Size (inches)
+            Input 1 — Selected Line Width/Height (in)
         </label>
         <div style="display:flex; gap:6px;">
-            <input type="text" id="loInput1" placeholder="e.g. 0.9683"
+            <input type="text" inputmode="decimal" id="loInput1" placeholder="e.g. 0.9683"
                    style="flex:1; padding:5px 7px; font-size:12px;" />
             <button type="button" id="loBtnFetch" class="tool-btn secondary" style="white-space:nowrap;">
                 Fetch
@@ -66,7 +66,7 @@
         <label for="loInput2" style="display:block; font-size:11px; color:#9fb0c3; margin-bottom:4px;">
             Input 2 — Target Dimension (e.g. 10.3, 12.1, 11.2)
         </label>
-        <input type="text" id="loInput2" placeholder="e.g. 10.3"
+        <input type="text" inputmode="decimal" id="loInput2" placeholder="e.g. 10.3"
                style="width:100%; box-sizing:border-box; padding:5px 7px; font-size:12px;" />
     </div>
 
@@ -79,14 +79,9 @@
         </div>
     </div>
 
-    <div style="display:flex; gap:6px;">
-        <button type="button" id="loBtnCopy" class="tool-btn secondary" style="flex:1;">
-            Copy %
-        </button>
-        <button type="button" id="loBtnPaste" class="tool-btn secondary" style="flex:1;">
-            Paste
-        </button>
-    </div>
+    <button type="button" id="loBtnCopy" class="tool-btn secondary" style="width:100%;">
+        Copy %
+    </button>
 </div>
 
 <div class="action-btn-row" style="margin-top:10px;">
@@ -98,8 +93,7 @@
     var JSX_PATH = "jsx/pu_floor_plan_cleaner.jsx";
     var STORAGE_KEY = "vg_layer_organizer_opts";
     var SCALE_FACTOR = 9.733;
-    var lastFocusedInput = null;
-    var latestPctText = "";
+    var latestPctNumber = "";
 
     var ids = ["loChkText", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
 
@@ -107,7 +101,6 @@
     var input2El = document.getElementById("loInput2");
     var fetchBtn = document.getElementById("loBtnFetch");
     var copyBtn = document.getElementById("loBtnCopy");
-    var pasteBtn = document.getElementById("loBtnPaste");
     var stepsEl = document.getElementById("loCalcSteps");
     var outputEl = document.getElementById("loScaleOutput");
 
@@ -117,11 +110,27 @@
         }
     }
 
-    function parseJsxResult(res) {
+    function cleanNumberInput(raw) {
+        if (!raw) return "";
+        // Strip everything except digits and dots
+        var stripped = String(raw).replace(/[^0-9.]/g, "");
+        // Keep only the first decimal point
+        var firstDot = stripped.indexOf(".");
+        if (firstDot !== -1) {
+            stripped = stripped.slice(0, firstDot + 1) + stripped.slice(firstDot + 1).replace(/\./g, "");
+        }
+        return stripped;
+    }
+
+    function extractJsonPayload(res) {
         if (!res) return null;
         if (typeof res === "object") return res;
         if (typeof res === "string") {
-            try { return JSON.parse(res); } catch (e) { return null; }
+            try { return JSON.parse(res); } catch (e) {}
+            var match = res.match(/\{[\s\S]*"ok"[\s\S]*\}/);
+            if (match) {
+                try { return JSON.parse(match[0]); } catch (e2) {}
+            }
         }
         return null;
     }
@@ -148,31 +157,39 @@
     }
 
     function calculateScale() {
-        var v1 = parseFloat(input1El.value);
-        var v2 = parseFloat(input2El.value);
+        var clean1 = cleanNumberInput(input1El.value);
+        var clean2 = cleanNumberInput(input2El.value);
+
+        if (input1El.value !== clean1) input1El.value = clean1;
+        if (input2El.value !== clean2) input2El.value = clean2;
+
+        var v1 = parseFloat(clean1);
+        var v2 = parseFloat(clean2);
 
         if (isNaN(v1) || isNaN(v2) || v1 === 0) {
             stepsEl.textContent = "(Input 2 × 9.733) ÷ Input 1";
             outputEl.textContent = "—%";
-            latestPctText = "";
+            latestPctNumber = "";
             return;
         }
 
         var numerator = v2 * SCALE_FACTOR;
-        var pct = numerator / v1;
-        var pctFormatted = pct.toFixed(4) + "%";
+        var pctVal = Number((numerator / v1).toFixed(4));
+        var pctNumStr = String(pctVal);
 
         stepsEl.textContent =
             v2 + " × " + SCALE_FACTOR + " = " + Number(numerator.toFixed(4)) +
-            " ÷ " + v1 + " = " + pctFormatted;
-        outputEl.textContent = pctFormatted;
-        latestPctText = pctFormatted;
+            " ÷ " + v1 + " = " + pctNumStr + "%";
+        outputEl.textContent = pctNumStr + "%";
+        latestPctNumber = pctNumStr;
     }
 
     [input1El, input2El].forEach(function (el) {
         if (!el) return;
-        el.addEventListener("focus", function () { lastFocusedInput = el; });
         el.addEventListener("input", calculateScale);
+        el.addEventListener("paste", function () {
+            setTimeout(calculateScale, 0);
+        });
         el.addEventListener("change", calculateScale);
     });
 
@@ -184,13 +201,13 @@
                 { _fromHtmlUi: true, action: "getSelectedSize" },
                 function (rawRes) {
                     fetchBtn.disabled = false;
-                    var parsed = parseJsxResult(rawRes);
+                    var parsed = extractJsonPayload(rawRes);
                     if (parsed && parsed.ok && typeof parsed.inches === "number") {
-                        input1El.value = String(parsed.inches);
+                        input1El.value = cleanNumberInput(String(parsed.inches));
                         calculateScale();
-                        logMsg("Fetched selected size: " + parsed.inches + " in", "info");
+                        logMsg("Fetched selected line size: " + parsed.inches + " in", "info");
                     } else {
-                        logMsg((parsed && parsed.error) || "Could not fetch selected line size.", "warn");
+                        logMsg((parsed && parsed.error) || "Select a line in Illustrator and click Fetch.", "warn");
                     }
                 },
                 "Fetch Selected Size"
@@ -200,19 +217,18 @@
 
     if (copyBtn) {
         copyBtn.onclick = function () {
-            var valToCopy = latestPctText || outputEl.textContent;
-            if (!valToCopy || valToCopy === "—%") {
+            if (!latestPctNumber) {
                 logMsg("Nothing to copy yet.", "warn");
                 return;
             }
             if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-                navigator.clipboard.writeText(valToCopy).then(function () {
-                    logMsg("Copied: " + valToCopy, "info");
+                navigator.clipboard.writeText(latestPctNumber).then(function () {
+                    logMsg("Copied: " + latestPctNumber, "info");
                 }).catch(function () {
-                    fallbackCopy(valToCopy);
+                    fallbackCopy(latestPctNumber);
                 });
             } else {
-                fallbackCopy(valToCopy);
+                fallbackCopy(latestPctNumber);
             }
         };
     }
@@ -229,27 +245,6 @@
             logMsg("Copy failed.", "warn");
         }
         document.body.removeChild(temp);
-    }
-
-    if (pasteBtn) {
-        pasteBtn.onclick = function () {
-            var target = lastFocusedInput || input2El;
-            if (!target) return;
-            target.focus();
-            if (navigator.clipboard && typeof navigator.clipboard.readText === "function") {
-                navigator.clipboard.readText().then(function (clipText) {
-                    if (clipText) {
-                        target.value = clipText.trim();
-                        calculateScale();
-                        logMsg("Pasted into " + (target.id === "loInput1" ? "Input 1" : "Input 2"), "info");
-                    }
-                }).catch(function () {
-                    try { document.execCommand("paste"); } catch (e) {}
-                });
-            } else {
-                try { document.execCommand("paste"); } catch (e) {}
-            }
-        };
     }
 
     for (var i = 0; i < ids.length; i++) {
