@@ -49,9 +49,165 @@
             .replace(/^\s+|\s+$/g, "");
     }
 
+    function joinFramesIntoTarget(targetTf, sourceTfs) {
+        if (!targetTf || !sourceTfs || sourceTfs.length === 0) return 0;
+
+        var origLeft = targetTf.left;
+        var origTop = targetTf.top;
+        var joinedCount = 0;
+
+        for (var i = 0; i < sourceTfs.length; i++) {
+            var src = sourceTfs[i];
+            if (!src || src === targetTf) continue;
+            try {
+                if (src.locked || src.hidden) continue;
+                var srcContents = src.contents;
+                if (srcContents !== "") {
+                    if (targetTf.contents.length > 0 && !/[\r\n]$/.test(targetTf.contents)) {
+                        targetTf.contents = targetTf.contents + "\r" + srcContents;
+                    } else {
+                        targetTf.contents = targetTf.contents + srcContents;
+                    }
+                }
+                src.remove();
+                joinedCount++;
+            } catch (e) {}
+        }
+
+        try {
+            targetTf.left = origLeft;
+            targetTf.top = origTop;
+        } catch (ePos) {}
+
+        return joinedCount;
+    }
+
+    function joinTextFramesIndividually(doc) {
+        if (!doc) {
+            return '{"ok":false,"error":"No document open."}';
+        }
+
+        var oldInteraction = app.userInteractionLevel;
+        app.userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
+
+        var mergedGroups = 0;
+        var removedFrames = 0;
+        var pulse = 0;
+
+        try {
+            var sel = doc.selection;
+            var selectedTextFrames = [];
+            if (sel && sel.length > 0) {
+                for (var s = 0; s < sel.length; s++) {
+                    if (sel[s] && sel[s].typename === "TextFrame" && !sel[s].locked && !sel[s].hidden) {
+                        selectedTextFrames.push(sel[s]);
+                    }
+                }
+            }
+
+            // Case 1: User selected 2+ text frames -> join them at the top-most/left-most frame's position
+            if (selectedTextFrames.length >= 2) {
+                report(40, "Joining selected text frames...");
+                selectedTextFrames.sort(function (a, b) {
+                    if (Math.abs(a.top - b.top) > 4) return b.top - a.top;
+                    return a.left - b.left;
+                });
+
+                var primary = selectedTextFrames[0];
+                var others = selectedTextFrames.slice(1);
+                var count = joinFramesIntoTarget(primary, others);
+                if (count > 0) {
+                    mergedGroups = 1;
+                    removedFrames = count;
+                }
+            } else {
+                // Case 2: Layer-by-layer join of adjacent same-line text fragments within each layer
+                var layers = doc.layers;
+                var totalLayers = Math.max(layers.length, 1);
+
+                for (var l = 0; l < layers.length; l++) {
+                    var layer = layers[l];
+                    if (!layer || !layer.visible || layer.locked) continue;
+
+                    var pct = 15 + Math.round(((l + 1) / totalLayers) * 75);
+                    report(pct, "Joining text [" + (l + 1) + "/" + layers.length + "]: " + layer.name);
+
+                    var frames = [];
+                    var tfs = layer.textFrames;
+                    for (var i = 0; i < tfs.length; i++) {
+                        var tf = tfs[i];
+                        try {
+                            if (!tf.locked && !tf.hidden) {
+                                frames.push(tf);
+                            }
+                        } catch (e) {}
+                    }
+
+                    // Sort top-to-bottom, then left-to-right
+                    frames.sort(function (a, b) {
+                        if (Math.abs(a.top - b.top) > 3) return b.top - a.top;
+                        return a.left - b.left;
+                    });
+
+                    var used = [];
+                    for (var k = 0; k < frames.length; k++) used.push(false);
+
+                    for (var a = 0; a < frames.length; a++) {
+                        pulse++;
+                        if (used[a]) { yieldBreath(pulse); continue; }
+
+                        var baseTf = frames[a];
+                        var lineBatch = [];
+                        var lastRight = baseTf.left + baseTf.width;
+                        var baseFontSize = 10;
+                        try {
+                            if (baseTf.textRange && baseTf.textRange.characterAttributes) {
+                                baseFontSize = baseTf.textRange.characterAttributes.size || 10;
+                            }
+                        } catch (eFs) {}
+
+                        for (var b = a + 1; b < frames.length; b++) {
+                            if (used[b]) continue;
+                            var candTf = frames[b];
+                            var sameRow = Math.abs(candTf.top - baseTf.top) <= Math.max(3, baseFontSize * 0.35);
+                            var gapX = candTf.left - lastRight;
+                            var maxGap = Math.max(12, baseFontSize * 2.2);
+
+                            if (sameRow && gapX >= -2 && gapX <= maxGap) {
+                                lineBatch.push(candTf);
+                                used[b] = true;
+                                lastRight = Math.max(lastRight, candTf.left + candTf.width);
+                            }
+                        }
+
+                        if (lineBatch.length > 0) {
+                            var moved = joinFramesIntoTarget(baseTf, lineBatch);
+                            if (moved > 0) {
+                                mergedGroups++;
+                                removedFrames += moved;
+                            }
+                        }
+                        used[a] = true;
+                        yieldBreath(pulse);
+                    }
+
+                    try { $.sleep(1); } catch (e) {}
+                }
+            }
+
+            clearSelectionSafely(doc);
+            report(100, "Joined " + mergedGroups + " text group(s) (" + removedFrames + " merged).");
+        } finally {
+            app.userInteractionLevel = oldInteraction;
+        }
+
+        return '{"ok":true' +
+            ',"merged":' + mergedGroups +
+            ',"removed":' + removedFrames + '}';
+    }
+
     function isFeetInchToken(str) {
         var t = normalizeText(str);
-        // Matches patterns like 18'-10", 17'-5", 18' 10", 18'-10.5"
         return /^\d+\s*'\s*-?\s*\d+(?:\.\d+)?\s*"?$/.test(t);
     }
 
@@ -62,7 +218,7 @@
 
     function getCenterPt(item) {
         try {
-            var b = item.geometricBounds; // [left, top, right, bottom]
+            var b = item.geometricBounds;
             return {
                 x: (b[0] + b[2]) * 0.5,
                 y: (b[1] + b[3]) * 0.5,
@@ -124,7 +280,6 @@
 
             report(35, "Matching 3-box dimension callouts...");
 
-            // Pair each 'sep' ("X") with nearest 'dim' on left/above and nearest 'dim' on right/below
             for (var s = 0; s < candidateFrames.length; s++) {
                 var sep = candidateFrames[s];
                 if (sep.used || sep.kind !== "sep") continue;
@@ -143,13 +298,10 @@
                     var dy = cand.box.y - sep.box.y;
                     var dist = Math.sqrt(dx * dx + dy * dy);
 
-                    // Generous spatial threshold for horizontal or vertical dimension callouts (in points)
                     var maxSpan = Math.max(sep.box.w, sep.box.h, cand.box.w, cand.box.h) * 5 + 90;
                     if (dist > maxSpan) continue;
 
-                    // Side A: left (dx < 0) or above (dy > 0 when stacked vertically)
                     var isSideA = (dx < -2) || (Math.abs(dx) <= 25 && dy > 2);
-                    // Side B: right (dx > 0) or below (dy < 0 when stacked vertically)
                     var isSideB = (dx > 2) || (Math.abs(dx) <= 25 && dy < -2);
 
                     if (isSideA && dist < bestDistA) {
@@ -374,7 +526,6 @@
 
             var totalSrc = Math.max(sourceLayers.length, 1);
 
-            // 1. TEXT (layer-by-layer)
             if (opts.runText && textLayer) {
                 for (var l = 0; l < sourceLayers.length; l++) {
                     var layer = sourceLayers[l];
@@ -395,7 +546,6 @@
                 }
             }
 
-            // 2A. #FFFFFF FILL -> "white_fill" (layer-by-layer)
             if (opts.runWhiteFill && whiteFillLayer) {
                 function processWhiteFill(items) {
                     var movedAny = false;
@@ -437,7 +587,6 @@
                 }
             }
 
-            // 2B. REMAINING FILL -> "fill" (layer-by-layer)
             if (opts.runFill && fillLayer) {
                 function processFill(items) {
                     var movedAny = false;
@@ -477,7 +626,6 @@
                 }
             }
 
-            // 3A. ZERO SIZE OBJECTS (layer-by-layer)
             if (opts.runZeroSize && zeroLayer) {
                 var targetW = 0;
                 var targetH = 0;
@@ -510,7 +658,6 @@
                 }
             }
 
-            // 3B. ZERO-STROKE PATHS (layer-by-layer)
             if (opts.runStroke && strokeLayer) {
                 function isZeroStroke(path) {
                     try { return (!path.stroked || path.strokeWidth === 0); } catch (e) { return false; }
@@ -562,7 +709,6 @@
                 }
             }
 
-            // 4A. DASHED LINES (layer-by-layer)
             if (opts.runDashed && dashedLayer) {
                 function isDashed(path) {
                     try {
@@ -623,7 +769,6 @@
                 }
             }
 
-            // 4B. REMAINING GRAPHICS -> "lines" (layer-by-layer)
             if (opts.runLine && linesLayer) {
                 for (var l = 0; l < sourceLayers.length; l++) {
                     var layer = sourceLayers[l];
@@ -646,7 +791,6 @@
                 }
             }
 
-            // 5. FINAL LAYER ORDER
             if (opts.runReorder) {
                 report(96, "Reordering layers...");
                 try {
@@ -709,6 +853,14 @@
                 return '{"ok":false,"error":"No document open."}';
             }
             return moveDimensionGroups(app.activeDocument);
+        }
+
+        if (isHtmlMode && panelData.action === "joinTextFrames") {
+            if (app.documents.length === 0) {
+                report(100, "No document open.");
+                return '{"ok":false,"error":"No document open."}';
+            }
+            return joinTextFramesIndividually(app.activeDocument);
         }
 
         var opts = {
