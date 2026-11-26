@@ -1,11 +1,14 @@
 <!-- views/layer_organizer.html -->
 <div class="custom-card">
-    <div id="loTabBar" style="display:flex; gap:6px; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px;">
-        <button type="button" id="loTabClean" class="tool-btn" data-tab="clean" style="flex:1; padding:6px 8px; font-size:11px;">
-            Auto Clean PDF File
+    <div id="loTabBar" style="display:flex; gap:4px; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px;">
+        <button type="button" id="loTabClean" class="tool-btn" data-tab="clean" style="flex:1; padding:6px 6px; font-size:11px;">
+            Auto Clean PDF
         </button>
-        <button type="button" id="loTabScale" class="tool-btn secondary" data-tab="scale" style="flex:1; padding:6px 8px; font-size:11px;">
-            Scale percentage calculator
+        <button type="button" id="loTabDim" class="tool-btn secondary" data-tab="dim" style="flex:1; padding:6px 6px; font-size:11px;">
+            Dimensions & Text
+        </button>
+        <button type="button" id="loTabScale" class="tool-btn secondary" data-tab="scale" style="flex:1; padding:6px 6px; font-size:11px;">
+            Scale %
         </button>
     </div>
 
@@ -64,21 +67,34 @@
         <div class="action-btn-row" style="margin-top:10px;">
             <button type="button" class="tool-btn secondary" data-jsx="jsx/create.jsx">+ Create Layers</button>
         </div>
+    </div>
 
-        <div class="action-btn-row" style="margin-top:6px;">
+    <!-- TAB 2: DIMENSIONS & TEXT -->
+    <div id="loPanelDim" data-tab-panel="dim" style="display:none;">
+        <h4>Dimensions & Text Tools</h4>
+
+        <div style="margin-bottom:10px;">
             <button type="button" id="loBtnDimensions" class="tool-btn secondary" style="width:100%;">
                 Move Dimensions
             </button>
+            <p style="font-size:11px; color:#9fb0c3; margin:5px 0 0 0; line-height:1.4;">
+                <b>What it's used for:</b> Finds 3-box room/plan dimensions like <code>18'-10"</code> | <code>X</code> | <code>17'-5"</code> and moves them to the <b>dimensions</b> layer.<br />
+                <b>How to use:</b> Unlock/show your layers and click <b>Move Dimensions</b>.
+            </p>
         </div>
 
-        <div class="action-btn-row" style="margin-top:6px;">
+        <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
             <button type="button" id="loBtnJoinText" class="tool-btn secondary" style="width:100%;">
                 Join Text Frames
             </button>
+            <p style="font-size:11px; color:#9fb0c3; margin:5px 0 0 0; line-height:1.4;">
+                <b>What it's used for:</b> Combines split text boxes into one single line (such as <code>18'-10" X 17'-5"</code>) while keeping the original position unchanged.<br />
+                <b>How to use:</b> Select 2+ text boxes to join them on one line, or click with nothing selected to auto-join same-line text fragments layer-by-layer.
+            </p>
         </div>
     </div>
 
-    <!-- TAB 2: SCALE PERCENTAGE CALCULATOR -->
+    <!-- TAB 3: SCALE PERCENTAGE CALCULATOR -->
     <div id="loPanelScale" data-tab-panel="scale" style="display:none;">
         <h4>Scale percentage calculator</h4>
 
@@ -129,8 +145,11 @@
     var ids = ["loChkText", "loChkWhiteFill", "loChkFill", "loChkZeroSize", "loChkStroke", "loChkDashed", "loChkLine", "loChkReorder"];
 
     var tabCleanBtn = document.getElementById("loTabClean");
+    var tabDimBtn = document.getElementById("loTabDim");
     var tabScaleBtn = document.getElementById("loTabScale");
+
     var panelClean = document.getElementById("loPanelClean");
+    var panelDim = document.getElementById("loPanelDim");
     var panelScale = document.getElementById("loPanelScale");
 
     var input1El = document.getElementById("loInput1");
@@ -143,22 +162,22 @@
     var joinTextBtn = document.getElementById("loBtnJoinText");
 
     function setActiveTab(tabName) {
-        var isScale = (tabName === "scale");
-        panelClean.style.display = isScale ? "none" : "block";
-        panelScale.style.display = isScale ? "block" : "none";
+        var active = (tabName === "dim" || tabName === "scale") ? tabName : "clean";
 
-        tabCleanBtn.className = isScale ? "tool-btn secondary" : "tool-btn";
-        tabScaleBtn.className = isScale ? "tool-btn" : "tool-btn secondary";
+        panelClean.style.display = (active === "clean") ? "block" : "none";
+        panelDim.style.display = (active === "dim") ? "block" : "none";
+        panelScale.style.display = (active === "scale") ? "block" : "none";
 
-        try { localStorage.setItem(TAB_STORAGE_KEY, isScale ? "scale" : "clean"); } catch (e) {}
+        tabCleanBtn.className = (active === "clean") ? "tool-btn" : "tool-btn secondary";
+        tabDimBtn.className = (active === "dim") ? "tool-btn" : "tool-btn secondary";
+        tabScaleBtn.className = (active === "scale") ? "tool-btn" : "tool-btn secondary";
+
+        try { localStorage.setItem(TAB_STORAGE_KEY, active); } catch (e) {}
     }
 
-    if (tabCleanBtn) {
-        tabCleanBtn.onclick = function () { setActiveTab("clean"); };
-    }
-    if (tabScaleBtn) {
-        tabScaleBtn.onclick = function () { setActiveTab("scale"); };
-    }
+    if (tabCleanBtn) tabCleanBtn.onclick = function () { setActiveTab("clean"); };
+    if (tabDimBtn) tabDimBtn.onclick = function () { setActiveTab("dim"); };
+    if (tabScaleBtn) tabScaleBtn.onclick = function () { setActiveTab("scale"); };
 
     function logMsg(msg, level) {
         if (window.VGTools && typeof window.VGTools.log === "function") {
@@ -261,7 +280,7 @@
     function loadSavedTab() {
         try {
             var savedTab = localStorage.getItem(TAB_STORAGE_KEY);
-            if (savedTab === "scale" || savedTab === "clean") {
+            if (savedTab === "dim" || savedTab === "scale" || savedTab === "clean") {
                 setActiveTab(savedTab);
                 return;
             }
