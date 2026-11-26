@@ -58,7 +58,7 @@
         </div>
         <button type="button" id="loBtnRun" class="tool-btn">▶ Start File Cleaning</button>
         <p style="font-size:11px; color:#9fb0c3; margin:6px 0 0 0;">
-            Moves #FFFFFF fills to <b>white_fill</b> and orders layers top-to-bottom.
+            Cleans layer-by-layer with selection cleared and progress live.
         </p>
     </div>
 
@@ -106,6 +106,12 @@
     <button type="button" class="tool-btn secondary" data-jsx="jsx/create.jsx">+ Create Layers</button>
 </div>
 
+<div class="action-btn-row" style="margin-top:6px;">
+    <button type="button" id="loBtnDimensions" class="tool-btn secondary" style="width:100%;">
+        Move Dimensions
+    </button>
+</div>
+
 <script>
 (function () {
     var JSX_PATH = "jsx/pu_floor_plan_cleaner.jsx";
@@ -127,6 +133,7 @@
     var copyBtn = document.getElementById("loBtnCopy");
     var stepsEl = document.getElementById("loCalcSteps");
     var outputEl = document.getElementById("loScaleOutput");
+    var dimBtn = document.getElementById("loBtnDimensions");
 
     function setActiveTab(tabName) {
         var isScale = (tabName === "scale");
@@ -159,6 +166,10 @@
 
         if (window.VGTools && typeof window.VGTools.runScript === "function") {
             var calledDone = false;
+            var label = "Layer Organizer";
+            if (payload.action === "getSelectedSize") label = "Fetch Selected Size";
+            else if (payload.action === "moveDimensions") label = "Move Dimensions";
+
             try {
                 var ret = window.VGTools.runScript(
                     JSX_PATH,
@@ -169,7 +180,7 @@
                             finish(res);
                         }
                     },
-                    payload.action === "getSelectedSize" ? "Fetch Selected Size" : "Layer Organizer"
+                    label
                 );
                 if (ret && typeof ret.then === "function") {
                     ret.then(function (r) {
@@ -290,21 +301,23 @@
     if (fetchBtn) {
         fetchBtn.onclick = function () {
             fetchBtn.disabled = true;
-            invokeJsx(
-                { _fromHtmlUi: true, action: "getSelectedSize" },
-                function (rawRes) {
-                    fetchBtn.disabled = false;
-                    var parsed = extractJsonPayload(rawRes);
-                    if (parsed && parsed.ok && typeof parsed.inches === "number") {
-                        input1El.value = cleanNumberInput(String(parsed.inches));
-                        calculateScale();
-                        var axisLabel = parsed.orientation === "vertical" ? "height" : "width";
-                        logMsg("Fetched " + axisLabel + ": " + parsed.inches + " in", "info");
-                    } else {
-                        logMsg((parsed && parsed.error) || "Select a line in Illustrator and click Fetch.", "warn");
+            setTimeout(function () {
+                invokeJsx(
+                    { _fromHtmlUi: true, action: "getSelectedSize" },
+                    function (rawRes) {
+                        fetchBtn.disabled = false;
+                        var parsed = extractJsonPayload(rawRes);
+                        if (parsed && parsed.ok && typeof parsed.inches === "number") {
+                            input1El.value = cleanNumberInput(String(parsed.inches));
+                            calculateScale();
+                            var axisLabel = parsed.orientation === "vertical" ? "height" : "width";
+                            logMsg("Fetched " + axisLabel + ": " + parsed.inches + " in", "info");
+                        } else {
+                            logMsg((parsed && parsed.error) || "Select a line in Illustrator and click Fetch.", "warn");
+                        }
                     }
-                }
-            );
+                );
+            }, 0);
         };
     }
 
@@ -340,6 +353,31 @@
         document.body.removeChild(temp);
     }
 
+    if (dimBtn) {
+        dimBtn.onclick = function () {
+            dimBtn.disabled = true;
+            dimBtn.innerText = "Moving Dimensions...";
+            setTimeout(function () {
+                invokeJsx(
+                    { _fromHtmlUi: true, action: "moveDimensions" },
+                    function (rawRes) {
+                        dimBtn.disabled = false;
+                        dimBtn.innerText = "Move Dimensions";
+                        var parsed = extractJsonPayload(rawRes);
+                        if (parsed && parsed.ok) {
+                            logMsg(
+                                "Moved " + parsed.sets + " dimension set(s) (" + parsed.frames + " text boxes) to 'dimensions'.",
+                                "info"
+                            );
+                        } else {
+                            logMsg((parsed && parsed.error) || "Could not move dimensions.", "warn");
+                        }
+                    }
+                );
+            }, 0);
+        };
+    }
+
     for (var i = 0; i < ids.length; i++) {
         var el = document.getElementById(ids[i]);
         if (el) el.addEventListener("change", saveOpts);
@@ -371,14 +409,16 @@
             runBtn.disabled = true;
             runBtn.innerText = "Organizing...";
 
-            invokeJsx(payload, function (rawRes) {
-                runBtn.disabled = false;
-                runBtn.innerText = "▶ Start File Cleaning";
-                var parsed = extractJsonPayload(rawRes);
-                if (parsed && parsed.ok) {
-                    logMsg("File cleaning completed.", "info");
-                }
-            });
+            setTimeout(function () {
+                invokeJsx(payload, function (rawRes) {
+                    runBtn.disabled = false;
+                    runBtn.innerText = "▶ Start File Cleaning";
+                    var parsed = extractJsonPayload(rawRes);
+                    if (parsed && parsed.ok) {
+                        logMsg("File cleaning completed.", "info");
+                    }
+                });
+            }, 0);
         };
     }
 
